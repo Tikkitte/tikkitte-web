@@ -7,8 +7,8 @@ export default function Footer() {
           <p className="text-sm mt-1">Event ticketing for Ghana</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4 text-sm">
-          <a href="mailto:hello@tikkitte.com" className="hover:text-white transition-colors">
-            hello@tikkitte.com
+          <a href="mailto:admin@tikkitte.com" className="hover:text-white transition-colors">
+            admin@tikkitte.com
           </a>
           <span className="hidden sm:block">·</span>
           <span>© {new Date().getFullYear()} Tikkitte</span>
