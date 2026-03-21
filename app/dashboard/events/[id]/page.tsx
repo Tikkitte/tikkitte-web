@@ -63,7 +63,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const poster = event.image?.[0]
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl mx-auto">
       {/* Back + actions */}
       <div className="flex items-center justify-between mb-6">
         <Link
