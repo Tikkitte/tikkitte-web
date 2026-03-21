@@ -2,19 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Ticket, UserTicket } from '@/lib/types'
+import { TicketBarChart, RevenueDonut } from '@/components/dashboard/TicketChart'
+import CancelButton from './CancelButton'
 
 function formatDate(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number)
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   return `${months[m - 1]} ${d}, ${y}`
-}
-
-async function cancelEvent(eventId: string) {
-  'use server'
-  const { createClient } = await import('@/lib/supabase/server')
-  const supabase = await createClient()
-  await supabase.from('event').update({ cancelled: true }).eq('id', eventId)
-  redirect(`/dashboard/events/${eventId}`)
 }
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -54,111 +48,186 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const totalSold = (tickets ?? []).reduce(
     (s: number, t: Ticket) => s + t.purchased_quantity, 0
   )
+  const totalCapacity = (tickets ?? []).some((t: Ticket) => t.total_quantity === null)
+    ? null
+    : (tickets ?? []).reduce((s: number, t: Ticket) => s + (t.total_quantity ?? 0), 0)
 
-  const cancelAction = cancelEvent.bind(null, id)
+  const chartData = (tickets ?? []).map((t: Ticket) => ({
+    label: t.label,
+    sold: t.purchased_quantity,
+    remaining: t.total_quantity !== null ? t.total_quantity - t.purchased_quantity : null,
+    revenue: t.purchased_quantity * t.price,
+    price: t.price,
+  }))
+
+  const poster = event.image?.[0]
 
   return (
-    <div className="max-w-3xl">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8 gap-4">
-        <div>
-          <Link href="/dashboard" className="text-sm text-[#1d67ba] hover:underline mb-1 block">
-            ← All events
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900">{event.name}</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            {formatDate(event.date)} · {event.time?.slice(0, 5)} · {event.venue ?? 'No venue'}
-          </p>
-          {event.cancelled && (
-            <span className="inline-block mt-2 text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
-              Cancelled
-            </span>
+    <div className="max-w-4xl">
+      {/* Back + actions */}
+      <div className="flex items-center justify-between mb-6">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          All events
+        </Link>
+        <div className="flex gap-2">
+          {!event.cancelled && (
+            <>
+              <Link
+                href={`/dashboard/events/${id}/edit`}
+                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+              >
+                Edit event
+              </Link>
+              <CancelButton eventId={id} />
+            </>
           )}
         </div>
-        {!event.cancelled && (
-          <Link
-            href={`/dashboard/events/${id}/edit`}
-            className="text-sm font-semibold border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors shrink-0"
-          >
-            Edit event
-          </Link>
-        )}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <p className="text-2xl font-extrabold text-gray-900">{totalSold}</p>
-          <p className="text-sm text-gray-500 mt-0.5">Tickets sold</p>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <p className="text-2xl font-extrabold text-gray-900">GHS {totalRevenue.toFixed(0)}</p>
-          <p className="text-sm text-gray-500 mt-0.5">Total revenue</p>
-        </div>
-      </div>
-
-      {/* Ticket breakdown */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Ticket breakdown</h2>
-        {(tickets ?? []).length === 0 ? (
-          <p className="text-sm text-gray-400">No ticket types.</p>
+      {/* Event header with poster */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden mb-6">
+        {poster ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={poster} alt={event.name} className="w-full h-56 object-cover" />
         ) : (
-          <div className="flex flex-col gap-3">
-            {(tickets ?? []).map((t: Ticket) => (
-              <div key={t.id} className="flex items-center justify-between text-sm">
-                <div>
-                  <span className="font-medium text-gray-900">{t.label}</span>
-                  <span className="text-gray-400 ml-2">GHS {t.price}</span>
-                </div>
-                <div className="text-right">
-                  <span className="font-semibold text-gray-900">
-                    {t.purchased_quantity}
-                    {t.total_quantity != null ? `/${t.total_quantity}` : ''} sold
-                  </span>
-                  <span className="text-gray-400 ml-3">
-                    GHS {(t.purchased_quantity * t.price).toFixed(0)}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <div className="w-full h-36 bg-gradient-to-br from-[#1d67ba]/10 to-[#1d67ba]/5 dark:from-[#1d67ba]/20 dark:to-[#1d67ba]/5 flex items-center justify-center">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#1d67ba]/30">
+              <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
+            </svg>
+          </div>
+        )}
+        <div className="p-6">
+          <div className="flex items-center gap-2 mb-2">
+            {event.cancelled && (
+              <span className="text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-950 dark:text-red-400 px-2.5 py-1 rounded-full">
+                Cancelled
+              </span>
+            )}
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{event.name}</h1>
+          <p className="text-gray-500 dark:text-gray-400">
+            {formatDate(event.date)} · {event.time?.slice(0, 5)} · {event.venue ?? 'No venue'}
+          </p>
+          {event.description && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">{event.description}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Tickets sold</p>
+          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">
+            {totalSold}
+            {totalCapacity !== null && <span className="text-gray-400 dark:text-gray-500 text-base font-normal">/{totalCapacity}</span>}
+          </p>
+        </div>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Revenue</p>
+          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">GHS {totalRevenue.toLocaleString()}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Attendees</p>
+          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{(userTickets ?? []).length}</p>
+        </div>
+      </div>
+
+      {/* Charts */}
+      {(tickets ?? []).length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
+            <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Sales by ticket type</h2>
+            <TicketBarChart data={chartData} />
+          </div>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
+            <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Revenue breakdown</h2>
+            <RevenueDonut data={chartData} />
+            <div className="flex flex-wrap gap-3 justify-center mt-3">
+              {chartData.map((d, i) => {
+                const colors = ['#1d67ba', '#3b82f6', '#60a5fa', '#93c5fd']
+                return (
+                  <div key={d.label} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
+                    {d.label}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ticket breakdown table */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 mb-6">
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Ticket types</h2>
+        {(tickets ?? []).length === 0 ? (
+          <p className="text-sm text-gray-400 dark:text-gray-500">No ticket types.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <th className="text-left py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Type</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Price</th>
+                  <th className="text-right py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Sold</th>
+                  <th className="text-right py-3 pl-4 font-medium text-gray-500 dark:text-gray-400">Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(tickets ?? []).map((t: Ticket) => (
+                  <tr key={t.id} className="border-b border-gray-50 dark:border-gray-800/50 last:border-0">
+                    <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">{t.label}</td>
+                    <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">GHS {t.price}</td>
+                    <td className="py-3 px-4 text-right text-gray-900 dark:text-white font-semibold">
+                      {t.purchased_quantity}
+                      {t.total_quantity != null && <span className="text-gray-400 dark:text-gray-500 font-normal">/{t.total_quantity}</span>}
+                    </td>
+                    <td className="py-3 pl-4 text-right text-gray-900 dark:text-white font-semibold">
+                      GHS {(t.purchased_quantity * t.price).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
       {/* Attendees */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-8">
-        <h2 className="font-semibold text-gray-900 mb-4">Attendees ({(userTickets ?? []).length})</h2>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Attendees ({(userTickets ?? []).length})</h2>
         {(userTickets ?? []).length === 0 ? (
-          <p className="text-sm text-gray-400">No tickets sold yet.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">No tickets sold yet.</p>
         ) : (
-          <div className="flex flex-col gap-2">
-            {(userTickets ?? []).map((ut: UserTicket & { user_profile?: { email: string; name: string } | null }) => (
-              <div key={ut.id} className="flex items-center justify-between text-sm py-2 border-b border-gray-50 last:border-0">
-                <div>
-                  <p className="font-medium text-gray-900">{ut.user_profile?.name ?? '—'}</p>
-                  <p className="text-gray-400">{ut.user_profile?.email ?? '—'}</p>
-                </div>
-                <div className="text-right text-gray-500">
-                  <p>{ticketMap[ut.ticket_type_id]?.label ?? '—'}</p>
-                  <p>× {ut.quantity}</p>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 dark:border-gray-800">
+                  <th className="text-left py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Name</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Email</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Ticket</th>
+                  <th className="text-right py-3 pl-4 font-medium text-gray-500 dark:text-gray-400">Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(userTickets ?? []).map((ut: UserTicket & { user_profile?: { email: string; name: string } | null }) => (
+                  <tr key={ut.id} className="border-b border-gray-50 dark:border-gray-800/50 last:border-0">
+                    <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">{ut.user_profile?.name ?? '—'}</td>
+                    <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{ut.user_profile?.email ?? '—'}</td>
+                    <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{ticketMap[ut.ticket_type_id]?.label ?? '—'}</td>
+                    <td className="py-3 pl-4 text-right text-gray-900 dark:text-white font-semibold">{ut.quantity}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
-
-      {/* Cancel */}
-      {!event.cancelled && (
-        <form action={cancelAction}>
-          <button
-            type="submit"
-            className="text-sm text-red-500 hover:text-red-700 font-medium underline"
-          >
-            Cancel this event
-          </button>
-        </form>
-      )}
     </div>
   )
 }
