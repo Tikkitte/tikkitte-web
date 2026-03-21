@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -30,8 +31,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4">
       <div className="max-w-md w-full mx-auto">
-        <Link href="/" className="block text-center text-2xl font-extrabold text-[#1d67ba] tracking-tight mb-8">
-          Tikkitte
+        <Link href="/" className="flex items-center justify-center gap-2 mb-8">
+          <Image src="/images/logo-square.png" alt="Tikkitte" width={36} height={36} className="rounded-lg" />
+          <span className="text-2xl font-extrabold text-[#1d67ba] tracking-tight">Tikkitte</span>
         </Link>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <h1 className="text-xl font-bold text-gray-900 mb-6">Sign in to your account</h1>

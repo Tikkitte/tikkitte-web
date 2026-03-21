@@ -33,12 +33,12 @@ const features = [
 
 export default function Features() {
   return (
-    <section className="bg-gray-50 py-24">
+    <section className="bg-gray-50 py-14">
       <div className="max-w-6xl mx-auto px-6">
         <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-4">
           Everything you need to run your event
         </h2>
-        <p className="text-gray-500 text-center text-lg mb-14 max-w-xl mx-auto">
+        <p className="text-gray-500 text-center text-lg mb-10 max-w-xl mx-auto">
           No spreadsheets, no manual transfers. Just a clean dashboard and happy attendees.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">

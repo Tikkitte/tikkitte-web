@@ -1,13 +1,17 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function Hero() {
   return (
     <section className="bg-white">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
-        <span className="text-2xl font-extrabold text-[#1d67ba] tracking-tight">Tikkitte</span>
+        <Link href="/" className="flex items-center gap-2">
+          <Image src="/images/logo-square.png" alt="Tikkitte" width={32} height={32} className="rounded-lg" />
+          <span className="text-2xl font-extrabold text-[#1d67ba] tracking-tight">Tikkitte</span>
+        </Link>
         <div className="flex items-center gap-4">
           <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">
             Sign in
@@ -22,7 +26,7 @@ export default function Hero() {
       </nav>
 
       {/* Hero content */}
-      <div className="max-w-6xl mx-auto px-6 pt-20 pb-28 text-center">
+      <div className="max-w-6xl mx-auto px-6 pt-12 pb-16 text-center">
         <div className="inline-block bg-blue-50 text-[#1d67ba] text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
           Now available in Ghana
         </div>
