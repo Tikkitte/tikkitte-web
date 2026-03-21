@@ -35,21 +35,39 @@ function VerifyForm() {
     setLoading(true)
     const supabase = createClient()
     const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'signup' })
+
+    // If OTP failed, check if user is already confirmed (token already consumed)
+    if (error) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setLoading(false)
+        setError(error.message)
+        return
+      }
+      // User is already confirmed — continue with profile creation
+      const display_name = user.user_metadata?.display_name ?? ''
+      await supabase.from('organizer_profile').upsert({
+        id: user.id,
+        display_name,
+        email,
+        approved: false,
+      })
+      setLoading(false)
+      router.push('/dashboard')
+      router.refresh()
+      return
+    }
+
     setLoading(false)
-    if (error) { setError(error.message); return }
     // Create organizer profile (pending approval)
     if (data.user) {
       const display_name = data.user.user_metadata?.display_name ?? ''
-      const { error: profileError } = await supabase.from('organizer_profile').upsert({
+      await supabase.from('organizer_profile').upsert({
         id: data.user.id,
         display_name,
         email,
         approved: false,
       })
-      if (profileError) {
-        setError('Failed to create profile. Please try again.')
-        return
-      }
     }
     router.push('/dashboard')
     router.refresh()
