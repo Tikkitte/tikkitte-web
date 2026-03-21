@@ -54,9 +54,6 @@ function VerifyForm() {
     if (digit && index < 5) {
       inputRefs.current[index + 1]?.focus()
     }
-    if (digit && index === 5) {
-      verify([...next].join(''))
-    }
   }
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -73,7 +70,6 @@ function VerifyForm() {
     setDigits(next)
     const focusIdx = Math.min(pasted.length, 5)
     inputRefs.current[focusIdx]?.focus()
-    if (pasted.length === 6) verify(pasted)
   }
 
   const handleResend = async () => {
