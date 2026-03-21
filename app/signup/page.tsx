@@ -2,15 +2,16 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
 export default function SignupPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
-  const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -32,31 +33,7 @@ export default function SignupPage() {
       setError(error.message)
       return
     }
-    setDone(true)
-  }
-
-  if (done) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4">
-        <div className="max-w-md w-full mx-auto">
-          <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-            <Image src="/images/logo-square.png" alt="Tikkitte" width={36} height={36} className="rounded-lg" />
-            <span className="text-2xl font-extrabold text-[#1d67ba] tracking-tight">Tikkitte</span>
-          </Link>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
-            <div className="text-4xl mb-4">🎉</div>
-            <h1 className="text-xl font-bold text-gray-900 mb-3">Request received</h1>
-            <p className="text-gray-500 text-sm leading-relaxed">
-              We&apos;ve got your request. We&apos;ll review your account and email you at{' '}
-              <span className="font-medium text-gray-700">{email}</span> once you&apos;re approved — usually within 24 hours.
-            </p>
-            <Link href="/" className="inline-block mt-6 text-sm text-[#1d67ba] font-medium hover:underline">
-              Back to home
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
+    router.push(`/auth/verify?email=${encodeURIComponent(email)}`)
   }
 
   return (
