@@ -37,7 +37,7 @@ export function TicketBarChart({ data }: { data: TicketData[] }) {
               color: '#fff',
               fontSize: '13px',
             }}
-            formatter={(value: number, name: string) => [value, name === 'sold' ? 'Sold' : name]}
+            formatter={(value) => [String(value), 'Sold']}
             labelStyle={{ color: '#9ca3af', marginBottom: 4 }}
           />
           <Bar dataKey="sold" radius={[6, 6, 0, 0]}>
@@ -91,7 +91,7 @@ export function RevenueDonut({ data }: { data: TicketData[] }) {
               color: '#fff',
               fontSize: '13px',
             }}
-            formatter={(value: number) => [`GHS ${value.toLocaleString()}`, 'Revenue']}
+            formatter={(value) => [`GHS ${Number(value).toLocaleString()}`, 'Revenue']}
           />
         </PieChart>
       </ResponsiveContainer>
