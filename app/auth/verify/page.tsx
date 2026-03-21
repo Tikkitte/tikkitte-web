@@ -34,9 +34,14 @@ function VerifyForm() {
     setError(null)
     setLoading(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'signup' })
+    const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'signup' })
     setLoading(false)
     if (error) { setError(error.message); return }
+    // Now authenticated — record the signup request
+    if (data.user) {
+      const name = data.user.user_metadata?.display_name ?? ''
+      await supabase.from('signup_requests').upsert({ id: data.user.id, name, email })
+    }
     router.push('/dashboard')
     router.refresh()
   }, [email, router])

@@ -33,9 +33,6 @@ export default function SignupPage() {
       setError(error.message)
       return
     }
-    if (data.user) {
-      await supabase.from('signup_requests').upsert({ id: data.user.id, name, email })
-    }
     setLoading(false)
     router.push(`/auth/verify?email=${encodeURIComponent(email)}`)
   }
