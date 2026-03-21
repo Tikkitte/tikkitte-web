@@ -43,6 +43,18 @@ export type EventWithTickets = Event & {
   tickets: Ticket[]
 }
 
+export type Payment = {
+  reference: string
+  user_id: string
+  event_id: string
+  status: string
+  amount: number
+  ticket_type_id: string
+  quantity: number
+  paid_at: string | null
+  metadata: Record<string, unknown> | null
+}
+
 export type SalesRow = {
   ticket: Ticket
   sold: number

@@ -1,14 +1,28 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import type { Ticket, UserTicket } from '@/lib/types'
-import { TicketBarChart, RevenueDonut } from '@/components/dashboard/TicketChart'
+import type { Ticket, UserTicket, Payment } from '@/lib/types'
+import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/TicketChart'
 import CancelButton from './CancelButton'
+import EventDetailTabs from './EventDetailTabs'
 
 function formatDate(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number)
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   return `${months[m - 1]} ${d}, ${y}`
+}
+
+function formatDateTime(dateStr: string) {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
 }
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -37,6 +51,27 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     .select('*, user_profile(email, name)')
     .eq('event_id', id)
 
+  const { data: payments } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('event_id', id)
+    .eq('status', 'success')
+    .order('paid_at', { ascending: false })
+
+  const { data: freePayments } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('event_id', id)
+    .eq('status', 'free')
+    .order('paid_at', { ascending: false })
+
+  const allPayments = [...(payments ?? []), ...(freePayments ?? [])]
+    .sort((a, b) => {
+      const da = a.paid_at ? new Date(a.paid_at).getTime() : 0
+      const db = b.paid_at ? new Date(b.paid_at).getTime() : 0
+      return db - da
+    })
+
   const ticketMap = (tickets ?? []).reduce((acc: Record<string, Ticket>, t: Ticket) => {
     acc[t.id] = t
     return acc
@@ -61,6 +96,25 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   }))
 
   const poster = event.image?.[0]
+
+  // Format payments for the tabs component
+  const formattedPayments = allPayments.map((p: Payment) => ({
+    reference: p.reference,
+    amount: p.amount,
+    status: p.status,
+    paidAt: p.paid_at ? formatDateTime(p.paid_at) : '—',
+    ticketLabel: ticketMap[p.ticket_type_id]?.label ?? '—',
+    quantity: p.quantity,
+  }))
+
+  // Format attendees for the tabs component
+  const formattedAttendees = (userTickets ?? []).map((ut: UserTicket & { user_profile?: { email: string; name: string } | null }) => ({
+    id: ut.id,
+    name: ut.user_profile?.name ?? '—',
+    email: ut.user_profile?.email ?? '—',
+    ticketLabel: ticketMap[ut.ticket_type_id]?.label ?? '—',
+    quantity: ut.quantity,
+  }))
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -132,8 +186,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           <p className="text-2xl font-extrabold text-gray-900 dark:text-white">GHS {totalRevenue.toLocaleString()}</p>
         </div>
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Attendees</p>
-          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{(userTickets ?? []).length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Transactions</p>
+          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{allPayments.length}</p>
         </div>
       </div>
 
@@ -146,18 +200,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           </div>
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
             <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Revenue breakdown</h2>
-            <RevenueDonut data={chartData} />
-            <div className="flex flex-wrap gap-3 justify-center mt-3">
-              {chartData.map((d, i) => {
-                const colors = ['#1d67ba', '#3b82f6', '#60a5fa', '#93c5fd']
-                return (
-                  <div key={d.label} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
-                    {d.label}
-                  </div>
-                )
-              })}
-            </div>
+            <RevenueBreakdown data={chartData} />
           </div>
         </div>
       )}
@@ -198,36 +241,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         )}
       </div>
 
-      {/* Attendees */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
-        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Attendees ({(userTickets ?? []).length})</h2>
-        {(userTickets ?? []).length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500">No tickets sold yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 dark:border-gray-800">
-                  <th className="text-left py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Name</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Email</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Ticket</th>
-                  <th className="text-right py-3 pl-4 font-medium text-gray-500 dark:text-gray-400">Qty</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(userTickets ?? []).map((ut: UserTicket & { user_profile?: { email: string; name: string } | null }) => (
-                  <tr key={ut.id} className="border-b border-gray-50 dark:border-gray-800/50 last:border-0">
-                    <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">{ut.user_profile?.name ?? '—'}</td>
-                    <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{ut.user_profile?.email ?? '—'}</td>
-                    <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{ticketMap[ut.ticket_type_id]?.label ?? '—'}</td>
-                    <td className="py-3 pl-4 text-right text-gray-900 dark:text-white font-semibold">{ut.quantity}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* Tabbed section: Transactions & Attendees */}
+      <EventDetailTabs
+        payments={formattedPayments}
+        attendees={formattedAttendees}
+      />
     </div>
   )
 }

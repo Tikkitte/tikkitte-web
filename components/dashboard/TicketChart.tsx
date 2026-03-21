@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, AreaChart, Area, CartesianGrid } from 'recharts'
 
 type TicketData = {
   label: string
@@ -10,39 +10,43 @@ type TicketData = {
   price: number
 }
 
-export function TicketBarChart({ data }: { data: TicketData[] }) {
-  const colors = ['#1d67ba', '#3b82f6', '#60a5fa', '#93c5fd']
+const COLORS = ['#1d67ba', '#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1e40af']
 
+export function TicketBarChart({ data }: { data: TicketData[] }) {
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} barCategoryGap="20%">
+        <BarChart data={data} barCategoryGap="25%">
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
           <XAxis
             dataKey="label"
-            tick={{ fill: '#9ca3af', fontSize: 13 }}
+            tick={{ fill: '#9ca3af', fontSize: 12 }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fill: '#9ca3af', fontSize: 13 }}
+            tick={{ fill: '#9ca3af', fontSize: 12 }}
             axisLine={false}
             tickLine={false}
             allowDecimals={false}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#1f2937',
+              backgroundColor: '#111827',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '12px',
               color: '#fff',
               fontSize: '13px',
+              padding: '10px 14px',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
             }}
             formatter={(value) => [String(value), 'Sold']}
             labelStyle={{ color: '#9ca3af', marginBottom: 4 }}
+            cursor={{ fill: 'rgba(29, 103, 186, 0.06)' }}
           />
-          <Bar dataKey="sold" radius={[6, 6, 0, 0]}>
+          <Bar dataKey="sold" radius={[8, 8, 0, 0]}>
             {data.map((_, i) => (
-              <Cell key={i} fill={colors[i % colors.length]} />
+              <Cell key={i} fill={COLORS[i % COLORS.length]} />
             ))}
           </Bar>
         </BarChart>
@@ -51,10 +55,8 @@ export function TicketBarChart({ data }: { data: TicketData[] }) {
   )
 }
 
-export function RevenueDonut({ data }: { data: TicketData[] }) {
-  const colors = ['#1d67ba', '#3b82f6', '#60a5fa', '#93c5fd']
+export function RevenueBreakdown({ data }: { data: TicketData[] }) {
   const total = data.reduce((s, d) => s + d.revenue, 0)
-  const pieData = data.filter(d => d.revenue > 0)
 
   if (total === 0) {
     return (
@@ -65,41 +67,114 @@ export function RevenueDonut({ data }: { data: TicketData[] }) {
   }
 
   return (
-    <div className="h-52 relative">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={pieData}
-            dataKey="revenue"
-            nameKey="label"
-            cx="50%"
-            cy="50%"
-            innerRadius={55}
-            outerRadius={80}
-            strokeWidth={2}
-            stroke="transparent"
-          >
-            {pieData.map((_, i) => (
-              <Cell key={i} fill={colors[i % colors.length]} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              backgroundColor: '#1f2937',
-              border: 'none',
-              borderRadius: '10px',
-              color: '#fff',
-              fontSize: '13px',
-            }}
-            formatter={(value) => [`GHS ${Number(value).toLocaleString()}`, 'Revenue']}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="text-center">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">GHS {total.toLocaleString()}</p>
-        </div>
+    <div className="space-y-4">
+      {data.map((d, i) => {
+        const pct = total > 0 ? (d.revenue / total) * 100 : 0
+        return (
+          <div key={d.label}>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <span
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: COLORS[i % COLORS.length] }}
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{d.label}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                  GHS {d.revenue.toLocaleString()}
+                </span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 w-10 text-right">
+                  {pct.toFixed(0)}%
+                </span>
+              </div>
+            </div>
+            <div className="h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${pct}%`,
+                  backgroundColor: COLORS[i % COLORS.length],
+                }}
+              />
+            </div>
+          </div>
+        )
+      })}
+      <div className="pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+        <span className="text-sm text-gray-500 dark:text-gray-400">Total revenue</span>
+        <span className="text-lg font-bold text-gray-900 dark:text-white">GHS {total.toLocaleString()}</span>
+      </div>
+    </div>
+  )
+}
+
+type DailyData = {
+  date: string
+  revenue: number
+}
+
+export function RevenueAreaChart({ data }: { data: DailyData[] }) {
+  if (data.length === 0) {
+    return (
+      <div className="h-64 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">
+        No transactions yet
+      </div>
+    )
+  }
+
+  const total = data.reduce((s, d) => s + d.revenue, 0)
+
+  return (
+    <div>
+      <div className="mb-4">
+        <p className="text-sm text-gray-500 dark:text-gray-400">Revenue</p>
+        <p className="text-3xl font-extrabold text-gray-900 dark:text-white">GHS {total.toLocaleString()}</p>
+      </div>
+      <div className="h-56">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#1d67ba" stopOpacity={0.2} />
+                <stop offset="100%" stopColor="#1d67ba" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+            <XAxis
+              dataKey="date"
+              tick={{ fill: '#9ca3af', fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fill: '#9ca3af', fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v) => `${v}`}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#111827',
+                border: 'none',
+                borderRadius: '12px',
+                color: '#fff',
+                fontSize: '13px',
+                padding: '10px 14px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+              }}
+              formatter={(value) => [`GHS ${Number(value).toLocaleString()}`, 'Revenue']}
+              labelStyle={{ color: '#9ca3af', marginBottom: 4 }}
+            />
+            <Area
+              type="monotone"
+              dataKey="revenue"
+              stroke="#1d67ba"
+              strokeWidth={2.5}
+              fill="url(#revenueGradient)"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
     </div>
   )

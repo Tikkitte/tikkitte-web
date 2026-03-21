@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import DashboardNav from '@/components/dashboard/DashboardNav'
 
 async function signOut() {
   'use server'
@@ -32,10 +33,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Top nav */}
       <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <Image src="/images/logo-square.png" alt="Tikkitte" width={28} height={28} className="rounded-md" />
-            <span className="text-xl font-extrabold text-[#1d67ba] tracking-tight">Tikkitte</span>
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <Image src="/images/logo-square.png" alt="Tikkitte" width={28} height={28} className="rounded-md" />
+              <span className="text-xl font-extrabold text-[#1d67ba] tracking-tight">Tikkitte</span>
+            </Link>
+            <DashboardNav />
+          </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
               {profile?.display_name ?? user.email}
