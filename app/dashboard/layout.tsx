@@ -18,9 +18,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('organizer_profile')
-    .select('display_name')
+    .select('display_name, approved')
     .eq('id', user.id)
     .maybeSingle()
+
+  // Unapproved organizers see the pending page without the dashboard shell
+  if (!profile?.approved) {
+    return <>{children}</>
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">

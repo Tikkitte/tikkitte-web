@@ -40,7 +40,16 @@ function VerifyForm() {
     // Create organizer profile (pending approval)
     if (data.user) {
       const display_name = data.user.user_metadata?.display_name ?? ''
-      await supabase.from('organizer_profile').upsert({ id: data.user.id, display_name, approved: false })
+      const { error: profileError } = await supabase.from('organizer_profile').upsert({
+        id: data.user.id,
+        display_name,
+        email,
+        approved: false,
+      })
+      if (profileError) {
+        setError('Failed to create profile. Please try again.')
+        return
+      }
     }
     router.push('/dashboard')
     router.refresh()

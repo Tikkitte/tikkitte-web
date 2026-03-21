@@ -2,6 +2,7 @@ export type OrganizerProfile = {
   id: string
   display_name: string
   email: string
+  approved: boolean
   logo_url: string | null
   bio: string | null
   created_at: string
