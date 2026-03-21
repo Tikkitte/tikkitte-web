@@ -37,10 +37,10 @@ function VerifyForm() {
     const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'signup' })
     setLoading(false)
     if (error) { setError(error.message); return }
-    // Now authenticated — record the signup request
+    // Create organizer profile (pending approval)
     if (data.user) {
-      const name = data.user.user_metadata?.display_name ?? ''
-      await supabase.from('signup_requests').upsert({ id: data.user.id, name, email })
+      const display_name = data.user.user_metadata?.display_name ?? ''
+      await supabase.from('organizer_profile').upsert({ id: data.user.id, display_name, approved: false })
     }
     router.push('/dashboard')
     router.refresh()

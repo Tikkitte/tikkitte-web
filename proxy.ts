@@ -31,30 +31,29 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // Check organizer_profile exists
+    // Check organizer is approved
     const { data: profile } = await supabase
       .from('organizer_profile')
-      .select('id')
+      .select('approved')
       .eq('id', user.id)
       .maybeSingle()
 
-    if (!profile) {
-      // Signed in but not yet approved — show pending page
+    if (!profile?.approved) {
       if (!request.nextUrl.pathname.startsWith('/dashboard/pending')) {
         return NextResponse.redirect(new URL('/dashboard/pending', request.url))
       }
     }
   }
 
-  // Redirect logged-in organizers away from login/signup
+  // Redirect approved organizers away from login/signup
   if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
     const { data: profile } = await supabase
       .from('organizer_profile')
-      .select('id')
+      .select('approved')
       .eq('id', user.id)
       .maybeSingle()
 
-    if (profile) {
+    if (profile?.approved) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
