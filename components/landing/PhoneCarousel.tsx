@@ -48,18 +48,15 @@ export default function PhoneCarousel() {
         </p>
 
         <div className="flex flex-col items-center gap-8">
-          {/* iPhone mockup */}
-          <div className="relative" style={{ width: 320, height: 660 }}>
+          {/* iPhone mockup — 320×670 matches 1320×2868 screenshot ratio */}
+          <div className="relative" style={{ width: 320, height: 670 }}>
             {/* Phone shell */}
             <div
-              className="absolute inset-0 rounded-[54px] border-[11px] border-gray-900 bg-gray-900 shadow-2xl overflow-hidden"
-              style={{ boxShadow: '0 0 0 2px #374151, 0 30px 80px rgba(0,0,0,0.35)' }}
+              className="absolute inset-0 rounded-[52px] border-[11px] border-gray-900 bg-gray-900 overflow-hidden"
+              style={{ boxShadow: '0 0 0 2px #374151, 0 32px 80px rgba(0,0,0,0.4)' }}
             >
-              {/* Notch */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-7 bg-gray-900 rounded-b-2xl z-10" />
-
-              {/* Screen */}
-              <div className="absolute inset-0 bg-black overflow-hidden rounded-[44px]">
+              {/* Screen — no fake notch, screenshots already include dynamic island */}
+              <div className="absolute inset-0 bg-black overflow-hidden rounded-[42px]">
                 {slides.map((slide, i) => (
                   <div
                     key={slide.src}
@@ -70,22 +67,22 @@ export default function PhoneCarousel() {
                       src={slide.src}
                       alt={slide.label}
                       fill
-                      className="object-cover object-top"
+                      className="object-fill"
                       priority={i === 0}
                     />
                   </div>
                 ))}
               </div>
-
-              {/* Side buttons (decorative) */}
             </div>
 
-            {/* Volume buttons */}
-            <div className="absolute left-[-12px] top-[130px] w-[4px] h-8 bg-gray-700 rounded-l-sm" />
-            <div className="absolute left-[-12px] top-[185px] w-[4px] h-14 bg-gray-700 rounded-l-sm" />
-            <div className="absolute left-[-12px] top-[258px] w-[4px] h-14 bg-gray-700 rounded-l-sm" />
+            {/* Volume silent switch */}
+            <div className="absolute left-[-12px] top-[120px] w-[4px] h-7 bg-gray-700 rounded-l-sm" />
+            {/* Volume up */}
+            <div className="absolute left-[-12px] top-[175px] w-[4px] h-14 bg-gray-700 rounded-l-sm" />
+            {/* Volume down */}
+            <div className="absolute left-[-12px] top-[248px] w-[4px] h-14 bg-gray-700 rounded-l-sm" />
             {/* Power button */}
-            <div className="absolute right-[-12px] top-[190px] w-[4px] h-20 bg-gray-700 rounded-r-sm" />
+            <div className="absolute right-[-12px] top-[185px] w-[4px] h-20 bg-gray-700 rounded-r-sm" />
           </div>
 
           {/* Caption */}
