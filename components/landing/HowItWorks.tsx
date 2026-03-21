@@ -20,26 +20,26 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="bg-white py-14">
+    <section id="how-it-works" className="bg-white dark:bg-gray-950 py-14">
       <div className="max-w-6xl mx-auto px-6">
-        <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-4">
+        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white text-center mb-4">
           Up and running in three steps
         </h2>
-        <p className="text-gray-500 text-center text-lg mb-10 max-w-xl mx-auto">
+        <p className="text-gray-500 dark:text-gray-400 text-center text-lg mb-10 max-w-xl mx-auto">
           No technical setup required. If you can fill out a form, you can list an event.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
           {steps.map((step, i) => (
             <div key={step.number} className="flex flex-col items-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-5">
-                <span className="text-[#1d67ba] text-xl font-extrabold">{step.number}</span>
+              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center mb-5">
+                <span className="text-[#1d67ba] dark:text-blue-400 text-xl font-extrabold">{step.number}</span>
               </div>
               {i < steps.length - 1 && (
-                <div className="hidden md:block absolute mt-7 ml-48 w-16 h-px bg-gray-200" />
+                <div className="hidden md:block absolute mt-7 ml-48 w-16 h-px bg-gray-200 dark:bg-gray-700" />
               )}
-              <h3 className="text-base font-bold text-gray-900 mb-2">{step.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed max-w-xs">{step.description}</p>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2">{step.title}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs">{step.description}</p>
             </div>
           ))}
         </div>

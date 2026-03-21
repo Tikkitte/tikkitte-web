@@ -86,17 +86,17 @@ function VerifyForm() {
   const activeIndex = digits.findIndex(d => d === '')
 
   return (
-    <div className="min-h-screen bg-white flex flex-col px-6 pt-14">
+    <div className="min-h-screen bg-white dark:bg-gray-950 flex flex-col px-6 pt-14">
       <div className="max-w-sm w-full mx-auto">
-        <Link href="/signup" className="inline-flex items-center text-gray-500 mb-10 -ml-1">
+        <Link href="/signup" className="inline-flex items-center text-gray-500 dark:text-gray-400 mb-10 -ml-1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
         </Link>
 
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Verify your email</h1>
-        <p className="text-gray-500 mb-0.5">Enter the 6-digit code sent to</p>
-        <p className="font-bold text-gray-900 mb-8">{email}</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Verify your email</h1>
+        <p className="text-gray-500 dark:text-gray-400 mb-0.5">Enter the 6-digit code sent to</p>
+        <p className="font-bold text-gray-900 dark:text-white mb-8">{email}</p>
 
         <div className="flex gap-2.5 mb-6" onPaste={handlePaste}>
           {digits.map((digit, i) => (
@@ -111,10 +111,10 @@ function VerifyForm() {
               onKeyDown={e => handleKeyDown(i, e)}
               className={`w-full aspect-square text-center text-xl font-bold rounded-2xl outline-none transition-colors border-2 ${
                 i === activeIndex
-                  ? 'border-[#1d67ba] bg-white'
+                  ? 'border-[#1d67ba] bg-white dark:bg-gray-900 text-gray-900 dark:text-white'
                   : digit
-                  ? 'border-[#1d67ba] bg-white'
-                  : 'border-transparent bg-gray-100'
+                  ? 'border-[#1d67ba] bg-white dark:bg-gray-900 text-gray-900 dark:text-white'
+                  : 'border-transparent bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
               }`}
             />
           ))}
@@ -130,7 +130,7 @@ function VerifyForm() {
           {loading ? 'Verifying…' : 'Verify'}
         </button>
 
-        <div className="text-center text-sm text-gray-400">
+        <div className="text-center text-sm text-gray-400 dark:text-gray-500">
           {countdown > 0 ? (
             <span>Resend code in {countdown}s</span>
           ) : (

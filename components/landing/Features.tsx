@@ -33,20 +33,20 @@ const features = [
 
 export default function Features() {
   return (
-    <section className="bg-gray-50 py-14">
+    <section className="bg-gray-50 dark:bg-gray-900 py-14">
       <div className="max-w-6xl mx-auto px-6">
-        <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-4">
+        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white text-center mb-4">
           Everything you need to run your event
         </h2>
-        <p className="text-gray-500 text-center text-lg mb-10 max-w-xl mx-auto">
+        <p className="text-gray-500 dark:text-gray-400 text-center text-lg mb-10 max-w-xl mx-auto">
           No spreadsheets, no manual transfers. Just a clean dashboard and happy attendees.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((f) => (
-            <div key={f.title} className="bg-white rounded-2xl p-7 shadow-sm border border-gray-100">
+            <div key={f.title} className="bg-white dark:bg-gray-800 rounded-2xl p-7 shadow-sm border border-gray-100 dark:border-gray-700">
               <div className="text-3xl mb-4">{f.icon}</div>
-              <h3 className="text-base font-bold text-gray-900 mb-2">{f.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{f.description}</p>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2">{f.title}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{f.description}</p>
             </div>
           ))}
         </div>

@@ -1,0 +1,1 @@
+Stage all changed files, write a concise commit message that describes what changed (no more than one sentence), commit, and push to origin main. Do not push if there are no changes to commit. After pushing, confirm the push succeeded and remind the user that Vercel will auto-deploy within ~1 minute if connected.
