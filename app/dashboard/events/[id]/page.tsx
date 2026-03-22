@@ -97,15 +97,35 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
   const poster = event.image?.[0]
 
+  // Group user_tickets by payment_reference to build accurate ticket summaries
+  const ticketsByRef = (userTickets ?? []).reduce((acc: Record<string, Array<{ label: string; quantity: number }>>, ut: UserTicket) => {
+    if (!ut.payment_reference) return acc
+    if (!acc[ut.payment_reference]) acc[ut.payment_reference] = []
+    acc[ut.payment_reference].push({
+      label: ticketMap[ut.ticket_type_id]?.label ?? '—',
+      quantity: ut.quantity,
+    })
+    return acc
+  }, {})
+
   // Format payments for the tabs component
-  const formattedPayments = allPayments.map((p: Payment) => ({
-    reference: p.reference,
-    amount: p.amount,
-    status: p.status,
-    paidAt: p.paid_at ? formatDateTime(p.paid_at) : '—',
-    ticketLabel: ticketMap[p.ticket_type_id]?.label ?? '—',
-    quantity: p.quantity,
-  }))
+  const formattedPayments = allPayments.map((p: Payment) => {
+    const items = ticketsByRef[p.reference] ?? []
+    const ticketLabel = items.length > 0
+      ? items.map(i => `${i.label} × ${i.quantity}`).join(', ')
+      : ticketMap[p.ticket_type_id]?.label ?? '—'
+    const quantity = items.length > 0
+      ? items.reduce((s, i) => s + i.quantity, 0)
+      : p.quantity
+    return {
+      reference: p.reference,
+      amount: p.amount,
+      status: p.status,
+      paidAt: p.paid_at ? formatDateTime(p.paid_at) : '—',
+      ticketLabel,
+      quantity,
+    }
+  })
 
   // Format attendees for the tabs component
   const formattedAttendees = (userTickets ?? []).map((ut: UserTicket & { user_profile?: { email: string; name: string } | null }) => ({
