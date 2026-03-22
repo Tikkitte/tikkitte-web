@@ -111,7 +111,7 @@ export default async function TransactionsPage() {
 
       {/* Revenue chart */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 mb-6">
-        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Revenue — Last 30 days</h2>
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Revenue · Last 30 days</h2>
         <RevenueAreaChart data={chartData} />
       </div>
 

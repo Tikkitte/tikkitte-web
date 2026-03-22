@@ -7,7 +7,7 @@ const features = [
   {
     icon: '📱',
     title: 'QR code scanning',
-    description: 'Every ticket gets a unique QR code. Scan at the door — fast, secure, no paper needed.',
+    description: 'Every ticket gets a unique QR code. Scan at the door, fast, secure, no paper needed.',
   },
   {
     icon: '📊',

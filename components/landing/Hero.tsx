@@ -30,7 +30,7 @@ export default function Hero() {
         <div className="inline-block bg-blue-50 dark:bg-blue-950 text-[#1d67ba] dark:text-blue-400 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
           Now available in Ghana
         </div>
-        <h1 className="text-5xl sm:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight max-w-3xl mx-auto">
+        <h1 className="text-5xl sm:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
           Sell tickets to your event — instantly
         </h1>
         <p className="mt-6 text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">

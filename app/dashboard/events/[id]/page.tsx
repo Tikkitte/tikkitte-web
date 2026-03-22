@@ -137,7 +137,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   }))
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div>
       {/* Back + actions */}
       <div className="flex items-center justify-between mb-6">
         <Link
@@ -152,7 +152,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             <>
               <Link
                 href={`/dashboard/events/${id}/edit`}
-                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors shadow-sm"
               >
                 Edit event
               </Link>
@@ -162,110 +162,121 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
 
-      {/* Event header with poster */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden mb-6">
-        {poster ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={poster} alt={event.name} className="w-full h-56 object-cover" />
-        ) : (
-          <div className="w-full h-36 bg-gradient-to-br from-[#1d67ba]/10 to-[#1d67ba]/5 dark:from-[#1d67ba]/20 dark:to-[#1d67ba]/5 flex items-center justify-center">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#1d67ba]/30">
-              <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
-            </svg>
+      {/* Two-column layout: poster left, content right */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left column — sticky poster */}
+        <div className="lg:w-[380px] lg:flex-shrink-0">
+          <div className="lg:sticky lg:top-20">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm dark:shadow-gray-950/20 overflow-hidden">
+              {poster ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={poster} alt={event.name} className="w-full max-h-[480px] object-cover" />
+              ) : (
+                <div className="w-full h-48 bg-gradient-to-br from-[#1d67ba]/10 to-[#1d67ba]/5 dark:from-[#1d67ba]/20 dark:to-[#1d67ba]/5 flex items-center justify-center">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#1d67ba]/30">
+                    <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
+                  </svg>
+                </div>
+              )}
+              <div className="p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  {event.cancelled && (
+                    <span className="text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-950 dark:text-red-400 px-2.5 py-1 rounded-full">
+                      Cancelled
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">{event.name}</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {formatDate(event.date)} · {event.time?.slice(0, 5)}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{event.venue ?? 'No venue'}</p>
+                {event.description && (
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-3 leading-relaxed line-clamp-4">{event.description}</p>
+                )}
+              </div>
+            </div>
           </div>
-        )}
-        <div className="p-6">
-          <div className="flex items-center gap-2 mb-2">
-            {event.cancelled && (
-              <span className="text-xs font-semibold text-red-600 bg-red-50 dark:bg-red-950 dark:text-red-400 px-2.5 py-1 rounded-full">
-                Cancelled
-              </span>
+        </div>
+
+        {/* Right column — scrollable content */}
+        <div className="flex-1 min-w-0 space-y-5">
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm dark:shadow-gray-950/20 p-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Tickets sold</p>
+              <p className="text-xl font-extrabold text-gray-900 dark:text-white">
+                {totalSold}
+                {totalCapacity !== null && <span className="text-gray-400 dark:text-gray-500 text-sm font-normal">/{totalCapacity}</span>}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm dark:shadow-gray-950/20 p-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Revenue</p>
+              <p className="text-xl font-extrabold text-gray-900 dark:text-white">GHS {totalRevenue.toLocaleString()}</p>
+            </div>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm dark:shadow-gray-950/20 p-4">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Transactions</p>
+              <p className="text-xl font-extrabold text-gray-900 dark:text-white">{allPayments.length}</p>
+            </div>
+          </div>
+
+          {/* Charts */}
+          {(tickets ?? []).length > 0 && (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm dark:shadow-gray-950/20 p-5">
+                <h2 className="font-semibold text-gray-900 dark:text-white mb-4 text-sm">Sales by ticket type</h2>
+                <TicketBarChart data={chartData} />
+              </div>
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm dark:shadow-gray-950/20 p-5">
+                <h2 className="font-semibold text-gray-900 dark:text-white mb-4 text-sm">Revenue breakdown</h2>
+                <RevenueBreakdown data={chartData} />
+              </div>
+            </div>
+          )}
+
+          {/* Ticket breakdown table */}
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm dark:shadow-gray-950/20 p-5">
+            <h2 className="font-semibold text-gray-900 dark:text-white mb-4 text-sm">Ticket types</h2>
+            {(tickets ?? []).length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500">No ticket types.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                      <th className="text-left py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Type</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Price</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Sold</th>
+                      <th className="text-right py-3 pl-4 font-medium text-gray-500 dark:text-gray-400">Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(tickets ?? []).map((t: Ticket) => (
+                      <tr key={t.id} className="border-b border-gray-50 dark:border-gray-800/50 last:border-0">
+                        <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">{t.label}</td>
+                        <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">GHS {t.price}</td>
+                        <td className="py-3 px-4 text-right text-gray-900 dark:text-white font-semibold">
+                          {t.purchased_quantity}
+                          {t.total_quantity != null && <span className="text-gray-400 dark:text-gray-500 font-normal">/{t.total_quantity}</span>}
+                        </td>
+                        <td className="py-3 pl-4 text-right text-gray-900 dark:text-white font-semibold">
+                          GHS {(t.purchased_quantity * t.price).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{event.name}</h1>
-          <p className="text-gray-500 dark:text-gray-400">
-            {formatDate(event.date)} · {event.time?.slice(0, 5)} · {event.venue ?? 'No venue'}
-          </p>
-          {event.description && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">{event.description}</p>
-          )}
+
+          {/* Tabbed section: Transactions & Attendees */}
+          <EventDetailTabs
+            payments={formattedPayments}
+            attendees={formattedAttendees}
+          />
         </div>
       </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Tickets sold</p>
-          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">
-            {totalSold}
-            {totalCapacity !== null && <span className="text-gray-400 dark:text-gray-500 text-base font-normal">/{totalCapacity}</span>}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Revenue</p>
-          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">GHS {totalRevenue.toLocaleString()}</p>
-        </div>
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Transactions</p>
-          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{allPayments.length}</p>
-        </div>
-      </div>
-
-      {/* Charts */}
-      {(tickets ?? []).length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
-            <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Sales by ticket type</h2>
-            <TicketBarChart data={chartData} />
-          </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
-            <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Revenue breakdown</h2>
-            <RevenueBreakdown data={chartData} />
-          </div>
-        </div>
-      )}
-
-      {/* Ticket breakdown table */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 mb-6">
-        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Ticket types</h2>
-        {(tickets ?? []).length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500">No ticket types.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 dark:border-gray-800">
-                  <th className="text-left py-3 pr-4 font-medium text-gray-500 dark:text-gray-400">Type</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Price</th>
-                  <th className="text-right py-3 px-4 font-medium text-gray-500 dark:text-gray-400">Sold</th>
-                  <th className="text-right py-3 pl-4 font-medium text-gray-500 dark:text-gray-400">Revenue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(tickets ?? []).map((t: Ticket) => (
-                  <tr key={t.id} className="border-b border-gray-50 dark:border-gray-800/50 last:border-0">
-                    <td className="py-3 pr-4 font-medium text-gray-900 dark:text-white">{t.label}</td>
-                    <td className="py-3 px-4 text-right text-gray-600 dark:text-gray-300">GHS {t.price}</td>
-                    <td className="py-3 px-4 text-right text-gray-900 dark:text-white font-semibold">
-                      {t.purchased_quantity}
-                      {t.total_quantity != null && <span className="text-gray-400 dark:text-gray-500 font-normal">/{t.total_quantity}</span>}
-                    </td>
-                    <td className="py-3 pl-4 text-right text-gray-900 dark:text-white font-semibold">
-                      GHS {(t.purchased_quantity * t.price).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Tabbed section: Transactions & Attendees */}
-      <EventDetailTabs
-        payments={formattedPayments}
-        attendees={formattedAttendees}
-      />
     </div>
   )
 }

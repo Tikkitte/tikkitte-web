@@ -29,7 +29,7 @@ export default function RefreshButton() {
       router.push('/dashboard')
       router.refresh()
     } else {
-      setMessage('Not approved yet — check back soon.')
+      setMessage('Not approved yet. Check back soon.')
       setChecking(false)
     }
   }

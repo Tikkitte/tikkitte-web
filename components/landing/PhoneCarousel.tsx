@@ -17,7 +17,7 @@ const slides = [
   {
     src: '/screenshots/ticket-qr.png',
     label: 'Your ticket, always ready',
-    caption: 'Unique QR code per ticket — just show your phone at the door.',
+    caption: 'Unique QR code per ticket. Just show your phone at the door.',
   },
   {
     src: '/screenshots/login.png',
@@ -44,7 +44,7 @@ export default function PhoneCarousel() {
           See the app in action
         </h2>
         <p className="text-gray-500 dark:text-gray-400 text-lg text-center mb-10 max-w-lg">
-          A seamless experience for attendees — from discovery to door entry.
+          A seamless experience for attendees, from discovery to door entry.
         </p>
 
         <div className="flex flex-col items-center gap-8">
