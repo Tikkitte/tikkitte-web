@@ -21,11 +21,15 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: events } = await supabase
+  const { data: rawEvents } = await supabase
     .from('event')
     .select('*')
     .eq('organizer_id', user.id)
-    .order('date', { ascending: false })
+
+  const today = new Date().toISOString().slice(0, 10)
+  const upcoming = (rawEvents ?? []).filter((e: Event) => e.date >= today && !e.cancelled).sort((a: Event, b: Event) => a.date.localeCompare(b.date))
+  const past = (rawEvents ?? []).filter((e: Event) => e.date < today || e.cancelled).sort((a: Event, b: Event) => b.date.localeCompare(a.date))
+  const events = [...upcoming, ...past]
 
   const eventIds = (events ?? []).map((e: Event) => e.id)
 
