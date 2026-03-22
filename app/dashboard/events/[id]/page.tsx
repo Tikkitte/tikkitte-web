@@ -112,10 +112,10 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const formattedPayments = allPayments.map((p: Payment) => {
     const items = ticketsByRef[p.reference] ?? []
     const ticketLabel = items.length > 0
-      ? items.map(i => `${i.label} × ${i.quantity}`).join(', ')
+      ? items.map((i: { label: string; quantity: number }) => `${i.label} × ${i.quantity}`).join(', ')
       : ticketMap[p.ticket_type_id]?.label ?? '—'
     const quantity = items.length > 0
-      ? items.reduce((s, i) => s + i.quantity, 0)
+      ? items.reduce((s: number, i: { label: string; quantity: number }) => s + i.quantity, 0)
       : p.quantity
     return {
       reference: p.reference,
