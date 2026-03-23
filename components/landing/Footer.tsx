@@ -2,10 +2,10 @@ import Image from 'next/image'
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-400 py-12 mt-auto">
+    <footer className="bg-slate-900 text-slate-400 py-12 mt-auto">
       <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-3">
-          <Image src="/images/logo-square.png" alt="Tikkitte" width={36} height={36} className="rounded-lg opacity-90" />
+          <Image src="/images/logo.png" alt="Tikkitte" width={36} height={36} className="opacity-90" />
           <div>
             <span className="text-xl font-extrabold text-white tracking-tight">Tikkitte</span>
             <p className="text-sm mt-0.5">Event ticketing for Ghana</p>

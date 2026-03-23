@@ -5,15 +5,15 @@ import Image from 'next/image'
 
 export default function Hero() {
   return (
-    <section className="bg-white dark:bg-gray-950">
+    <section className="bg-white dark:bg-slate-950">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-6xl mx-auto border-b border-transparent">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/images/logo-square.png" alt="Tikkitte" width={32} height={32} className="rounded-lg" />
+          <Image src="/images/logo.png" alt="Tikkitte" width={32} height={32} />
           <span className="text-2xl font-extrabold text-[#1d67ba] tracking-tight">Tikkitte</span>
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/login" className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+          <Link href="/login" className="text-sm font-medium text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white">
             Sign in
           </Link>
           <Link
@@ -33,7 +33,7 @@ export default function Hero() {
         <h1 className="text-5xl sm:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight tracking-tight">
           Sell tickets to your event — instantly
         </h1>
-        <p className="mt-6 text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+        <p className="mt-6 text-xl text-gray-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
           Tikkitte puts your event in front of thousands of people actively looking for things to do.
           Set up in minutes, get paid directly.
         </p>
@@ -46,7 +46,7 @@ export default function Hero() {
           </Link>
           <a
             href="#how-it-works"
-            className="border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-base font-semibold px-8 py-4 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 text-base font-semibold px-8 py-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
           >
             See how it works
           </a>

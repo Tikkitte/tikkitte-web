@@ -38,12 +38,12 @@ export default function PhoneCarousel() {
   }, [next])
 
   return (
-    <section className="bg-white dark:bg-gray-950 py-12">
+    <section className="bg-white dark:bg-slate-950 py-12">
       <div className="max-w-6xl mx-auto px-6 flex flex-col items-center">
         <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white text-center mb-3">
           See the app in action
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 text-lg text-center mb-10 max-w-lg">
+        <p className="text-gray-500 dark:text-slate-400 text-lg text-center mb-10 max-w-lg">
           A seamless experience for attendees, from discovery to door entry.
         </p>
 
@@ -88,7 +88,7 @@ export default function PhoneCarousel() {
           {/* Caption */}
           <div className="text-center h-14">
             <p className="text-base font-semibold text-gray-900 dark:text-white mb-1">{slides[active].label}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto">{slides[active].caption}</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400 max-w-xs mx-auto">{slides[active].caption}</p>
           </div>
 
           {/* Controls */}
@@ -96,7 +96,7 @@ export default function PhoneCarousel() {
             <button
               onClick={prev}
               aria-label="Previous"
-              className="w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="w-9 h-9 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               ‹
             </button>
@@ -111,7 +111,7 @@ export default function PhoneCarousel() {
                   className={`rounded-full transition-all duration-300 ${
                     i === active
                       ? 'w-6 h-2.5 bg-[#1d67ba]'
-                      : 'w-2.5 h-2.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'
+                      : 'w-2.5 h-2.5 bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600'
                   }`}
                 />
               ))}
@@ -120,7 +120,7 @@ export default function PhoneCarousel() {
             <button
               onClick={next}
               aria-label="Next"
-              className="w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="w-9 h-9 rounded-full border border-gray-200 dark:border-slate-700 flex items-center justify-center text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               ›
             </button>

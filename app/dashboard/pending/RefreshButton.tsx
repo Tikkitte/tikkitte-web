@@ -44,7 +44,7 @@ export default function RefreshButton() {
         {checking ? 'Checking…' : 'Go to dashboard'}
       </button>
       {message && (
-        <p className="text-sm text-gray-400 dark:text-gray-500">{message}</p>
+        <p className="text-sm text-gray-400 dark:text-slate-500">{message}</p>
       )}
     </div>
   )

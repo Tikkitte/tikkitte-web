@@ -22,7 +22,7 @@ export default function DashboardNav() {
             className={`text-sm font-medium px-3.5 py-1.5 rounded-lg transition-colors ${
               active
                 ? 'bg-[#1d67ba]/10 text-[#1d67ba] dark:bg-[#1d67ba]/20'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                : 'text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800'
             }`}
           >
             {item.label}
