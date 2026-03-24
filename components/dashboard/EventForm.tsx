@@ -27,6 +27,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
   const [date, setDate] = useState(event?.date ?? '')
   const [time, setTime] = useState(event?.time ? event.time.slice(0, 5) : '')
   const [venue, setVenue] = useState(event?.venue ?? '')
+  const [mapsLink, setMapsLink] = useState(event?.maps_link ?? '')
   const [description, setDescription] = useState(event?.description ?? '')
   const [imageUrl, setImageUrl] = useState<string | null>(event?.image?.[0] ?? null)
   const [imageUploading, setImageUploading] = useState(false)
@@ -102,6 +103,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           date,
           time: time + ':00',
           venue: venue || null,
+          maps_link: mapsLink || null,
           description: description || null,
           image: imageUrl ? [imageUrl] : event.image,
         })
@@ -151,6 +153,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           date,
           time: time + ':00',
           venue: venue || null,
+          maps_link: mapsLink || null,
           description: description || null,
           image: imageUrl ? [imageUrl] : null,
           organizer_id: organizerId,
@@ -204,6 +207,11 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Venue</label>
           <input value={venue} onChange={e => setVenue(e.target.value)} className={inputClass} placeholder="e.g. Club Aria, Accra" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Google Maps Link <span className="font-normal text-gray-400 dark:text-slate-500">(optional)</span></label>
+          <input value={mapsLink} onChange={e => setMapsLink(e.target.value)} className={inputClass} placeholder="https://maps.google.com/..." />
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Without a link, attendees will see the venue name but won&apos;t get exact directions.</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Description</label>

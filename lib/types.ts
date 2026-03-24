@@ -15,6 +15,7 @@ export type Event = {
   time: string
   description: string | null
   venue: string | null
+  maps_link: string | null
   image: string[] | null
   cancelled: boolean
   organizer_id: string | null
