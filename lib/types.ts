@@ -24,6 +24,7 @@ export type Event = {
 export type Ticket = {
   id: string
   event_id: string
+  type: number
   label: string
   price: number
   total_quantity: number | null
