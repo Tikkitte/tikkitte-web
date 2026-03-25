@@ -11,6 +11,7 @@ export type OrganizerProfile = {
 export type Event = {
   id: string
   name: string
+  slug: string | null
   date: string
   time: string
   description: string | null

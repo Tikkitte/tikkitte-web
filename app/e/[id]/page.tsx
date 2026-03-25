@@ -22,20 +22,22 @@ type Props = {
   params: Promise<{ id: string }>
 }
 
-async function getEventData(id: string) {
-  if (!isValidUUID(id)) return null
+async function getEventData(idOrSlug: string) {
   const supabase = await createClient()
+
+  // Try UUID first, then slug
+  const isUUID = isValidUUID(idOrSlug)
   const { data: event } = await supabase
     .from('event')
     .select('*')
-    .eq('id', id)
+    .eq(isUUID ? 'id' : 'slug', idOrSlug)
     .maybeSingle()
   if (!event) return null
 
   const { data: tickets } = await supabase
     .from('ticket')
     .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity')
-    .eq('event_id', id)
+    .eq('event_id', event.id)
     .order('price', { ascending: true })
 
   return { event: event as Event, tickets: (tickets ?? []) as Ticket[] }
