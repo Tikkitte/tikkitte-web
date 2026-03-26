@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -80,7 +81,7 @@ export default async function PublicEventPage({ params }: Props) {
           </svg>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Event Cancelled</h1>
-        <p className="text-gray-500 dark:text-slate-400">{event.name} has been cancelled.</p>
+        <p className="text-gray-600 dark:text-slate-400">{event.name} has been cancelled.</p>
       </div>
     )
   }
@@ -91,7 +92,7 @@ export default async function PublicEventPage({ params }: Props) {
     <div className="max-w-2xl mx-auto px-4 py-6">
       {/* Event poster */}
       {poster && (
-        <div className="rounded-2xl overflow-hidden mb-6">
+        <div className="rounded-2xl overflow-hidden mb-6 shadow-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={poster}
@@ -103,43 +104,47 @@ export default async function PublicEventPage({ params }: Props) {
 
       {/* Event info */}
       <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-3">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white mb-3 tracking-tight">
           {event.name}
         </h1>
 
-        <div className="flex flex-col gap-2 mb-4">
-          <div className="flex items-center gap-2 text-gray-600 dark:text-slate-300">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
-            </svg>
-            <span className="text-sm font-medium">
+        <div className="flex flex-col gap-2.5 mb-5">
+          <div className="flex items-center gap-2.5 text-gray-700 dark:text-slate-200">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#1d67ba]">
+                <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+              </svg>
+            </div>
+            <span className="text-sm font-semibold">
               {formatDate(event.date)} &middot; {formatTime(event.time)}
             </span>
           </div>
 
           {event.venue && (
-            <div className="flex items-center gap-2 text-gray-600 dark:text-slate-300">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" />
-              </svg>
+            <div className="flex items-center gap-2.5 text-gray-700 dark:text-slate-200">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#1d67ba]">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
               {event.maps_link ? (
                 <a
                   href={event.maps_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-medium underline underline-offset-2 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="text-sm font-semibold text-[#1d67ba] underline underline-offset-2 hover:text-[#1555a0] transition-colors"
                 >
                   {event.venue}
                 </a>
               ) : (
-                <span className="text-sm font-medium">{event.venue}</span>
+                <span className="text-sm font-semibold">{event.venue}</span>
               )}
             </div>
           )}
         </div>
 
         {event.description && (
-          <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed whitespace-pre-line">
+          <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
             {event.description}
           </p>
         )}
@@ -147,6 +152,16 @@ export default async function PublicEventPage({ params }: Props) {
 
       {/* Ticket selection + checkout */}
       <EventCheckout eventId={event.id} tickets={tickets} eventName={event.name} />
+
+      {/* Browse more */}
+      <div className="mt-10 pt-6 border-t border-gray-100 dark:border-slate-800 text-center">
+        <Link
+          href="/"
+          className="text-sm font-semibold text-[#1d67ba] hover:underline"
+        >
+          &larr; Browse more events
+        </Link>
+      </div>
     </div>
   )
 }

@@ -5,8 +5,8 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Tikkitte | Event Ticketing for Ghana",
-  description: "List your event on Tikkitte and reach thousands of people looking for things to do in Ghana.",
+  title: "Tikkitte | Find Events in Ghana",
+  description: "Discover and buy tickets to events happening in Ghana. No account needed.",
 };
 
 export default function RootLayout({

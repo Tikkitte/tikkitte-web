@@ -109,8 +109,8 @@ export default function ConfirmationPage({
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <div className="inline-flex items-center gap-2 text-gray-500 dark:text-slate-400">
-          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+        <div className="inline-flex items-center gap-2 text-gray-600 dark:text-slate-300 font-medium">
+          <svg className="animate-spin h-5 w-5 text-[#1d67ba]" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
@@ -129,10 +129,10 @@ export default function ConfirmationPage({
           </svg>
         </div>
         <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Payment Issue</h1>
-        <p className="text-gray-500 dark:text-slate-400 mb-6">{error}</p>
+        <p className="text-gray-600 dark:text-slate-300 mb-6">{error}</p>
         <Link
           href={`/e/${eventId}`}
-          className="inline-flex px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-sm font-semibold hover:bg-gray-800 dark:hover:bg-slate-100 transition-colors"
+          className="inline-flex px-5 py-2.5 bg-[#1d67ba] text-white rounded-lg text-sm font-semibold hover:bg-[#1555a0] transition-colors"
         >
           Back to Event
         </Link>
@@ -151,22 +151,22 @@ export default function ConfirmationPage({
             <circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Tickets Confirmed!</h1>
-        <p className="text-gray-500 dark:text-slate-400">
+        <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-1 tracking-tight">Tickets Confirmed!</h1>
+        <p className="text-gray-600 dark:text-slate-300">
           Your tickets have been sent to your email
         </p>
       </div>
 
       {/* Event card */}
       {data.event && (
-        <div className="bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl overflow-hidden mb-6">
+        <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl overflow-hidden mb-6">
           {data.event.image && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={data.event.image} alt={data.event.name} className="w-full h-48 object-cover" />
           )}
           <div className="p-5">
             <h2 className="font-bold text-lg text-gray-900 dark:text-white mb-1">{data.event.name}</h2>
-            <div className="flex flex-col gap-1 text-sm text-gray-500 dark:text-slate-400">
+            <div className="flex flex-col gap-1 text-sm text-gray-600 dark:text-slate-300">
               {data.event.date && <span>{formatDate(data.event.date)}</span>}
               {data.event.venue && <span>{data.event.venue}</span>}
             </div>
@@ -175,15 +175,15 @@ export default function ConfirmationPage({
       )}
 
       {/* Order summary */}
-      <div className="bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-5 mb-6">
+      <div className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl p-5 mb-6">
         <div className="flex justify-between items-center mb-3">
-          <span className="text-sm text-gray-500 dark:text-slate-400">Tickets</span>
+          <span className="text-sm text-gray-600 dark:text-slate-300">Tickets</span>
           <span className="text-sm font-semibold text-gray-900 dark:text-white">
             {data.tickets_issued} ticket{data.tickets_issued > 1 ? 's' : ''}
           </span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-500 dark:text-slate-400">Total paid</span>
+          <span className="text-sm text-gray-600 dark:text-slate-300">Total paid</span>
           <span className="text-sm font-semibold text-gray-900 dark:text-white">
             {data.breakdown.total === 0
               ? 'Free'
@@ -196,14 +196,14 @@ export default function ConfirmationPage({
       <div className="space-y-3">
         <Link
           href={`/tickets/${data.payment.reference}`}
-          className="block w-full text-center py-3 bg-gray-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-semibold text-sm hover:bg-gray-800 dark:hover:bg-slate-100 transition-colors"
+          className="block w-full text-center py-3 bg-[#1d67ba] text-white rounded-xl font-semibold text-sm hover:bg-[#1555a0] transition-colors"
         >
           View Tickets &amp; QR Code
         </Link>
 
         <Link
           href={`/e/${eventId}`}
-          className="block w-full text-center py-3 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+          className="block w-full text-center py-3 border border-gray-200 dark:border-slate-600 text-gray-800 dark:text-slate-200 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
         >
           Back to Event
         </Link>
@@ -213,6 +213,16 @@ export default function ConfirmationPage({
       <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-6">
         Bookmark this page or check your email to access your tickets anytime
       </p>
+
+      {/* Browse more */}
+      <div className="mt-8 pt-6 border-t border-gray-100 dark:border-slate-800 text-center">
+        <Link
+          href="/"
+          className="text-sm font-semibold text-[#1d67ba] hover:underline"
+        >
+          &larr; Browse more events
+        </Link>
+      </div>
     </div>
   )
 }

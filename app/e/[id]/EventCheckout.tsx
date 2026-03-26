@@ -186,7 +186,7 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
   return (
     <div>
       {/* Ticket selection */}
-      <h2 className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+      <h2 className="text-xs font-bold text-[#1d67ba] uppercase tracking-widest mb-4">
         Tickets
       </h2>
 
@@ -202,35 +202,39 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
           return (
             <div
               key={ticket.id}
-              className="bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl p-4"
+              className={`border rounded-xl p-4 transition-colors ${
+                count > 0
+                  ? 'bg-blue-50/50 dark:bg-blue-950/30 border-[#1d67ba]/30 dark:border-[#1d67ba]/40'
+                  : 'bg-gray-50 dark:bg-slate-900 border-gray-200 dark:border-slate-700'
+              }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <span className="font-semibold text-gray-900 dark:text-white">{ticket.label}</span>
-                  <span className="ml-2 text-gray-500 dark:text-slate-400">
+                  <span className="font-bold text-gray-900 dark:text-white">{ticket.label}</span>
+                  <span className="ml-2 text-gray-600 dark:text-slate-300 font-medium">
                     {ticket.price === 0 ? 'Free' : `GHS ${ticket.price}`}
                   </span>
                 </div>
                 {soldOut && (
-                  <span className="text-xs font-bold text-red-500 bg-red-50 dark:bg-red-950 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-bold text-red-600 bg-red-50 dark:bg-red-950 px-2.5 py-0.5 rounded-full">
                     SOLD OUT
                   </span>
                 )}
                 {isLow && !soldOut && (
-                  <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
                     {available} left
                   </span>
                 )}
               </div>
 
               {soldOut ? (
-                <div className="text-center py-2 text-sm text-red-400">Sold out</div>
+                <div className="text-center py-2 text-sm text-red-500 font-medium">Sold out</div>
               ) : (
-                <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg px-3 py-1">
+                <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-lg px-3 py-1 border border-gray-100 dark:border-slate-700">
                   <button
                     type="button"
                     onClick={() => decrement(ticket.id)}
-                    className="w-8 h-8 flex items-center justify-center text-lg font-bold text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    className="w-9 h-9 flex items-center justify-center text-lg font-bold text-gray-700 dark:text-slate-200 hover:text-[#1d67ba] dark:hover:text-[#1d67ba] transition-colors"
                   >
                     &minus;
                   </button>
@@ -241,7 +245,7 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
                     type="button"
                     onClick={() => increment(ticket.id)}
                     disabled={atMax}
-                    className="w-8 h-8 flex items-center justify-center text-lg font-bold text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-30"
+                    className="w-9 h-9 flex items-center justify-center text-lg font-bold text-gray-700 dark:text-slate-200 hover:text-[#1d67ba] dark:hover:text-[#1d67ba] transition-colors disabled:opacity-30"
                   >
                     +
                   </button>
@@ -256,8 +260,8 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
       {totalTickets > 0 && (
         <div className="space-y-3 mb-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-              Email address <span className="text-red-400">*</span>
+            <label htmlFor="email" className="block text-sm font-semibold text-gray-800 dark:text-slate-200 mb-1">
+              Email address <span className="text-red-500">*</span>
             </label>
             <input
               id="email"
@@ -267,15 +271,15 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] focus:border-transparent placeholder:text-gray-400 dark:placeholder:text-slate-500"
             />
-            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
               Your tickets and QR code will be sent here
             </p>
           </div>
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-              Name <span className="text-gray-400">(optional)</span>
+            <label htmlFor="name" className="block text-sm font-semibold text-gray-800 dark:text-slate-200 mb-1">
+              Name <span className="text-gray-400 dark:text-slate-500 font-normal">(optional)</span>
             </label>
             <input
               id="name"
@@ -284,7 +288,7 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
               placeholder="Your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] focus:border-transparent placeholder:text-gray-400 dark:placeholder:text-slate-500"
             />
           </div>
         </div>
@@ -292,7 +296,7 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm rounded-lg p-3 mb-4">
+        <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-sm font-medium rounded-lg p-3 mb-4">
           {error}
         </div>
       )}
@@ -303,7 +307,7 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
           type="button"
           onClick={handleCheckout}
           disabled={loading || totalTickets === 0 || allSoldOut}
-          className="w-full py-3.5 rounded-xl font-semibold text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-gray-900 dark:bg-white text-white dark:text-slate-900 hover:bg-gray-800 dark:hover:bg-slate-100 shadow-sm"
+          className="w-full py-3.5 rounded-xl font-semibold text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[#1d67ba] text-white hover:bg-[#1555a0] shadow-sm"
         >
           {loading ? (
             <span className="inline-flex items-center gap-2">
