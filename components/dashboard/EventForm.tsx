@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Event, Ticket } from '@/lib/types'
@@ -183,9 +183,44 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
     setLoading(false)
   }
 
-  const slugPreview = name.trim()
-    ? 'tikkitte.com/e/' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60)
+  const baseSlug = name.trim()
+    ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60)
     : ''
+
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
+  const [resolvedSlug, setResolvedSlug] = useState('')
+
+  useEffect(() => {
+    if (!baseSlug) {
+      setSlugStatus('idle')
+      setResolvedSlug('')
+      return
+    }
+
+    setSlugStatus('checking')
+    const timer = setTimeout(async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('event')
+        .select('id, slug')
+        .eq('slug', baseSlug)
+        .maybeSingle()
+
+      if (!data || (event && data.id === event.id)) {
+        setResolvedSlug(baseSlug)
+        setSlugStatus('available')
+      } else {
+        // Slug taken — append a short random suffix
+        const suffix = Math.random().toString(36).slice(2, 6)
+        setResolvedSlug(baseSlug + '-' + suffix)
+        setSlugStatus('taken')
+      }
+    }, 400)
+
+    return () => clearTimeout(timer)
+  }, [baseSlug, event])
+
+  const slugPreview = resolvedSlug ? 'tikkitte.com/e/' + resolvedSlug : ''
 
   const inputClass = 'w-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] placeholder:text-gray-400 dark:placeholder:text-slate-500'
 
@@ -197,9 +232,22 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Event name</label>
           <input required value={name} onChange={e => setName(e.target.value)} className={inputClass} placeholder="e.g. Saturday Night Lights" />
-          {slugPreview && (
-            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
-              {slugPreview}
+          {baseSlug && (
+            <p className="text-xs mt-1 flex items-center gap-1.5">
+              {slugStatus === 'checking' ? (
+                <span className="text-gray-400 dark:text-slate-500">Checking tikkitte.com/e/{baseSlug}...</span>
+              ) : slugStatus === 'available' ? (
+                <>
+                  <span className="text-green-600 dark:text-green-400">&#10003;</span>
+                  <span className="text-gray-400 dark:text-slate-500">{slugPreview}</span>
+                </>
+              ) : slugStatus === 'taken' ? (
+                <>
+                  <span className="text-amber-500">&#8226;</span>
+                  <span className="text-gray-400 dark:text-slate-500">{slugPreview}</span>
+                  <span className="text-amber-500 dark:text-amber-400">(name already taken)</span>
+                </>
+              ) : null}
             </p>
           )}
         </div>
