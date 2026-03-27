@@ -62,40 +62,40 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
       const supabase = createClient()
 
       // 1. Anonymous auth
-      console.log('[checkout] Step 1: signing in anonymously...')
+      if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 1: signing in anonymously...')
       const { data: anonData, error: anonErr } = await supabase.auth.signInAnonymously()
       if (anonErr || !anonData.session || !anonData.user) {
-        console.error('[checkout] Anonymous auth failed:', anonErr)
+        if (process.env.NODE_ENV === 'development') console.error('[checkout] Anonymous auth failed:', anonErr)
         setError(anonErr?.message || 'Unable to start checkout. Please try again.')
         return
       }
-      console.log('[checkout] Step 1 done. User:', anonData.user.id)
+      if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 1 done. User:', anonData.user.id)
 
       const userId = anonData.user.id
       const accessToken = anonData.session.access_token
 
       // 2. Attach email to anonymous user metadata
-      console.log('[checkout] Step 2: updating user metadata...')
+      if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 2: updating user metadata...')
       const cleanName = sanitizeName(name)
       const { error: updateErr } = await supabase.auth.updateUser({
         data: { email: validEmail, name: cleanName, is_guest: true },
       })
-      if (updateErr) console.error('[checkout] updateUser error:', updateErr)
+      if (updateErr && process.env.NODE_ENV === 'development') console.error('[checkout] updateUser error:', updateErr)
 
       // Refresh session so the new metadata is in the token
       const { data: refreshed } = await supabase.auth.refreshSession()
       const freshToken = refreshed?.session?.access_token ?? accessToken
-      console.log('[checkout] Step 2 done, token refreshed')
+      if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 2 done, token refreshed')
 
       // 3. Create user profile
-      console.log('[checkout] Step 3: upserting user profile...')
+      if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 3: upserting user profile...')
       const { error: profileErr } = await supabase.from('user_profile').upsert({
         id: userId,
         email: validEmail,
         name: cleanName,
       })
-      if (profileErr) console.error('[checkout] profile upsert error:', profileErr)
-      console.log('[checkout] Step 3 done')
+      if (profileErr && process.env.NODE_ENV === 'development') console.error('[checkout] profile upsert error:', profileErr)
+      if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 3 done')
 
       // 4. Build ticket array matching edge function format (type integer, not UUID)
       const ticketsPayload = tickets
@@ -104,36 +104,34 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
           type: t.type,
           quantity: counts[t.id],
         }))
-      console.log('[checkout] Step 4: tickets payload:', JSON.stringify(ticketsPayload))
+      if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 4: tickets payload:', JSON.stringify(ticketsPayload))
 
       // 5. Get quote
-      console.log('[checkout] Step 5: fetching quote...')
+      if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 5: fetching quote...')
       const quoteRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/quote-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${freshToken}`,
-          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         },
         body: JSON.stringify({ event_id: eventId, tickets: ticketsPayload }),
       })
 
       const quoteData = await quoteRes.json()
-      console.log('[checkout] Step 5 response:', quoteRes.status, JSON.stringify(quoteData))
+      if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 5 response:', quoteRes.status, JSON.stringify(quoteData))
       if (!quoteRes.ok || !quoteData.quote_id) {
         setError(quoteData.message || 'Failed to get price quote. Please try again.')
         return
       }
 
       // 6. Make payment
-      console.log('[checkout] Step 6: making payment...')
+      if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 6: making payment...')
       const callbackUrl = `${window.location.origin}/e/${eventId}/confirmation`
       const makeRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/make-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${freshToken}`,
-          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         },
         body: JSON.stringify({
           event_id: eventId,
@@ -144,7 +142,7 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
       })
 
       const paymentData = await makeRes.json()
-      console.log('[checkout] Step 6 response:', makeRes.status, JSON.stringify(paymentData))
+      if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 6 response:', makeRes.status, JSON.stringify(paymentData))
       if (!makeRes.ok) {
         setError(paymentData.message || 'Failed to start payment. Please try again.')
         return
@@ -158,13 +156,23 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
 
       // 8. Redirect to Paystack
       if (paymentData.authorization_url) {
+        try {
+          const payUrl = new URL(paymentData.authorization_url)
+          if (payUrl.hostname !== 'checkout.paystack.com') {
+            setError('Unexpected payment redirect. Please try again.')
+            return
+          }
+        } catch {
+          setError('Invalid payment URL received.')
+          return
+        }
         window.location.href = paymentData.authorization_url
         return
       }
 
       setError('Unexpected response from payment service.')
     } catch (err) {
-      console.error('[checkout] Error at step:', err)
+      if (process.env.NODE_ENV === 'development') console.error('[checkout] Error at step:', err)
       setError('Something went wrong. Please try again.')
     } finally {
       setLoading(false)

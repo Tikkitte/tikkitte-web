@@ -64,7 +64,6 @@ export default function ConfirmationPage({
           headers: {
             'Content-Type': 'application/json',
             ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
           },
           body: JSON.stringify({ reference }),
         })
@@ -78,19 +77,16 @@ export default function ConfirmationPage({
 
         setData(result as ConfirmationData)
 
-        // Fire-and-forget: send ticket email
+        // Fire-and-forget: send ticket email (requires auth)
         try {
-          const email =
-            session?.session?.user?.user_metadata?.email ||
-            session?.session?.user?.email
-          if (email) {
+          if (accessToken) {
             fetch(`${SUPABASE_FUNCTIONS_URL}/send-ticket-email`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                Authorization: `Bearer ${accessToken}`,
               },
-              body: JSON.stringify({ reference, email }),
+              body: JSON.stringify({ reference }),
             }).catch(() => {})
           }
         } catch {
