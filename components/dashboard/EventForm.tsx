@@ -47,13 +47,30 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // Validate MIME type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type)) {
+      setError('Only JPEG, PNG, WebP, and GIF images are allowed.')
+      return
+    }
+
+    // Validate file size (5 MB max)
+    const MAX_SIZE = 5 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      setError('Image must be under 5 MB.')
+      return
+    }
+
     setImageUploading(true)
+    setError(null)
     const supabase = createClient()
-    const ext = file.name.split('.').pop()
-    const path = `${organizerId}/${Date.now()}.${ext}`
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+    const safeName = crypto.randomUUID()
+    const path = `${organizerId}/${safeName}.${ext}`
     const { error: uploadError } = await supabase.storage
       .from('event-images')
-      .upload(path, file, { upsert: true })
+      .upload(path, file, { contentType: file.type, upsert: true })
     if (uploadError) {
       setError('Image upload failed: ' + uploadError.message)
       setImageUploading(false)
@@ -288,7 +305,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imageUrl} alt="Event" className="w-full h-48 object-cover rounded-xl" />
         )}
-        <input ref={fileRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleImageChange} className="hidden" />
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
