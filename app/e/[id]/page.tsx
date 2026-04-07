@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -98,16 +99,19 @@ export default async function PublicEventPage({ params }: Props) {
         {/* ── Left column: poster + description ────────────────────── */}
         <div>
           {/* Poster */}
-          <div className="rounded-2xl overflow-hidden bg-gray-100 mb-8">
+          <div className="relative rounded-2xl overflow-hidden bg-gray-100 mb-8 aspect-[16/10]">
             {poster ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={poster}
                 alt={event.name}
-                className="w-full object-cover"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 55vw"
+                quality={90}
+                priority
               />
             ) : (
-              <div className="aspect-[16/10] w-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100">
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300">
                   <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
                 </svg>

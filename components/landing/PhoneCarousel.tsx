@@ -56,6 +56,7 @@ export default function PhoneCarousel() {
                   src={slide.src}
                   alt={slide.label}
                   fill
+                  sizes="280px"
                   className="object-fill"
                   priority={i === 0}
                 />

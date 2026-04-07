@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Event } from '@/lib/types'
 
 function formatDate(dateStr: string) {
@@ -80,11 +81,13 @@ export default function EventGrid({ events }: Props) {
             {/* ── Image ─────────────────────────────────────────────── */}
             <div className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
               {poster ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={poster}
                   alt={event.name}
-                  className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-out"
+                  fill
+                  className="object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-out"
+                  sizes="(max-width: 1024px) 100vw, 58vw"
+                  quality={90}
                 />
               ) : (
                 <ImagePlaceholder />
