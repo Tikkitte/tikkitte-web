@@ -14,7 +14,11 @@ export default function OrganizersPage() {
   return (
     <main className="flex flex-col min-h-full">
       <Hero />
-      <PhoneCarousel />
+      <section className="bg-white py-24">
+        <div className="max-w-[1440px] mx-auto px-6 lg:px-12 flex justify-center">
+          <PhoneCarousel />
+        </div>
+      </section>
       <Features />
       <HowItWorks />
       <Footer />

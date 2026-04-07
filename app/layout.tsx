@@ -1,8 +1,18 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Roboto, Poppins } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({ subsets: ["latin"] });
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-roboto",
+});
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  variable: "--font-poppins",
+});
 
 export const metadata: Metadata = {
   title: "Tikkitte | Find Events in Ghana",
@@ -16,7 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className={`${geist.className} min-h-full flex flex-col`}>{children}</body>
+      <body className={`${roboto.variable} ${poppins.variable} font-sans min-h-full flex flex-col bg-white text-gray-900`}>
+        {children}
+      </body>
     </html>
   );
 }

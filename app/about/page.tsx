@@ -1,0 +1,47 @@
+import Nav from '@/components/landing/Nav'
+import AboutUs from '@/components/landing/AboutUs'
+import Footer from '@/components/landing/Footer'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'About Us | Tikkitte',
+  description: 'Meet the team behind Tikkitte — Ghana\'s home for live event ticketing.',
+}
+
+export default function AboutPage() {
+  return (
+    <main className="flex flex-col min-h-full">
+      <Nav />
+
+      {/* Page header */}
+      <div className="relative overflow-hidden border-b border-gray-100 bg-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 flex items-center justify-end pr-6 lg:pr-12 select-none"
+        >
+          <span
+            className="text-[12rem] lg:text-[18rem] font-bold leading-none tracking-tighter text-gray-900/[0.04]"
+            style={{ fontFamily: 'var(--font-poppins)' }}
+          >
+            ABOUT
+          </span>
+        </div>
+        <div className="relative z-10 max-w-[1440px] mx-auto px-6 lg:px-12 py-20">
+          <span className="text-xs font-semibold tracking-widest text-[#3B82F6] uppercase">
+            Our story
+          </span>
+          <h1 className="mt-3 text-4xl sm:text-5xl font-bold text-gray-900 leading-tight">
+            About Tikkitte
+          </h1>
+          <p className="mt-4 text-lg text-gray-500 max-w-lg">
+            Built in Ghana, for Ghana. We&apos;re making it easier to discover, buy, and sell tickets to live events.
+          </p>
+        </div>
+      </div>
+
+      <AboutUs />
+
+      <Footer />
+    </main>
+  )
+}

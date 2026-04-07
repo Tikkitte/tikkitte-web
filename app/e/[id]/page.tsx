@@ -25,8 +25,6 @@ type Props = {
 
 async function getEventData(idOrSlug: string) {
   const supabase = await createClient()
-
-  // Try UUID first, then slug
   const isUUID = isValidUUID(idOrSlug)
   const { data: event } = await supabase
     .from('event')
@@ -74,14 +72,17 @@ export default async function PublicEventPage({ params }: Props) {
 
   if (event.cancelled) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 dark:bg-red-950 mb-4">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-12 py-24 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-5">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
             <circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Event Cancelled</h1>
-        <p className="text-gray-600 dark:text-slate-400">{event.name} has been cancelled.</p>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Event Cancelled</h1>
+        <p className="text-gray-500 mb-8">{event.name} has been cancelled.</p>
+        <Link href="/events" className="text-sm font-semibold text-[#3B82F6] hover:text-[#2563EB] transition-colors">
+          ← Browse other events
+        </Link>
       </div>
     )
   }
@@ -89,78 +90,115 @@ export default async function PublicEventPage({ params }: Props) {
   const poster = event.image?.[0]
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      {/* Event poster */}
-      {poster && (
-        <div className="rounded-2xl overflow-hidden mb-6 shadow-sm">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={poster}
-            alt={event.name}
-            className="w-full max-h-[420px] object-cover"
-          />
-        </div>
-      )}
+    <div className="max-w-[1440px] mx-auto px-6 lg:px-12 py-10 lg:py-16">
 
-      {/* Event info */}
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white mb-3 tracking-tight">
-          {event.name}
-        </h1>
+      {/* Two-column layout on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-10 lg:gap-16 items-start">
 
-        <div className="flex flex-col gap-2.5 mb-5">
-          <div className="flex items-center gap-2.5 text-gray-700 dark:text-slate-200">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#1d67ba]">
-                <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
-              </svg>
-            </div>
-            <span className="text-sm font-semibold">
-              {formatDate(event.date)} &middot; {formatTime(event.time)}
-            </span>
-          </div>
-
-          {event.venue && (
-            <div className="flex items-center gap-2.5 text-gray-700 dark:text-slate-200">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#1d67ba]">
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+        {/* ── Left column: poster + description ────────────────────── */}
+        <div>
+          {/* Poster */}
+          <div className="rounded-2xl overflow-hidden bg-gray-100 mb-8">
+            {poster ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={poster}
+                alt={event.name}
+                className="w-full object-cover"
+              />
+            ) : (
+              <div className="aspect-[16/10] w-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
                 </svg>
               </div>
-              {event.maps_link ? (
-                <a
-                  href={event.maps_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-semibold text-[#1d67ba] underline underline-offset-2 hover:text-[#1555a0] transition-colors"
-                >
-                  {event.venue}
-                </a>
-              ) : (
-                <span className="text-sm font-semibold">{event.venue}</span>
-              )}
+            )}
+          </div>
+
+          {/* Description — desktop only (mobile shows below checkout) */}
+          {event.description && (
+            <div className="hidden lg:block">
+              <h2 className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3">About this event</h2>
+              <p className="text-gray-500 leading-relaxed whitespace-pre-line text-sm">
+                {event.description}
+              </p>
             </div>
           )}
         </div>
 
-        {event.description && (
-          <p className="text-sm text-gray-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
-            {event.description}
-          </p>
-        )}
-      </div>
+        {/* ── Right column: meta + checkout (sticky on desktop) ────── */}
+        <div className="lg:sticky lg:top-24">
 
-      {/* Ticket selection + checkout */}
-      <EventCheckout eventId={event.id} tickets={tickets} eventName={event.name} />
+          {/* Status badge */}
+          <span className="inline-block text-[10px] font-bold tracking-[0.15em] uppercase bg-blue-50 text-[#3B82F6] px-3 py-1.5 rounded-full mb-5">
+            Upcoming
+          </span>
 
-      {/* Browse more */}
-      <div className="mt-10 pt-6 border-t border-gray-100 dark:border-slate-800 text-center">
-        <Link
-          href="/"
-          className="text-sm font-semibold text-[#1d67ba] hover:underline"
-        >
-          &larr; Browse more events
-        </Link>
+          {/* Event name */}
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight mb-6">
+            {event.name}
+          </h1>
+
+          {/* Date + venue */}
+          <div className="flex flex-col gap-3 pb-6 border-b border-gray-100 mb-6">
+            <div className="flex items-center gap-3 text-gray-700">
+              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#3B82F6]">
+                  <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+                </svg>
+              </div>
+              <span className="text-sm font-semibold">
+                {formatDate(event.date)} &middot; {formatTime(event.time)}
+              </span>
+            </div>
+
+            {event.venue && (
+              <div className="flex items-center gap-3 text-gray-700">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#3B82F6]">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+                  </svg>
+                </div>
+                {event.maps_link ? (
+                  <a
+                    href={event.maps_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold text-[#3B82F6] underline underline-offset-2 hover:text-[#2563EB] transition-colors"
+                  >
+                    {event.venue}
+                  </a>
+                ) : (
+                  <span className="text-sm font-semibold">{event.venue}</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Ticket checkout */}
+          <EventCheckout eventId={event.id} tickets={tickets} eventName={event.name} />
+
+          {/* Description — mobile only */}
+          {event.description && (
+            <div className="lg:hidden mt-8 pt-6 border-t border-gray-100">
+              <h2 className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3">About this event</h2>
+              <p className="text-gray-500 leading-relaxed whitespace-pre-line text-sm">
+                {event.description}
+              </p>
+            </div>
+          )}
+
+          {/* Back link */}
+          <div className="mt-8 pt-6 border-t border-gray-100">
+            <Link
+              href="/events"
+              className="text-sm font-semibold text-[#3B82F6] hover:text-[#2563EB] transition-colors"
+            >
+              ← All events
+            </Link>
+          </div>
+
+        </div>
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Reveal from './Reveal'
 
 const steps = [
   {
@@ -20,38 +21,44 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section id="how-it-works" className="bg-white dark:bg-slate-950 py-14">
-      <div className="max-w-6xl mx-auto px-6">
-        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white text-center mb-4">
-          Up and running in three steps
-        </h2>
-        <p className="text-gray-500 dark:text-slate-400 text-center text-lg mb-10 max-w-xl mx-auto">
-          No technical setup required. If you can fill out a form, you can list an event.
-        </p>
+    <section id="how-it-works" className="bg-gray-50 py-24">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+        <Reveal>
+          <div className="max-w-2xl mb-16">
+            <span className="text-xs font-semibold tracking-widest text-[#3B82F6] uppercase">
+              Getting started
+            </span>
+            <h2 className="mt-3 text-4xl sm:text-5xl font-bold text-gray-900 leading-tight">
+              Up and running in three steps.
+            </h2>
+            <p className="mt-4 text-lg text-gray-500 leading-relaxed">
+              No technical setup required. If you can fill out a form, you can list an event.
+            </p>
+          </div>
+        </Reveal>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-14">
           {steps.map((step, i) => (
-            <div key={step.number} className="flex flex-col items-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center mb-5">
-                <span className="text-[#1d67ba] dark:text-blue-400 text-xl font-extrabold">{step.number}</span>
+            <Reveal key={step.number} delay={i * 100}>
+              <div className="bg-white rounded-2xl p-8 border border-gray-100 hover:border-blue-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 h-full">
+                <span className="text-4xl font-bold text-gray-100 leading-none">{step.number}</span>
+                <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">{step.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{step.description}</p>
               </div>
-              {i < steps.length - 1 && (
-                <div className="hidden md:block absolute mt-7 ml-48 w-16 h-px bg-gray-200 dark:bg-slate-700" />
-              )}
-              <h3 className="text-base font-bold text-gray-900 dark:text-white mb-2">{step.title}</h3>
-              <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed max-w-xs">{step.description}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
 
-        <div className="text-center">
+        <Reveal delay={300}>
           <Link
             href="/signup"
-            className="inline-block bg-[#1d67ba] text-white text-base font-semibold px-10 py-4 rounded-xl hover:bg-[#1555a0] transition-colors shadow-sm"
+            className="inline-flex bg-[#3B82F6] text-white text-sm font-semibold px-8 py-3.5 rounded-xl hover:bg-[#2563EB] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
           >
             Get started for free →
           </Link>
-        </div>
+        </Reveal>
+
       </div>
     </section>
   )
