@@ -40,7 +40,7 @@ export default function Nav({ showOrganizerCta = false }: Props) {
             : 'border-gray-100 shadow-none'
         }`}
       >
-        <nav className="max-w-[1440px] mx-auto px-6 lg:px-12 h-16 flex items-center justify-between">
+        <nav className="max-w-[1440px] mx-auto px-6 lg:px-12 h-16 grid grid-cols-[1fr_auto_1fr] items-center md:grid-cols-[1fr_auto_1fr]">
 
           {/* Logo */}
           <div className="flex-shrink-0 select-none">
@@ -76,7 +76,7 @@ export default function Nav({ showOrganizerCta = false }: Props) {
           </div>
 
           {/* Desktop right actions */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 justify-end">
             {showOrganizerCta && (
               <>
                 <Link
@@ -97,7 +97,7 @@ export default function Nav({ showOrganizerCta = false }: Props) {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-[5px] rounded-lg hover:bg-gray-50 transition-colors"
+            className="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-[5px] rounded-lg hover:bg-gray-50 transition-colors ml-auto"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Toggle menu"
           >

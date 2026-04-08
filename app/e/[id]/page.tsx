@@ -6,6 +6,7 @@ import type { Metadata } from 'next'
 import type { Event, Ticket } from '@/lib/types'
 import { isValidUUID } from '@/lib/validation'
 import EventCheckout from './EventCheckout'
+import EventPreviewGallery from '@/components/EventPreviewGallery'
 
 function formatDate(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number)
@@ -118,6 +119,17 @@ export default async function PublicEventPage({ params }: Props) {
               </div>
             )}
           </div>
+
+          {/* Preview gallery */}
+          {((event.preview_images?.length ?? 0) + (event.preview_videos?.length ?? 0)) > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3">Preview</h2>
+              <EventPreviewGallery
+                images={event.preview_images ?? []}
+                videos={event.preview_videos ?? []}
+              />
+            </div>
+          )}
 
           {/* Description — desktop only (mobile shows below checkout) */}
           {event.description && (

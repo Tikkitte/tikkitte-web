@@ -20,6 +20,8 @@ export type Event = {
   image: string[] | null
   cancelled: boolean
   organizer_id: string | null
+  preview_images: string[] | null
+  preview_videos: string[] | null
 }
 
 export type Ticket = {

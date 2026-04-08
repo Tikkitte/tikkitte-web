@@ -41,8 +41,70 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
         }))
       : [{ label: '', price: '', total_quantity: '' }]
   )
+  const [previewImages, setPreviewImages] = useState<string[]>(event?.preview_images ?? [])
+  const [previewVideos, setPreviewVideos] = useState<string[]>(event?.preview_videos ?? [])
+  const [previewUploading, setPreviewUploading] = useState(false)
+  const previewFileRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const handlePreviewImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    if (files.length === 0) return
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    for (const file of files) {
+      if (!allowedTypes.includes(file.type)) {
+        setError('Only JPEG, PNG, WebP, and GIF images are allowed.')
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Each image must be under 5 MB.')
+        return
+      }
+    }
+
+    setPreviewUploading(true)
+    setError(null)
+    const supabase = createClient()
+    const uploaded: string[] = []
+
+    for (const file of files) {
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const path = `${organizerId}/${crypto.randomUUID()}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('event-images')
+        .upload(path, file, { contentType: file.type, upsert: true })
+      if (uploadError) {
+        setError('Upload failed: ' + uploadError.message)
+        setPreviewUploading(false)
+        return
+      }
+      const { data } = supabase.storage.from('event-images').getPublicUrl(path)
+      uploaded.push(data.publicUrl)
+    }
+
+    setPreviewImages(prev => [...prev, ...uploaded])
+    setPreviewUploading(false)
+    // Reset input so same files can be re-selected if needed
+    if (previewFileRef.current) previewFileRef.current.value = ''
+  }
+
+  const removePreviewImage = (i: number) => {
+    setPreviewImages(prev => prev.filter((_, idx) => idx !== i))
+  }
+
+  const addVideoUrl = () => {
+    setPreviewVideos(prev => [...prev, ''])
+  }
+
+  const updateVideoUrl = (i: number, value: string) => {
+    setPreviewVideos(prev => prev.map((v, idx) => idx === i ? value : v))
+  }
+
+  const removeVideoUrl = (i: number) => {
+    setPreviewVideos(prev => prev.filter((_, idx) => idx !== i))
+  }
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -123,6 +185,8 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           maps_link: mapsLink || null,
           description: description || null,
           image: imageUrl ? [imageUrl] : event.image,
+          preview_images: previewImages.length > 0 ? previewImages : null,
+          preview_videos: previewVideos.filter(v => v.trim()).length > 0 ? previewVideos.filter(v => v.trim()) : null,
         })
         .eq('id', event.id)
 
@@ -173,6 +237,8 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           maps_link: mapsLink || null,
           description: description || null,
           image: imageUrl ? [imageUrl] : null,
+          preview_images: previewImages.length > 0 ? previewImages : null,
+          preview_videos: previewVideos.filter(v => v.trim()).length > 0 ? previewVideos.filter(v => v.trim()) : null,
           organizer_id: organizerId,
           cancelled: false,
         })
@@ -313,6 +379,85 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 dark:hover:bg-[#1d67ba]/10 transition-colors disabled:opacity-50 self-start"
         >
           {imageUploading ? 'Uploading…' : imageUrl ? 'Change image' : 'Upload image'}
+        </button>
+      </div>
+
+      {/* Preview media */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6 flex flex-col gap-4">
+        <div>
+          <h2 className="font-semibold text-gray-900 dark:text-white">Preview media</h2>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Show attendees what to expect — photos from past events and YouTube links.</p>
+        </div>
+
+        {/* Preview image thumbnails */}
+        {previewImages.length > 0 && (
+          <div className="flex flex-wrap gap-3">
+            {previewImages.map((url, i) => (
+              <div key={i} className="relative group w-28 h-20 rounded-lg overflow-hidden bg-gray-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removePreviewImage(i)}
+                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity leading-none"
+                  aria-label="Remove"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div>
+          <input
+            ref={previewFileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
+            onChange={handlePreviewImagesChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => previewFileRef.current?.click()}
+            disabled={previewUploading}
+            className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 dark:hover:bg-[#1d67ba]/10 transition-colors disabled:opacity-50 self-start"
+          >
+            {previewUploading ? 'Uploading…' : '+ Add photos'}
+          </button>
+        </div>
+
+        {/* Video URLs */}
+        {previewVideos.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {previewVideos.map((url, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="url"
+                  value={url}
+                  onChange={e => updateVideoUrl(i, e.target.value)}
+                  className={`${inputClass} flex-1`}
+                  placeholder="https://youtube.com/watch?v=..."
+                />
+                <button
+                  type="button"
+                  onClick={() => removeVideoUrl(i)}
+                  className="text-gray-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors text-lg leading-none px-1"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={addVideoUrl}
+          className="text-sm text-[#1d67ba] font-medium hover:underline self-start"
+        >
+          + Add YouTube link
         </button>
       </div>
 
