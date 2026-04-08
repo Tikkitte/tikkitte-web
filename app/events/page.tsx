@@ -3,7 +3,6 @@ import type { Event } from '@/lib/types'
 import Nav from '@/components/landing/Nav'
 import EventGrid from '@/components/landing/EventGrid'
 import Footer from '@/components/landing/Footer'
-import WatermarkText from '@/components/landing/WatermarkText'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -30,17 +29,8 @@ export default async function EventsPage() {
       <Nav />
 
       {/* Page header */}
-      <div className="relative overflow-hidden border-b border-gray-100 bg-white">
-        {/* Watermark */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 flex items-start justify-end pr-6 lg:pr-12 pt-12 select-none"
-        >
-          <WatermarkText text="EVENTS" />
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10 max-w-[1440px] mx-auto px-6 lg:px-12 py-12 sm:py-20">
+      <div className="border-b border-gray-100 bg-white">
+        <div className="max-w-[1440px] mx-auto px-6 lg:px-12 py-12 sm:py-20">
           <span className="text-xs font-semibold tracking-widest text-[#3B82F6] uppercase">
             Ghana&apos;s events
           </span>

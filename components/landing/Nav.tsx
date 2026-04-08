@@ -126,12 +126,12 @@ export default function Nav({ showOrganizerCta = false }: Props) {
         {/* Drawer header */}
         <div className="flex items-center justify-between px-6 h-16 border-b border-gray-100">
           <Image
-            src="/images/text-logo-web.png"
+            src="/images/logo.png"
             alt="Tikkitte"
-            width={120}
-            height={20}
+            width={54}
+            height={36}
             unoptimized
-            style={{ height: '22px', width: 'auto', display: 'block' }}
+            style={{ height: '32px', width: 'auto', display: 'block' }}
           />
           <button
             onClick={() => setMenuOpen(false)}
