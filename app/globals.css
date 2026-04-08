@@ -22,6 +22,15 @@
   --font-display: var(--font-poppins), system-ui, sans-serif;
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -65,4 +74,18 @@ h1, h2, h3, h4 {
 @keyframes shimmer-in {
   from { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
   to   { box-shadow: 0 0 0 4px rgba(59,130,246,0.08); }
+}
+
+/* ─── Watermark text — cursor-reactive ─────────────────── */
+
+.watermark-text {
+  display: block;
+  font-size: clamp(8rem, 18vw, 18rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke-width: 4px;
+  -webkit-text-stroke-color: rgba(59, 130, 246, 0.45);
+  pointer-events: none;
 }

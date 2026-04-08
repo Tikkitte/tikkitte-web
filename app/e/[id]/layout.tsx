@@ -22,12 +22,20 @@ export default function EventLayout({ children }: { children: React.ReactNode })
               <path d="m15 18-6-6 6-6" />
             </svg>
             <Image
+              src="/images/logo.png"
+              alt=""
+              width={42}
+              height={28}
+              unoptimized
+              style={{ width: 'auto', height: '28px', display: 'block' }}
+            />
+            <Image
               src="/images/text-logo-web.png"
               alt="Tikkitte"
-              width={144}
-              height={24}
+              width={120}
+              height={20}
               unoptimized
-              style={{ height: '24px', width: 'auto', display: 'block' }}
+              style={{ height: '20px', width: 'auto', display: 'block' }}
             />
           </Link>
 

@@ -25,7 +25,7 @@ const benefits = [
         <circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" />
       </svg>
     ),
-    text: 'Paid directly in cedis via Paystack — no delays.',
+    text: 'Live sales dashboard — see every ticket sold, in real time.',
   },
   {
     icon: (
@@ -50,7 +50,7 @@ export default function OrganizerPitch() {
                 For organizers
               </span>
               <h2 className="mt-3 text-4xl sm:text-5xl font-bold text-gray-900 leading-tight">
-                Running an event?
+                Hosting an event?
               </h2>
               <p className="mt-5 text-lg text-gray-500 leading-relaxed max-w-md">
                 List your event on Tikkitte and reach thousands of people actively looking for something to do.

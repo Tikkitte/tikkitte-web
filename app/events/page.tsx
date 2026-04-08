@@ -3,6 +3,7 @@ import type { Event } from '@/lib/types'
 import Nav from '@/components/landing/Nav'
 import EventGrid from '@/components/landing/EventGrid'
 import Footer from '@/components/landing/Footer'
+import WatermarkText from '@/components/landing/WatermarkText'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -33,14 +34,9 @@ export default async function EventsPage() {
         {/* Watermark */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 flex items-center justify-end pr-6 lg:pr-12 select-none"
+          className="pointer-events-none absolute inset-0 flex items-start justify-end pr-6 lg:pr-12 pt-12 select-none"
         >
-          <span
-            className="text-[12rem] lg:text-[18rem] font-bold leading-none tracking-tighter text-gray-900/[0.04]"
-            style={{ fontFamily: 'var(--font-poppins)' }}
-          >
-            EVENTS
-          </span>
+          <WatermarkText text="EVENTS" />
         </div>
 
         {/* Content */}

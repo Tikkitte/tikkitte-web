@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Nav from './Nav'
 import PhoneCarousel from './PhoneCarousel'
 import CursorGlow from './CursorGlow'
@@ -30,6 +31,18 @@ export default function Hero() {
       {/* Hero content */}
       <div className="relative z-10 max-w-[1440px] mx-auto px-6 lg:px-12 pt-24 pb-16 text-center">
         <Reveal>
+          {/* Icon mark */}
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/images/logo.png"
+              alt="Tikkitte"
+              width={96}
+              height={64}
+              unoptimized
+              style={{ width: 'auto', height: '64px' }}
+            />
+          </div>
+
           {/* Eyebrow */}
           <span className="inline-block text-xs font-semibold tracking-widest text-[#3B82F6] uppercase mb-6">
             Now available in Ghana

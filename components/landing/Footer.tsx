@@ -9,14 +9,22 @@ export default function Footer() {
 
           {/* Brand */}
           <div>
-            <Link href="/">
+            <Link href="/" className="inline-flex items-center gap-3 mb-3">
+              <Image
+                src="/images/logo.png"
+                alt=""
+                width={54}
+                height={36}
+                unoptimized
+                style={{ width: 'auto', height: '36px', display: 'block' }}
+              />
               <Image
                 src="/images/text-logo-web.png"
                 alt="Tikkitte"
-                width={168}
-                height={28}
+                width={120}
+                height={20}
                 unoptimized
-                style={{ height: '28px', width: 'auto', display: 'block', marginBottom: '12px' }}
+                style={{ height: '20px', width: 'auto', display: 'block' }}
               />
             </Link>
             <p className="text-sm text-gray-500 leading-relaxed">

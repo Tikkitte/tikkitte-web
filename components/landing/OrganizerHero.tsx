@@ -1,4 +1,5 @@
 import Nav from './Nav'
+import WatermarkText from './WatermarkText'
 
 export default function OrganizerHero() {
   return (
@@ -9,17 +10,12 @@ export default function OrganizerHero() {
         {/* Watermark */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 flex items-center justify-end pr-6 lg:pr-12 select-none"
+          className="pointer-events-none absolute inset-0 flex items-start justify-end pr-6 lg:pr-12 pt-12 select-none"
         >
-          <span
-            className="text-[12rem] lg:text-[18rem] font-bold leading-none tracking-tighter text-gray-900/[0.04]"
-            style={{ fontFamily: 'var(--font-poppins)' }}
-          >
-            SELL
-          </span>
+          <WatermarkText text="SELL" />
         </div>
 
-        <div className="relative z-10 max-w-[1440px] mx-auto px-6 lg:px-12 pt-20 pb-14">
+        <div className="relative z-10 max-w-[1440px] mx-auto px-6 lg:px-12 py-20">
           {/* Eyebrow */}
           <span className="inline-block text-xs font-semibold tracking-widest text-[#3B82F6] uppercase mb-6">
             For organizers
