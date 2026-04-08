@@ -38,7 +38,7 @@ function PhotoPlaceholder() {
 
 export default function AboutUs() {
   return (
-    <section className="bg-white py-24">
+    <section className="bg-white py-14 sm:py-24">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
 
         {/* Header row */}

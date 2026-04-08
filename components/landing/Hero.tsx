@@ -29,7 +29,7 @@ export default function Hero() {
       <Nav />
 
       {/* Hero content */}
-      <div className="relative z-10 max-w-[1440px] mx-auto px-6 lg:px-12 pt-24 pb-16 text-center">
+      <div className="relative z-10 max-w-[1440px] mx-auto px-6 lg:px-12 pt-14 sm:pt-20 lg:pt-24 pb-10 sm:pb-16 text-center">
         <Reveal>
           {/* Icon mark */}
           <div className="flex justify-center mb-6">
@@ -49,7 +49,7 @@ export default function Hero() {
           </span>
 
           {/* Headline */}
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 leading-[1.08] tracking-tight max-w-3xl mx-auto">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-gray-900 leading-[1.08] tracking-tight max-w-3xl mx-auto">
             Ghana&apos;s home<br />for live events.
           </h1>
 

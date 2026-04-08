@@ -91,7 +91,7 @@ export default async function PublicEventPage({ params }: Props) {
   const poster = event.image?.[0]
 
   return (
-    <div className="max-w-[1440px] mx-auto px-6 lg:px-12 py-10 lg:py-16">
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-10 lg:py-16">
 
       {/* Two-column layout on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-10 lg:gap-16 items-start">

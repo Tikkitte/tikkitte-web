@@ -80,7 +80,7 @@ h1, h2, h3, h4 {
 
 .watermark-text {
   display: block;
-  font-size: clamp(8rem, 18vw, 18rem);
+  font-size: clamp(5rem, 18vw, 18rem);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.04em;

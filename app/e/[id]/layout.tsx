@@ -17,7 +17,7 @@ export default function EventLayout({ children }: { children: React.ReactNode })
             <svg
               width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              className="group-hover:-translate-x-0.5 transition-transform duration-150"
+              className="group-hover:-translate-x-0.5 transition-transform duration-150 flex-shrink-0"
             >
               <path d="m15 18-6-6 6-6" />
             </svg>
@@ -27,7 +27,7 @@ export default function EventLayout({ children }: { children: React.ReactNode })
               width={42}
               height={28}
               unoptimized
-              style={{ width: 'auto', height: '28px', display: 'block' }}
+              style={{ width: 'auto', height: '24px', display: 'block', flexShrink: 0 }}
             />
             <Image
               src="/images/text-logo-web.png"
@@ -35,13 +35,13 @@ export default function EventLayout({ children }: { children: React.ReactNode })
               width={120}
               height={20}
               unoptimized
-              style={{ height: '20px', width: 'auto', display: 'block' }}
+              style={{ height: '18px', width: 'auto', display: 'block' }}
             />
           </Link>
 
           <Link
             href="/events"
-            className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
+            className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors whitespace-nowrap"
           >
             All events
           </Link>

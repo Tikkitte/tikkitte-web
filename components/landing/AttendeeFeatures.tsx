@@ -39,12 +39,12 @@ const features = [
 
 export default function AttendeeFeatures() {
   return (
-    <section className="bg-gray-50 py-24">
+    <section className="bg-gray-50 py-14 sm:py-24">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
 
         {/* Section header */}
         <Reveal>
-          <div className="max-w-2xl mb-16">
+          <div className="max-w-2xl mb-10 sm:mb-16">
             <span className="text-xs font-semibold tracking-widest text-[#3B82F6] uppercase">
               For event-goers
             </span>

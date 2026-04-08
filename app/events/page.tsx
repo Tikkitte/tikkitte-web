@@ -40,7 +40,7 @@ export default async function EventsPage() {
         </div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-[1440px] mx-auto px-6 lg:px-12 py-20">
+        <div className="relative z-10 max-w-[1440px] mx-auto px-6 lg:px-12 py-12 sm:py-20">
           <span className="text-xs font-semibold tracking-widest text-[#3B82F6] uppercase">
             Ghana&apos;s events
           </span>
