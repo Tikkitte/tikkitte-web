@@ -2,7 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import QrScanner from 'qr-scanner'
+
+// BarcodeDetector is built into Chrome on Android — declare locally so TS is happy
+declare class BarcodeDetector {
+  constructor(options: { formats: string[] })
+  detect(source: HTMLCanvasElement | HTMLVideoElement): Promise<Array<{ rawValue: string }>>
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -102,17 +107,23 @@ export default function Scanner() {
   const [cameraError, setCameraError] = useState('')
 
   const videoRef = useRef<HTMLVideoElement>(null)
-  const scannerRef = useRef<QrScanner | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const scanningRef = useRef(false)
+  const streamRef = useRef<MediaStream | null>(null)
   const resultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastRefRef = useRef<string | null>(null)
+  // Keep a stable ref to session so doScan can read it without stale closure
+  const sessionRef = useRef<SessionInfo | null>(null)
+  const isOnlineRef = useRef(true)
 
   const supabase = createClient()
 
   // Online/offline tracking
   useEffect(() => {
-    const onOnline = () => setIsOnline(true)
-    const onOffline = () => setIsOnline(false)
+    const onOnline = () => { setIsOnline(true); isOnlineRef.current = true }
+    const onOffline = () => { setIsOnline(false); isOnlineRef.current = false }
     setIsOnline(navigator.onLine)
+    isOnlineRef.current = navigator.onLine
     window.addEventListener('online', onOnline)
     window.addEventListener('offline', onOffline)
     return () => {
@@ -120,6 +131,11 @@ export default function Scanner() {
       window.removeEventListener('offline', onOffline)
     }
   }, [])
+
+  // Keep sessionRef in sync
+  useEffect(() => {
+    sessionRef.current = session
+  }, [session])
 
   // Flush offline queue when coming back online
   useEffect(() => {
@@ -151,7 +167,6 @@ export default function Scanner() {
     setPinLoading(true)
     setPinError('')
 
-    // Look up event by PIN, then fetch all tickets for offline cache
     const { data: events, error: eventErr } = await supabase
       .from('event')
       .select('id, name')
@@ -183,31 +198,63 @@ export default function Scanner() {
     setPinLoading(false)
   }
 
-  // ── Camera + QR scanning (qr-scanner — works on iOS Safari + Android) ───────
+  // ── Camera + BarcodeDetector scanning (Chrome on Android) ───────────────────
 
   const stopCamera = useCallback(() => {
-    scannerRef.current?.stop()
-    scannerRef.current?.destroy()
-    scannerRef.current = null
+    scanningRef.current = false
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
   }, [])
+
+  // These functions are defined outside useCallback intentionally — they reference
+  // each other and are only called from startCamera's closure after mount.
+  function scheduleScan() {
+    if (!scanningRef.current) return
+    setTimeout(doScan, 500)
+  }
+
+  async function doScan() {
+    if (!scanningRef.current) return
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    if (!video || !canvas || video.readyState < 2) { scheduleScan(); return }
+
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')
+    if (!ctx) { scheduleScan(); return }
+    ctx.drawImage(video, 0, 0)
+
+    try {
+      if (typeof BarcodeDetector === 'undefined') {
+        setCameraError('QR scanning requires Chrome on Android. This browser is not supported.')
+        return
+      }
+      const detector = new BarcodeDetector({ formats: ['qr_code'] })
+      const codes = await detector.detect(canvas)
+      if (codes.length > 0) {
+        await handleQRCode(codes[0].rawValue)
+        return
+      }
+    } catch {
+      // no QR in frame — non-fatal, keep polling
+    }
+    scheduleScan()
+  }
 
   const startCamera = useCallback(async () => {
     setCameraError('')
-    if (!videoRef.current) return
     try {
-      const scanner = new QrScanner(
-        videoRef.current,
-        (result: QrScanner.ScanResult) => { void handleQRCode(result.data) },
-        {
-          preferredCamera: 'environment',
-          highlightScanRegion: false,
-          highlightCodeOutline: false,
-          returnDetailedScanResult: true,
-          workerPath: '/qr-scanner-worker.min.js',
-        }
-      )
-      await scanner.start()
-      scannerRef.current = scanner
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+      })
+      streamRef.current = stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+      }
+      scanningRef.current = true
+      scheduleScan()
     } catch {
       setCameraError('Camera access denied. Please allow camera access and reload.')
     }
@@ -227,7 +274,8 @@ export default function Scanner() {
   // ── QR handling ─────────────────────────────────────────────────────────────
 
   async function handleQRCode(raw: string) {
-    if (!session) return
+    const currentSession = sessionRef.current
+    if (!currentSession) return
 
     let payload: { reference?: string; event_id?: string }
     try {
@@ -245,21 +293,22 @@ export default function Scanner() {
 
     // Debounce — ignore same ref within 3s
     if (lastRefRef.current === reference) {
+      scheduleScan()
       return
     }
     lastRefRef.current = reference
     setTimeout(() => { lastRefRef.current = null }, 3000)
 
-    if (!isOnline) {
-      handleOfflineScan(reference)
+    if (!isOnlineRef.current) {
+      handleOfflineScan(reference, currentSession)
       return
     }
 
     try {
       const { data } = await supabase.rpc('scan_ticket', {
         p_reference: reference,
-        p_event_id: session.eventId,
-        p_pin: session.pin,
+        p_event_id: currentSession.eventId,
+        p_pin: currentSession.pin,
       })
 
       const res = data as {
@@ -267,12 +316,11 @@ export default function Scanner() {
         error?: string
         ticket_type?: string
         quantity?: number
-        buyer_name?: string
         scanned_at?: string
       }
 
       if (res.ok) {
-        markCacheUsed(session.eventId, reference)
+        markCacheUsed(currentSession.eventId, reference)
         showResult({ status: 'success', ticketType: res.ticket_type!, quantity: res.quantity! })
       } else if (res.error === 'already_used') {
         showResult({ status: 'already_used', scannedAt: res.scanned_at ?? null })
@@ -284,14 +332,12 @@ export default function Scanner() {
         showResult({ status: 'error', message: res.error ?? 'Unknown error' })
       }
     } catch {
-      // Network failure mid-request — fall back to offline
-      handleOfflineScan(reference)
+      handleOfflineScan(reference, currentSession)
     }
   }
 
-  function handleOfflineScan(reference: string) {
-    if (!session) return
-    const cache = getCache(session.eventId)
+  function handleOfflineScan(reference: string, currentSession: SessionInfo) {
+    const cache = getCache(currentSession.eventId)
     const ticket = cache.get(reference)
 
     if (!ticket) {
@@ -303,8 +349,8 @@ export default function Scanner() {
       return
     }
 
-    markCacheUsed(session.eventId, reference)
-    enqueue({ reference, eventId: session.eventId, pin: session.pin, ts: Date.now() })
+    markCacheUsed(currentSession.eventId, reference)
+    enqueue({ reference, eventId: currentSession.eventId, pin: currentSession.pin, ts: Date.now() })
     showResult({ status: 'success', ticketType: ticket.ticket_type, quantity: ticket.quantity })
   }
 
@@ -313,6 +359,7 @@ export default function Scanner() {
     if (resultTimerRef.current) clearTimeout(resultTimerRef.current)
     resultTimerRef.current = setTimeout(() => {
       setResult(null)
+      scheduleScan()
     }, 2500)
   }
 
@@ -418,6 +465,9 @@ export default function Scanner() {
           muted
           className="absolute inset-0 w-full h-full object-cover"
         />
+
+        {/* Hidden canvas used for BarcodeDetector */}
+        <canvas ref={canvasRef} className="hidden" />
 
         {cameraError ? (
           <div className="relative z-10 text-center px-8">
