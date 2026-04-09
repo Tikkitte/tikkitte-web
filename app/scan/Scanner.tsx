@@ -11,7 +11,6 @@ type CachedTicket = {
   used: boolean
   ticket_type: string
   quantity: number
-  buyer_name: string
 }
 
 type SessionInfo = {
@@ -21,7 +20,7 @@ type SessionInfo = {
 }
 
 type ScanResult =
-  | { status: 'success'; ticketType: string; quantity: number; buyerName: string }
+  | { status: 'success'; ticketType: string; quantity: number }
   | { status: 'already_used'; scannedAt: string | null }
   | { status: 'ticket_not_found' }
   | { status: 'event_not_found' }
@@ -271,7 +270,7 @@ export default function Scanner() {
 
       if (res.ok) {
         markCacheUsed(session.eventId, reference)
-        showResult({ status: 'success', ticketType: res.ticket_type!, quantity: res.quantity!, buyerName: res.buyer_name! })
+        showResult({ status: 'success', ticketType: res.ticket_type!, quantity: res.quantity! })
       } else if (res.error === 'already_used') {
         showResult({ status: 'already_used', scannedAt: res.scanned_at ?? null })
       } else if (res.error === 'ticket_not_found') {
@@ -303,7 +302,7 @@ export default function Scanner() {
 
     markCacheUsed(session.eventId, reference)
     enqueue({ reference, eventId: session.eventId, pin: session.pin, ts: Date.now() })
-    showResult({ status: 'success', ticketType: ticket.ticket_type, quantity: ticket.quantity, buyerName: ticket.buyer_name })
+    showResult({ status: 'success', ticketType: ticket.ticket_type, quantity: ticket.quantity })
   }
 
   function showResult(r: ScanResult) {
@@ -457,9 +456,6 @@ export default function Scanner() {
               </div>
               <p className="text-3xl font-bold mb-1" style={{ color: '#ECEDEE' }}>Valid</p>
               <p className="text-lg font-medium mb-1" style={{ color: 'rgba(236,237,238,0.8)' }}>{result.ticketType}</p>
-              {result.buyerName && (
-                <p className="text-base mb-1" style={{ color: 'rgba(236,237,238,0.65)' }}>{result.buyerName}</p>
-              )}
               <p className="text-sm" style={{ color: 'rgba(236,237,238,0.5)' }}>
                 {result.quantity > 1 ? `×${result.quantity} tickets` : '×1 ticket'}
               </p>
