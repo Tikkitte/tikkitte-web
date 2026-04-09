@@ -197,7 +197,7 @@ export default function Scanner() {
     try {
       const scanner = new QrScanner(
         videoRef.current,
-        result => handleQRCode(result.data),
+        result => { void handleQRCode(result.data) },
         {
           preferredCamera: 'environment',
           highlightScanRegion: false,
