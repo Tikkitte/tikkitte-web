@@ -202,6 +202,7 @@ export default function Scanner() {
           preferredCamera: 'environment',
           highlightScanRegion: false,
           highlightCodeOutline: false,
+          workerPath: '/qr-scanner-worker.min.js',
         }
       )
       await scanner.start()
