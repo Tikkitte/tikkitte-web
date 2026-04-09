@@ -22,6 +22,7 @@ export type Event = {
   organizer_id: string | null
   preview_images: string[] | null
   preview_videos: string[] | null
+  scanner_pin: string | null
 }
 
 export type Ticket = {
@@ -42,6 +43,9 @@ export type UserTicket = {
   ticket_type_id: string
   quantity: number
   payment_reference: string
+  used: boolean
+  scanned_at: string | null
+  scanned_by: string | null
 }
 
 export type EventWithTickets = Event & {

@@ -45,6 +45,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
   const [previewVideos, setPreviewVideos] = useState<string[]>(event?.preview_videos ?? [])
   const [previewUploading, setPreviewUploading] = useState(false)
   const previewFileRef = useRef<HTMLInputElement>(null)
+  const [scannerPin, setScannerPin] = useState(event?.scanner_pin ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -187,6 +188,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           image: imageUrl ? [imageUrl] : event.image,
           preview_images: previewImages.length > 0 ? previewImages : null,
           preview_videos: previewVideos.filter(v => v.trim()).length > 0 ? previewVideos.filter(v => v.trim()) : null,
+          scanner_pin: scannerPin.trim() || null,
         })
         .eq('id', event.id)
 
@@ -239,6 +241,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           image: imageUrl ? [imageUrl] : null,
           preview_images: previewImages.length > 0 ? previewImages : null,
           preview_videos: previewVideos.filter(v => v.trim()).length > 0 ? previewVideos.filter(v => v.trim()) : null,
+          scanner_pin: scannerPin.trim() || null,
           organizer_id: organizerId,
           cancelled: false,
         })
@@ -459,6 +462,45 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
         >
           + Add YouTube link
         </button>
+      </div>
+
+      {/* Scanner PIN */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6 flex flex-col gap-3">
+        <div>
+          <h2 className="font-semibold text-gray-900 dark:text-white">Scanner PIN</h2>
+          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
+            Give this PIN to your bouncers. They go to{' '}
+            <span className="font-medium text-gray-600 dark:text-slate-400">tikkitte.com/scan</span>{' '}
+            to scan tickets at the door.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <input
+            type="tel"
+            inputMode="numeric"
+            maxLength={4}
+            readOnly
+            value={scannerPin}
+            placeholder="—"
+            className="w-24 text-center font-mono text-xl tracking-[0.3em] border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg px-3 py-2.5 outline-none placeholder:tracking-normal placeholder:text-base"
+          />
+          <button
+            type="button"
+            onClick={() => setScannerPin(String(Math.floor(1000 + Math.random() * 9000)))}
+            className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 dark:hover:bg-[#1d67ba]/10 transition-colors"
+          >
+            {scannerPin ? 'Regenerate' : 'Generate PIN'}
+          </button>
+          {scannerPin && (
+            <button
+              type="button"
+              onClick={() => setScannerPin('')}
+              className="text-sm text-gray-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+            >
+              Remove
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Ticket types */}

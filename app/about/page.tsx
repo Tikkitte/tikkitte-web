@@ -14,7 +14,7 @@ export default function AboutPage() {
       <Nav />
 
       {/* Page header */}
-      <div className="border-b border-gray-100 bg-white">
+      <div className="bg-white">
         <div className="max-w-[1440px] mx-auto px-6 lg:px-12 py-12 sm:py-20">
           <span className="text-xs font-semibold tracking-widest text-[#3B82F6] uppercase">
             Our story

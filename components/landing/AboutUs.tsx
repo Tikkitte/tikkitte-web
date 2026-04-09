@@ -16,7 +16,6 @@ const founders = [
 function PhotoPlaceholder() {
   return (
     <div className="w-full h-full bg-gradient-to-b from-gray-100 to-gray-200 flex items-end justify-center">
-      {/* Person silhouette */}
       <svg
         viewBox="0 0 200 260"
         fill="none"
@@ -24,13 +23,8 @@ function PhotoPlaceholder() {
         className="w-full translate-y-[2px]"
         aria-hidden
       >
-        {/* Head */}
         <ellipse cx="100" cy="72" rx="36" ry="40" fill="#D1D5DB" />
-        {/* Body / shoulders */}
-        <path
-          d="M0 260 C0 180 40 155 100 155 C160 155 200 180 200 260 Z"
-          fill="#D1D5DB"
-        />
+        <path d="M0 260 C0 180 40 155 100 155 C160 155 200 180 200 260 Z" fill="#D1D5DB" />
       </svg>
     </div>
   )
@@ -38,59 +32,58 @@ function PhotoPlaceholder() {
 
 export default function AboutUs() {
   return (
-    <section className="bg-white py-14 sm:py-24">
+    <section className="bg-white py-16 sm:py-28">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
 
-        {/* Header row */}
-        <Reveal>
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-16 pb-10 border-b border-gray-100">
-            <div>
-              <span className="text-xs font-semibold tracking-widest text-[#3B82F6] uppercase">
-                The founders
-              </span>
-              <h2 className="mt-3 text-4xl sm:text-5xl font-bold text-gray-900 leading-tight">
-                Meet the team.
-              </h2>
-              <p className="mt-4 text-lg text-gray-500 max-w-md leading-relaxed">
-                Tikkitte was born out of frustration with how hard it is to discover and buy tickets in Ghana. We&apos;re fixing that.
-              </p>
-            </div>
-          </div>
-        </Reveal>
+        {/* Quote + founders side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
 
-        {/* Portrait row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-10">
+          {/* Story pull-quote */}
+          <Reveal>
+            <p className="text-2xl sm:text-3xl font-light text-gray-700 leading-relaxed italic border-l-2 border-[#3B82F6] pl-6">
+              &ldquo;Ghana&apos;s event scene is thriving — but getting tickets has always been an afterthought.
+              We started Tikkitte to give organisers a real platform and give fans a way to show up without the hassle.&rdquo;
+            </p>
+          </Reveal>
+
+          {/* Portrait grid */}
+          <div className="grid grid-cols-2 gap-6">
           {founders.map((founder, i) => (
-            <Reveal key={founder.name} delay={i * 120}>
+            <Reveal key={founder.name} delay={i * 150}>
               <div className="group">
 
-                {/* Photo */}
-                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 mb-6">
+                {/* Photo — slides up + fades on scroll, image scales on hover */}
+                <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 mb-5 shadow-sm group-hover:shadow-md transition-shadow duration-500">
                   {founder.photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={founder.photo}
                       alt={founder.name}
-                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500 ease-out"
+                      className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700 ease-out"
                     />
                   ) : (
                     <PhotoPlaceholder />
                   )}
+
+                  {/* Blue tint on hover */}
+                  <div className="absolute inset-0 bg-[#3B82F6] opacity-0 group-hover:opacity-5 transition-opacity duration-500" />
                 </div>
 
                 {/* Name */}
-                <p className="text-lg font-bold tracking-wide text-gray-900 uppercase">
+                <p className="text-xl font-bold text-gray-900 group-hover:text-[#3B82F6] transition-colors duration-300">
                   {founder.name}
                 </p>
 
                 {/* Role */}
-                <p className="mt-1 text-xs font-semibold tracking-[0.18em] text-gray-400 uppercase">
+                <p className="mt-1 text-sm font-medium text-gray-400">
                   {founder.role}
                 </p>
 
               </div>
             </Reveal>
           ))}
+          </div>
+
         </div>
 
       </div>

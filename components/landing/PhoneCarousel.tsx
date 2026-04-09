@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 
 const slides = [
@@ -26,16 +26,13 @@ const slides = [
   },
 ]
 
-export default function PhoneCarousel() {
+export default function PhoneCarousel({ minimal = false }: { minimal?: boolean }) {
   const [active, setActive] = useState(0)
 
-  const next = useCallback(() => setActive(i => (i + 1) % slides.length), [])
-  const prev = useCallback(() => setActive(i => (i - 1 + slides.length) % slides.length), [])
-
   useEffect(() => {
-    const t = setInterval(next, 3500)
+    const t = setInterval(() => setActive(i => (i + 1) % slides.length), 3500)
     return () => clearInterval(t)
-  }, [next])
+  }, [])
 
   return (
     <div className="flex flex-col items-center gap-8">
@@ -72,45 +69,49 @@ export default function PhoneCarousel() {
         <div className="absolute right-[-11px] top-[162px] w-[4px] h-16 bg-gray-700 rounded-r-sm" />
       </div>
 
-      {/* Caption */}
-      <div className="text-center h-12">
-        <p className="text-sm font-semibold text-gray-900 mb-1">{slides[active].label}</p>
-        <p className="text-sm text-gray-500 max-w-xs mx-auto">{slides[active].caption}</p>
-      </div>
+      {!minimal && (
+        <>
+          {/* Caption */}
+          <div className="text-center h-12">
+            <p className="text-sm font-semibold text-gray-900 mb-1">{slides[active].label}</p>
+            <p className="text-sm text-gray-500 max-w-xs mx-auto">{slides[active].caption}</p>
+          </div>
 
-      {/* Controls */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={prev}
-          aria-label="Previous"
-          className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-        >
-          ‹
-        </button>
-
-        <div className="flex gap-1.5">
-          {slides.map((_, i) => (
+          {/* Controls */}
+          <div className="flex items-center gap-4">
             <button
-              key={i}
-              onClick={() => setActive(i)}
-              aria-label={`Go to slide ${i + 1}`}
-              className={`rounded-full transition-all duration-300 ${
-                i === active
-                  ? 'w-5 h-2 bg-[#3B82F6]'
-                  : 'w-2 h-2 bg-gray-200 hover:bg-gray-300'
-              }`}
-            />
-          ))}
-        </div>
+              onClick={() => setActive(i => (i - 1 + slides.length) % slides.length)}
+              aria-label="Previous"
+              className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              ‹
+            </button>
 
-        <button
-          onClick={next}
-          aria-label="Next"
-          className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-gray-900 transition-colors"
-        >
-          ›
-        </button>
-      </div>
+            <div className="flex gap-1.5">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActive(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === active
+                      ? 'w-5 h-2 bg-[#3B82F6]'
+                      : 'w-2 h-2 bg-gray-200 hover:bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={() => setActive(i => (i + 1) % slides.length)}
+              aria-label="Next"
+              className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+            >
+              ›
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

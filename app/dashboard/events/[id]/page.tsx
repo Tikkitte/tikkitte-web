@@ -5,6 +5,7 @@ import type { Ticket, UserTicket, Payment } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/TicketChart'
 import CancelButton from './CancelButton'
 import EventDetailTabs from './EventDetailTabs'
+import CheckinStats from '@/components/dashboard/CheckinStats'
 
 function formatDate(dateStr: string) {
   const [y, m, d] = dateStr.split('-').map(Number)
@@ -83,6 +84,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const totalSold = (tickets ?? []).reduce(
     (s: number, t: Ticket) => s + t.purchased_quantity, 0
   )
+  const totalCheckedIn = (userTickets ?? []).filter((ut: UserTicket) => ut.used).length
   const totalCapacity = (tickets ?? []).some((t: Ticket) => t.total_quantity === null)
     ? null
     : (tickets ?? []).reduce((s: number, t: Ticket) => s + (t.total_quantity ?? 0), 0)
@@ -219,6 +221,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               <p className="text-xl font-extrabold text-gray-900 dark:text-white">{allPayments.length}</p>
             </div>
           </div>
+
+          {/* Check-in stats (live via Realtime) */}
+          <CheckinStats
+            eventId={id}
+            totalSold={totalSold}
+            initialCheckedIn={totalCheckedIn}
+            scannerPin={event.scanner_pin ?? null}
+          />
 
           {/* Charts */}
           {(tickets ?? []).length > 0 && (

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 type Props = {
-  showOrganizerCta?: boolean
+  showOrganizerCta?: boolean // kept for compatibility but no longer used
 }
 
 const links = [
@@ -40,9 +40,9 @@ export default function Nav({ showOrganizerCta = false }: Props) {
             : 'border-gray-100 shadow-none'
         }`}
       >
-        <nav className="max-w-[1440px] mx-auto px-6 lg:px-12 h-16 grid grid-cols-[1fr_auto_1fr] items-center md:grid-cols-[1fr_auto_1fr]">
+        <nav className="max-w-[1440px] mx-auto px-6 lg:px-12 h-16 flex items-center justify-between gap-8">
 
-          {/* Logo */}
+          {/* Logo — col 1 */}
           <div className="flex-shrink-0 select-none">
             <Image
               src="/images/text-logo-web.png"
@@ -75,29 +75,9 @@ export default function Nav({ showOrganizerCta = false }: Props) {
             ))}
           </div>
 
-          {/* Desktop right actions */}
-          <div className="hidden md:flex items-center gap-3 justify-end">
-            {showOrganizerCta && (
-              <>
-                <Link
-                  href="/login"
-                  className="relative text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors duration-150"
-                >
-                  Organizer sign in
-                </Link>
-                <Link
-                  href="/signup"
-                  className="text-sm font-semibold bg-[#3B82F6] text-white px-4 py-2 rounded-lg hover:bg-[#2563EB] transition-colors duration-150"
-                >
-                  List your event
-                </Link>
-              </>
-            )}
-          </div>
-
           {/* Mobile hamburger */}
           <button
-            className="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-[5px] rounded-lg hover:bg-gray-50 transition-colors ml-auto"
+            className="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-[5px] rounded-lg hover:bg-gray-50 transition-colors"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Toggle menu"
           >
