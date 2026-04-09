@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { BrowserQRCodeReader, IScannerControls } from '@zxing/browser'
+import QrScanner from 'qr-scanner'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -102,7 +102,7 @@ export default function Scanner() {
   const [cameraError, setCameraError] = useState('')
 
   const videoRef = useRef<HTMLVideoElement>(null)
-  const controlsRef = useRef<IScannerControls | null>(null)
+  const scannerRef = useRef<QrScanner | null>(null)
   const resultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastRefRef = useRef<string | null>(null)
 
@@ -183,28 +183,29 @@ export default function Scanner() {
     setPinLoading(false)
   }
 
-  // ── Camera + QR scanning (zxing — works on iOS Safari too) ─────────────────
+  // ── Camera + QR scanning (qr-scanner — works on iOS Safari + Android) ───────
 
   const stopCamera = useCallback(() => {
-    controlsRef.current?.stop()
-    controlsRef.current = null
+    scannerRef.current?.stop()
+    scannerRef.current?.destroy()
+    scannerRef.current = null
   }, [])
 
   const startCamera = useCallback(async () => {
     setCameraError('')
     if (!videoRef.current) return
     try {
-      const reader = new BrowserQRCodeReader()
-      const controls = await reader.decodeFromConstraints(
-        { video: { facingMode: 'environment' } },
+      const scanner = new QrScanner(
         videoRef.current,
-        (result, error) => {
-          if (result) handleQRCode(result.getText())
-          // errors are non-fatal (no QR in frame) — zxing fires them continuously
-          void error
+        result => handleQRCode(result.data),
+        {
+          preferredCamera: 'environment',
+          highlightScanRegion: false,
+          highlightCodeOutline: false,
         }
       )
-      controlsRef.current = controls
+      await scanner.start()
+      scannerRef.current = scanner
     } catch {
       setCameraError('Camera access denied. Please allow camera access and reload.')
     }
