@@ -19,7 +19,7 @@ type SessionInfo = {
   eventName: string
 }
 
-type ScanResult =
+type TicketScanResult =
   | { status: 'success'; ticketType: string; quantity: number }
   | { status: 'already_used'; scannedAt: string | null }
   | { status: 'ticket_not_found' }
@@ -97,7 +97,7 @@ export default function Scanner() {
   const [pinInput, setPinInput] = useState('')
   const [pinLoading, setPinLoading] = useState(false)
   const [pinError, setPinError] = useState('')
-  const [result, setResult] = useState<ScanResult | null>(null)
+  const [result, setResult] = useState<TicketScanResult | null>(null)
   const [isOnline, setIsOnline] = useState(true)
   const [cameraError, setCameraError] = useState('')
 
@@ -307,7 +307,7 @@ export default function Scanner() {
     showResult({ status: 'success', ticketType: ticket.ticket_type, quantity: ticket.quantity })
   }
 
-  function showResult(r: ScanResult) {
+  function showResult(r: TicketScanResult) {
     setResult(r)
     if (resultTimerRef.current) clearTimeout(resultTimerRef.current)
     resultTimerRef.current = setTimeout(() => {
