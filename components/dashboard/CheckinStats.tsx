@@ -95,7 +95,7 @@ export default function CheckinStats({ eventId, totalSold, initialCheckedIn, sca
       ) : (
         <p className="text-xs text-gray-400 dark:text-slate-500">
           No scanner PIN set.{' '}
-          <a href="edit" className="text-[#1d67ba] hover:underline">Edit event</a> to generate one.
+          <a href={`/dashboard/events/${eventId}/edit`} className="text-[#1d67ba] hover:underline">Edit event</a> to generate one.
         </p>
       )}
     </div>
