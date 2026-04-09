@@ -118,6 +118,21 @@ export default function Scanner() {
 
   const supabase = createClient()
 
+  // Lock body scroll while scanning so the camera view never scrolls
+  useEffect(() => {
+    if (phase === 'scanning') {
+      document.documentElement.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.documentElement.style.overflow = ''
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.documentElement.style.overflow = ''
+      document.body.style.overflow = ''
+    }
+  }, [phase])
+
   // Online/offline tracking
   useEffect(() => {
     const onOnline = () => { setIsOnline(true); isOnlineRef.current = true }
@@ -428,7 +443,7 @@ export default function Scanner() {
   // ── Scanning phase ────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ backgroundColor: '#151718' }}>
+    <div className="h-screen flex flex-col relative overflow-hidden" style={{ backgroundColor: '#151718' }}>
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-4 pb-3 z-20">
