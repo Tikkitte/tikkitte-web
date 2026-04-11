@@ -93,79 +93,79 @@ export default async function TransactionsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Transactions</h1>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">All payments across your events</p>
+        <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
+        <p className="text-sm text-gray-500 mt-1">All payments across your events</p>
       </div>
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm dark:shadow-slate-950/20 p-5">
-          <p className="text-sm text-gray-500 dark:text-slate-400 mb-1">Total revenue</p>
-          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">GHS {totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <p className="text-sm text-gray-500 mb-1">Total revenue</p>
+          <p className="text-2xl font-extrabold text-gray-900">GHS {totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm dark:shadow-slate-950/20 p-5">
-          <p className="text-sm text-gray-500 dark:text-slate-400 mb-1">Total transactions</p>
-          <p className="text-2xl font-extrabold text-gray-900 dark:text-white">{totalTransactions}</p>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <p className="text-sm text-gray-500 mb-1">Total transactions</p>
+          <p className="text-2xl font-extrabold text-gray-900">{totalTransactions}</p>
         </div>
       </div>
 
       {/* Revenue chart */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm dark:shadow-slate-950/20 p-6 mb-6">
-        <h2 className="font-semibold text-gray-900 dark:text-white mb-4">Revenue · Last 30 days</h2>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <h2 className="font-semibold text-gray-900 mb-4">Revenue · Last 30 days</h2>
         <RevenueAreaChart data={chartData} />
       </div>
 
       {/* Transactions table */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm dark:shadow-slate-950/20 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 dark:border-slate-800">
-          <h2 className="font-semibold text-gray-900 dark:text-white">All transactions ({totalTransactions})</h2>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-900">All transactions ({totalTransactions})</h2>
         </div>
 
         {allPayments.length === 0 ? (
           <div className="p-6">
-            <p className="text-sm text-gray-400 dark:text-slate-500 text-center py-8">No transactions yet. Revenue will appear here once tickets are sold.</p>
+            <p className="text-sm text-gray-400 text-center py-8">No transactions yet. Revenue will appear here once tickets are sold.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/30">
-                  <th className="text-left py-3 pl-6 pr-4 font-medium text-gray-500 dark:text-slate-400">Amount</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-slate-400">Event</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-slate-400">Reference</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500 dark:text-slate-400">Status</th>
-                  <th className="text-right py-3 pr-6 pl-4 font-medium text-gray-500 dark:text-slate-400">Paid on</th>
+                <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <th className="text-left py-3 pl-6 pr-4 font-medium text-gray-500">Amount</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500">Event</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500">Reference</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
+                  <th className="text-right py-3 pr-6 pl-4 font-medium text-gray-500">Paid on</th>
                 </tr>
               </thead>
               <tbody>
                 {allPayments.map((p: Payment) => (
-                  <tr key={p.reference} className="border-b border-gray-50 dark:border-slate-800/50 last:border-0 hover:bg-gray-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                  <tr key={p.reference} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
                     <td className="py-3.5 pl-6 pr-4">
                       <div className="flex items-center gap-2.5">
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
                           p.status === 'success' ? 'bg-green-500' : p.status === 'free' ? 'bg-blue-400' : 'bg-gray-400'
                         }`} />
-                        <span className="font-semibold text-gray-900 dark:text-white">
+                        <span className="font-semibold text-gray-900">
                           {p.status === 'free' ? 'Free' : `GHS ${(p.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-gray-600 dark:text-slate-300 max-w-[200px] truncate">
+                    <td className="py-3.5 px-4 text-gray-600 max-w-[200px] truncate">
                       {eventMap[p.event_id] ?? '—'}
                     </td>
-                    <td className="py-3.5 px-4 text-gray-500 dark:text-slate-400 font-mono text-xs">{p.reference}</td>
+                    <td className="py-3.5 px-4 text-gray-500 font-mono text-xs">{p.reference}</td>
                     <td className="py-3.5 px-4">
                       <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
                         p.status === 'success'
-                          ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400'
+                          ? 'bg-green-50 text-green-700'
                           : p.status === 'free'
-                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-400'
-                            : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400'
+                            ? 'bg-blue-50 text-blue-700'
+                            : 'bg-gray-100 text-gray-600'
                       }`}>
                         {p.status === 'success' ? 'Success' : p.status === 'free' ? 'Free' : p.status}
                       </span>
                     </td>
-                    <td className="py-3.5 pr-6 pl-4 text-right text-gray-500 dark:text-slate-400 text-xs whitespace-nowrap">
+                    <td className="py-3.5 pr-6 pl-4 text-right text-gray-500 text-xs whitespace-nowrap">
                       {p.paid_at ? formatDateTime(p.paid_at) : '—'}
                     </td>
                   </tr>

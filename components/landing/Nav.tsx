@@ -43,15 +43,24 @@ export default function Nav({ showOrganizerCta = false }: Props) {
         <nav className="max-w-[1440px] mx-auto px-6 lg:px-12 h-16 flex items-center justify-between gap-8">
 
           {/* Logo — col 1 */}
-          <div className="flex-shrink-0 select-none">
+          <div className="flex-shrink-0 select-none flex items-center gap-2">
+            <Image
+              src="/images/logo.png"
+              alt=""
+              width={42}
+              height={28}
+              priority
+              unoptimized
+              style={{ width: 'auto', height: '24px', display: 'block', flexShrink: 0 }}
+            />
             <Image
               src="/images/text-logo-web.png"
               alt="Tikkitte"
-              width={192}
-              height={32}
+              width={120}
+              height={20}
               priority
               unoptimized
-              style={{ height: '28px', width: 'auto', display: 'block' }}
+              style={{ height: '18px', width: 'auto', display: 'block' }}
             />
           </div>
 

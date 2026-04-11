@@ -308,30 +308,30 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
 
   const slugPreview = resolvedSlug ? 'tikkitte.com/e/' + resolvedSlug : ''
 
-  const inputClass = 'w-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] placeholder:text-gray-400 dark:placeholder:text-slate-500'
+  const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] placeholder:text-gray-400'
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto w-full flex flex-col gap-6">
       {/* Basic info */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6 flex flex-col gap-4">
-        <h2 className="font-semibold text-gray-900 dark:text-white">Event details</h2>
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
+        <h2 className="font-semibold text-gray-900">Event details</h2>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Event name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Event name</label>
           <input required value={name} onChange={e => setName(e.target.value)} className={inputClass} placeholder="e.g. Saturday Night Lights" />
           {baseSlug && (
             <p className="text-xs mt-1 flex items-center gap-1.5">
               {slugStatus === 'checking' ? (
-                <span className="text-gray-400 dark:text-slate-500">Checking tikkitte.com/e/{baseSlug}...</span>
+                <span className="text-gray-400">Checking tikkitte.com/e/{baseSlug}...</span>
               ) : slugStatus === 'available' ? (
                 <>
-                  <span className="text-green-600 dark:text-green-400">&#10003;</span>
-                  <span className="text-gray-400 dark:text-slate-500">{slugPreview}</span>
+                  <span className="text-green-600">&#10003;</span>
+                  <span className="text-gray-400">{slugPreview}</span>
                 </>
               ) : slugStatus === 'taken' ? (
                 <>
                   <span className="text-amber-500">&#8226;</span>
-                  <span className="text-gray-400 dark:text-slate-500">{slugPreview}</span>
-                  <span className="text-amber-500 dark:text-amber-400">(name already taken)</span>
+                  <span className="text-gray-400">{slugPreview}</span>
+                  <span className="text-amber-500">(name already taken)</span>
                 </>
               ) : null}
             </p>
@@ -339,25 +339,25 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
             <input type="date" required value={date} onChange={e => setDate(e.target.value)} className={inputClass} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Time</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
             <input type="time" required value={time} onChange={e => setTime(e.target.value)} className={inputClass} />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Venue</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Venue</label>
           <input value={venue} onChange={e => setVenue(e.target.value)} className={inputClass} placeholder="e.g. Club Aria, Accra" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Google Maps Link <span className="font-normal text-gray-400 dark:text-slate-500">(optional)</span></label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Google Maps Link <span className="font-normal text-gray-400">(optional)</span></label>
           <input value={mapsLink} onChange={e => setMapsLink(e.target.value)} className={inputClass} placeholder="https://maps.google.com/..." />
-          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Without a link, attendees will see the venue name but won&apos;t get exact directions.</p>
+          <p className="text-xs text-gray-400 mt-1">Without a link, attendees will see the venue name but won&apos;t get exact directions.</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Description</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
           <textarea
             value={description}
             onChange={e => setDescription(e.target.value)}
@@ -368,8 +368,8 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
       </div>
 
       {/* Image upload */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6 flex flex-col gap-3">
-        <h2 className="font-semibold text-gray-900 dark:text-white">Event image</h2>
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-3">
+        <h2 className="font-semibold text-gray-900">Event image</h2>
         {imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imageUrl} alt="Event" className="w-full h-48 object-cover rounded-xl" />
@@ -379,17 +379,20 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={imageUploading}
-          className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 dark:hover:bg-[#1d67ba]/10 transition-colors disabled:opacity-50 self-start"
+          className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors disabled:opacity-50 self-start"
         >
           {imageUploading ? 'Uploading…' : imageUrl ? 'Change image' : 'Upload image'}
         </button>
+        <p className="text-xs text-gray-400">
+          Best size: <strong className="font-medium text-gray-500">1080 × 1080 px</strong> (square) or <strong className="font-medium text-gray-500">1080 × 1350 px</strong> (portrait). Landscape works too. Max 5 MB.
+        </p>
       </div>
 
       {/* Preview media */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6 flex flex-col gap-4">
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
         <div>
-          <h2 className="font-semibold text-gray-900 dark:text-white">Preview media</h2>
-          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Show attendees what to expect — photos from past events and YouTube links.</p>
+          <h2 className="font-semibold text-gray-900">Preview media</h2>
+          <p className="text-xs text-gray-400 mt-1">Show attendees what to expect — photos from past events and YouTube links.</p>
         </div>
 
         {/* Preview image thumbnails */}
@@ -425,7 +428,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
             type="button"
             onClick={() => previewFileRef.current?.click()}
             disabled={previewUploading}
-            className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 dark:hover:bg-[#1d67ba]/10 transition-colors disabled:opacity-50 self-start"
+            className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors disabled:opacity-50 self-start"
           >
             {previewUploading ? 'Uploading…' : '+ Add photos'}
           </button>
@@ -446,7 +449,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
                 <button
                   type="button"
                   onClick={() => removeVideoUrl(i)}
-                  className="text-gray-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors text-lg leading-none px-1"
+                  className="text-gray-400 hover:text-red-500 transition-colors text-lg leading-none px-1"
                 >
                   ×
                 </button>
@@ -465,12 +468,12 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
       </div>
 
       {/* Scanner PIN */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6 flex flex-col gap-3">
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-3">
         <div>
-          <h2 className="font-semibold text-gray-900 dark:text-white">Scanner PIN</h2>
-          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
+          <h2 className="font-semibold text-gray-900">Scanner PIN</h2>
+          <p className="text-xs text-gray-400 mt-1">
             Give this PIN to your bouncers. They go to{' '}
-            <span className="font-medium text-gray-600 dark:text-slate-400">tikkitte.com/scan</span>{' '}
+            <span className="font-medium text-gray-600">tikkitte.com/scan</span>{' '}
             to scan tickets at the door.
           </p>
         </div>
@@ -482,12 +485,12 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
             readOnly
             value={scannerPin}
             placeholder="—"
-            className="w-24 text-center font-mono text-xl tracking-[0.3em] border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg px-3 py-2.5 outline-none placeholder:tracking-normal placeholder:text-base"
+            className="w-24 text-center font-mono text-xl tracking-[0.3em] border border-gray-200 bg-gray-50 text-gray-900 rounded-lg px-3 py-2.5 outline-none placeholder:tracking-normal placeholder:text-base"
           />
           <button
             type="button"
             onClick={() => setScannerPin(String(Math.floor(1000 + Math.random() * 9000)))}
-            className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 dark:hover:bg-[#1d67ba]/10 transition-colors"
+            className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors"
           >
             {scannerPin ? 'Regenerate' : 'Generate PIN'}
           </button>
@@ -495,7 +498,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
             <button
               type="button"
               onClick={() => setScannerPin('')}
-              className="text-sm text-gray-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+              className="text-sm text-gray-400 hover:text-red-500 transition-colors"
             >
               Remove
             </button>
@@ -504,8 +507,8 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
       </div>
 
       {/* Ticket types */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-6 flex flex-col gap-4">
-        <h2 className="font-semibold text-gray-900 dark:text-white">Ticket types</h2>
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
+        <h2 className="font-semibold text-gray-900">Ticket types</h2>
         {ticketRows.map((row, i) => (
           <div key={i} className="flex gap-3 items-start">
             <div className="flex-1">
@@ -543,14 +546,14 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
               <button
                 type="button"
                 onClick={() => removeTicketRow(i)}
-                className="text-gray-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 transition-colors pt-2.5 text-lg leading-none"
+                className="text-gray-400 hover:text-red-500 transition-colors pt-2.5 text-lg leading-none"
               >
                 ×
               </button>
             )}
           </div>
         ))}
-        <div className="flex gap-2 text-xs text-gray-400 dark:text-slate-500 -mt-2 px-1">
+        <div className="flex gap-2 text-xs text-gray-400 -mt-2 px-1">
           <span className="flex-1">Label</span>
           <span className="w-28">Price (GHS)</span>
           <span className="w-28">Capacity (blank = ∞)</span>
@@ -577,7 +580,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
         <button
           type="button"
           onClick={() => router.back()}
-          className="text-gray-500 dark:text-slate-400 font-medium px-6 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+          className="text-gray-500 font-medium px-6 py-3 rounded-xl hover:bg-gray-100 transition-colors"
         >
           Cancel
         </button>

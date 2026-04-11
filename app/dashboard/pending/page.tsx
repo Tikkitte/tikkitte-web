@@ -18,7 +18,7 @@ export default async function PendingPage() {
   if (profile?.approved) redirect('/dashboard')
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex flex-col justify-center py-12 px-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4">
       <div className="max-w-sm w-full mx-auto text-center">
         <Image
           src="/images/logo.png"
@@ -28,21 +28,21 @@ export default async function PendingPage() {
           className="mx-auto mb-10"
         />
 
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+        <h1 className="text-2xl font-bold text-gray-900 mb-3">
           Application under review
         </h1>
 
-        <p className="text-gray-500 dark:text-slate-400 text-[15px] leading-relaxed mb-1">
+        <p className="text-gray-500 text-[15px] leading-relaxed mb-1">
           We&apos;re reviewing your organizer request.
         </p>
-        <p className="text-gray-500 dark:text-slate-400 text-[15px] leading-relaxed mb-1">
+        <p className="text-gray-500 text-[15px] leading-relaxed mb-1">
           We&apos;ll notify you at
         </p>
-        <p className="font-semibold text-gray-900 dark:text-white text-[15px] mb-6">
+        <p className="font-semibold text-gray-900 text-[15px] mb-6">
           {user.email}
         </p>
 
-        <p className="text-gray-400 dark:text-slate-500 text-sm mb-8">
+        <p className="text-gray-400 text-sm mb-8">
           This usually takes less than 24 hours.
         </p>
 

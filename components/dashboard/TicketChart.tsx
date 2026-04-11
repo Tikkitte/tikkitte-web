@@ -15,7 +15,7 @@ const COLORS = ['#1d67ba', '#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1e40af'
 export function TicketBarChart({ data }: { data: TicketData[] }) {
   return (
     <div className="h-64">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <BarChart data={data} barCategoryGap="25%">
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
           <XAxis
@@ -60,7 +60,7 @@ export function RevenueBreakdown({ data }: { data: TicketData[] }) {
 
   if (total === 0) {
     return (
-      <div className="h-52 flex items-center justify-center text-sm text-gray-400 dark:text-slate-500">
+      <div className="h-52 flex items-center justify-center text-sm text-gray-400">
         No revenue yet
       </div>
     )
@@ -78,18 +78,18 @@ export function RevenueBreakdown({ data }: { data: TicketData[] }) {
                   className="w-3 h-3 rounded-full flex-shrink-0"
                   style={{ backgroundColor: COLORS[i % COLORS.length] }}
                 />
-                <span className="text-sm font-medium text-gray-700 dark:text-slate-300">{d.label}</span>
+                <span className="text-sm font-medium text-gray-700">{d.label}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                <span className="text-sm font-bold text-gray-900">
                   GHS {d.revenue.toLocaleString()}
                 </span>
-                <span className="text-xs text-gray-400 dark:text-slate-500 w-10 text-right">
+                <span className="text-xs text-gray-400 w-10 text-right">
                   {pct.toFixed(0)}%
                 </span>
               </div>
             </div>
-            <div className="h-2.5 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
@@ -101,9 +101,9 @@ export function RevenueBreakdown({ data }: { data: TicketData[] }) {
           </div>
         )
       })}
-      <div className="pt-3 border-t border-gray-100 dark:border-slate-800 flex justify-between items-center">
-        <span className="text-sm text-gray-500 dark:text-slate-400">Total revenue</span>
-        <span className="text-lg font-bold text-gray-900 dark:text-white">GHS {total.toLocaleString()}</span>
+      <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
+        <span className="text-sm text-gray-500">Total revenue</span>
+        <span className="text-lg font-bold text-gray-900">GHS {total.toLocaleString()}</span>
       </div>
     </div>
   )
@@ -117,7 +117,7 @@ type DailyData = {
 export function RevenueAreaChart({ data }: { data: DailyData[] }) {
   if (data.length === 0) {
     return (
-      <div className="h-64 flex items-center justify-center text-sm text-gray-400 dark:text-slate-500">
+      <div className="h-64 flex items-center justify-center text-sm text-gray-400">
         No transactions yet
       </div>
     )
@@ -128,11 +128,11 @@ export function RevenueAreaChart({ data }: { data: DailyData[] }) {
   return (
     <div>
       <div className="mb-4">
-        <p className="text-sm text-gray-500 dark:text-slate-400">Revenue</p>
-        <p className="text-3xl font-extrabold text-gray-900 dark:text-white">GHS {total.toLocaleString()}</p>
+        <p className="text-sm text-gray-500">Revenue</p>
+        <p className="text-3xl font-extrabold text-gray-900">GHS {total.toLocaleString()}</p>
       </div>
       <div className="h-56">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <AreaChart data={data}>
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
