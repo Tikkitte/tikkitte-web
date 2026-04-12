@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState, use, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { isValidReference } from '@/lib/validation'
@@ -33,12 +33,7 @@ function formatDate(dateStr: string) {
   return `${months[m - 1]} ${d}, ${y}`
 }
 
-export default function ConfirmationPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const { id: eventId } = use(params)
+function ConfirmationContent({ eventId }: { eventId: string }) {
   const searchParams = useSearchParams()
   const reference = searchParams.get('reference') || searchParams.get('trxref')
 
@@ -220,5 +215,28 @@ export default function ConfirmationPage({
         </Link>
       </div>
     </div>
+  )
+}
+
+export default function ConfirmationPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id: eventId } = use(params)
+  return (
+    <Suspense fallback={
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+        <div className="inline-flex items-center gap-2 text-gray-600 font-medium">
+          <svg className="animate-spin h-5 w-5 text-[#1d67ba]" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Verifying your payment...
+        </div>
+      </div>
+    }>
+      <ConfirmationContent eventId={eventId} />
+    </Suspense>
   )
 }
