@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, use, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useSearchParams, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { isValidReference } from '@/lib/validation'
 import Link from 'next/link'
@@ -33,7 +33,9 @@ function formatDate(dateStr: string) {
   return `${months[m - 1]} ${d}, ${y}`
 }
 
-function ConfirmationContent({ eventId }: { eventId: string }) {
+function ConfirmationContent() {
+  const params = useParams()
+  const eventId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : ''
   const searchParams = useSearchParams()
   const reference = searchParams.get('reference') || searchParams.get('trxref')
 
@@ -218,12 +220,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
   )
 }
 
-export default function ConfirmationPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const { id: eventId } = use(params)
+export default function ConfirmationPage() {
   return (
     <Suspense fallback={
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
@@ -236,7 +233,7 @@ export default function ConfirmationPage({
         </div>
       </div>
     }>
-      <ConfirmationContent eventId={eventId} />
+      <ConfirmationContent />
     </Suspense>
   )
 }
