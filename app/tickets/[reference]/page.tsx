@@ -37,7 +37,7 @@ async function getTicketData(reference: string) {
   // Get the event
   const { data: event } = await supabase
     .from('event')
-    .select('id, name, date, time, venue, image, maps_link')
+    .select('id, slug, name, date, time, venue, image, maps_link')
     .eq('id', payment.event_id)
     .maybeSingle()
 
@@ -183,7 +183,7 @@ export default async function TicketPage({ params }: Props) {
         {/* Back to event link */}
         {event && (
           <Link
-            href={`/e/${event.id}`}
+            href={`/e/${event.slug ?? event.id}`}
             className="block w-full text-center py-3 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
           >
             View Event

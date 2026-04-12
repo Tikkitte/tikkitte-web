@@ -174,7 +174,7 @@ export default async function PublicEventPage({ params }: Props) {
         <div className="lg:sticky lg:top-20">
 
           {/* Ticket checkout */}
-          <EventCheckout eventId={event.id} tickets={tickets} eventName={event.name} />
+          <EventCheckout eventId={event.slug ?? event.id} tickets={tickets} eventName={event.name} />
 
           {/* Back link */}
           <div className="mt-8 pt-6 border-t border-gray-100">
