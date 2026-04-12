@@ -10,11 +10,12 @@ const SUPABASE_FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/function
 
 type Props = {
   eventId: string
+  eventSlug: string
   tickets: Ticket[]
   eventName: string
 }
 
-export default function EventCheckout({ eventId, tickets, eventName }: Props) {
+export default function EventCheckout({ eventId, eventSlug, tickets, eventName }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>(() =>
     Object.fromEntries(tickets.map((t) => [t.id, 0]))
   )
@@ -126,7 +127,7 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
 
       // 6. Make payment
       if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 6: making payment...')
-      const callbackUrl = `${window.location.origin}/e/${eventId}/confirmation`
+      const callbackUrl = `${window.location.origin}/e/${eventSlug}/confirmation`
       const makeRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/make-payment`, {
         method: 'POST',
         headers: {
@@ -150,7 +151,7 @@ export default function EventCheckout({ eventId, tickets, eventName }: Props) {
 
       // 7. Handle free tickets
       if (paymentData.free && paymentData.reference) {
-        window.location.href = `/e/${eventId}/confirmation?reference=${paymentData.reference}`
+        window.location.href = `/e/${eventSlug}/confirmation?reference=${paymentData.reference}`
         return
       }
 
