@@ -12,6 +12,7 @@ declare class BarcodeDetector {
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type CachedTicket = {
+  ticket_id: string
   reference: string
   used: boolean
   ticket_type: string
@@ -31,7 +32,7 @@ type TicketScanResult =
   | { status: 'event_not_found' }
   | { status: 'error'; message: string }
 
-type QueueItem = { reference: string; eventId: string; pin: string; ts: number }
+type QueueItem = { ticketId: string; eventId: string; pin: string; ts: number }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -44,7 +45,7 @@ function getCache(eventId: string): Map<string, CachedTicket> {
     const raw = localStorage.getItem(cacheKey(eventId))
     if (!raw) return new Map()
     const arr: CachedTicket[] = JSON.parse(raw)
-    return new Map(arr.map(t => [t.reference, t]))
+    return new Map(arr.map(t => [t.ticket_id, t]))
   } catch {
     return new Map()
   }
@@ -58,9 +59,9 @@ function getCacheList(eventId: string): CachedTicket[] {
   return Array.from(getCache(eventId).values())
 }
 
-function markCacheUsed(eventId: string, reference: string) {
+function markCacheUsed(eventId: string, ticketId: string) {
   const cache = getCache(eventId)
-  const ticket = cache.get(reference)
+  const ticket = cache.get(ticketId)
   if (ticket) {
     ticket.used = true
     saveCache(eventId, Array.from(cache.values()))
@@ -161,7 +162,7 @@ export default function Scanner() {
       for (const item of queue) {
         try {
           await supabase.rpc('scan_ticket', {
-            p_reference: item.reference,
+            p_ticket_id: item.ticketId,
             p_event_id: item.eventId,
             p_pin: item.pin,
           })
@@ -292,7 +293,7 @@ export default function Scanner() {
     const currentSession = sessionRef.current
     if (!currentSession) return
 
-    let payload: { reference?: string; event_id?: string }
+    let payload: { ticket_id?: string; reference?: string; event_id?: string }
     try {
       payload = JSON.parse(raw)
     } catch {
@@ -300,28 +301,28 @@ export default function Scanner() {
       return
     }
 
-    const reference = payload.reference
-    if (!reference) {
+    const ticketId = payload.ticket_id
+    if (!ticketId) {
       showResult({ status: 'error', message: 'Invalid QR code' })
       return
     }
 
-    // Debounce — ignore same ref within 3s
-    if (lastRefRef.current === reference) {
+    // Debounce — ignore same ticket within 3s
+    if (lastRefRef.current === ticketId) {
       scheduleScan()
       return
     }
-    lastRefRef.current = reference
+    lastRefRef.current = ticketId
     setTimeout(() => { lastRefRef.current = null }, 3000)
 
     if (!isOnlineRef.current) {
-      handleOfflineScan(reference, currentSession)
+      handleOfflineScan(ticketId, currentSession)
       return
     }
 
     try {
       const { data } = await supabase.rpc('scan_ticket', {
-        p_reference: reference,
+        p_ticket_id: ticketId,
         p_event_id: currentSession.eventId,
         p_pin: currentSession.pin,
       })
@@ -335,7 +336,7 @@ export default function Scanner() {
       }
 
       if (res.ok) {
-        markCacheUsed(currentSession.eventId, reference)
+        markCacheUsed(currentSession.eventId, ticketId)
         showResult({ status: 'success', ticketType: res.ticket_type!, quantity: res.quantity! })
       } else if (res.error === 'already_used') {
         showResult({ status: 'already_used', scannedAt: res.scanned_at ?? null })
@@ -347,13 +348,13 @@ export default function Scanner() {
         showResult({ status: 'error', message: res.error ?? 'Unknown error' })
       }
     } catch {
-      handleOfflineScan(reference, currentSession)
+      handleOfflineScan(ticketId, currentSession)
     }
   }
 
-  function handleOfflineScan(reference: string, currentSession: SessionInfo) {
+  function handleOfflineScan(ticketId: string, currentSession: SessionInfo) {
     const cache = getCache(currentSession.eventId)
-    const ticket = cache.get(reference)
+    const ticket = cache.get(ticketId)
 
     if (!ticket) {
       showResult({ status: 'ticket_not_found' })
@@ -364,8 +365,8 @@ export default function Scanner() {
       return
     }
 
-    markCacheUsed(currentSession.eventId, reference)
-    enqueue({ reference, eventId: currentSession.eventId, pin: currentSession.pin, ts: Date.now() })
+    markCacheUsed(currentSession.eventId, ticketId)
+    enqueue({ ticketId, eventId: currentSession.eventId, pin: currentSession.pin, ts: Date.now() })
     showResult({ status: 'success', ticketType: ticket.ticket_type, quantity: ticket.quantity })
   }
 
