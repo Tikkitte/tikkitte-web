@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto, Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body className={`${roboto.variable} ${poppins.variable} font-sans min-h-full flex flex-col bg-white text-gray-900`}>
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
