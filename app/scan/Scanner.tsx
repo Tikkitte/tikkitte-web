@@ -446,10 +446,16 @@ export default function Scanner() {
   // ── Scanning phase ────────────────────────────────────────────────────────────
 
   return (
-    <div className="h-screen flex flex-col relative overflow-hidden" style={{ backgroundColor: '#151718' }}>
+    <div
+      className="flex flex-col relative overflow-hidden"
+      style={{ backgroundColor: '#151718', height: '100dvh' }}
+    >
 
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3 z-20">
+      {/* Top bar — respects notch/status bar */}
+      <div
+        className="flex items-center justify-between px-4 pb-3 z-20 flex-shrink-0"
+        style={{ paddingTop: 'max(16px, env(safe-area-inset-top))' }}
+      >
         <div className="flex items-center gap-2">
           <span className="font-semibold text-sm truncate max-w-[200px]" style={{ color: '#ECEDEE' }}>
             {session?.eventName}
@@ -466,6 +472,7 @@ export default function Scanner() {
             setSession(null)
             setPinInput('')
             setResult(null)
+            setLastResult(null)
             setPhase('pin')
           }}
           className="text-xs font-medium transition-colors px-3 py-1.5 rounded-full"
@@ -475,8 +482,8 @@ export default function Scanner() {
         </button>
       </div>
 
-      {/* Camera feed */}
-      <div className="flex-1 relative flex items-center justify-center">
+      {/* Camera feed — fills remaining vertical space */}
+      <div className="flex-1 relative overflow-hidden min-h-0">
         <video
           ref={videoRef}
           playsInline
@@ -488,62 +495,66 @@ export default function Scanner() {
         <canvas ref={canvasRef} className="hidden" />
 
         {cameraError ? (
-          <div className="relative z-10 text-center px-8">
+          <div className="absolute inset-0 flex items-center justify-center text-center px-8">
             <p className="text-sm" style={{ color: '#f87171' }}>{cameraError}</p>
           </div>
         ) : (
-          /* Viewfinder — larger box so users don't over-center */
-          <div className="relative z-10" style={{ width: 'min(82vw, 340px)', height: 'min(82vw, 340px)' }}>
-            <div className="absolute inset-0 rounded-2xl" style={{ border: '1px solid rgba(155,161,166,0.15)' }} />
-            {/* Corners */}
-            <div className="absolute top-0 left-0 w-10 h-10 rounded-tl-xl" style={{ borderTop: '3px solid #ECEDEE', borderLeft: '3px solid #ECEDEE' }} />
-            <div className="absolute top-0 right-0 w-10 h-10 rounded-tr-xl" style={{ borderTop: '3px solid #ECEDEE', borderRight: '3px solid #ECEDEE' }} />
-            <div className="absolute bottom-0 left-0 w-10 h-10 rounded-bl-xl" style={{ borderBottom: '3px solid #ECEDEE', borderLeft: '3px solid #ECEDEE' }} />
-            <div className="absolute bottom-0 right-0 w-10 h-10 rounded-br-xl" style={{ borderBottom: '3px solid #ECEDEE', borderRight: '3px solid #ECEDEE' }} />
+          /* Viewfinder centered in the camera area */
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="relative" style={{ width: 'min(75vw, 300px)', height: 'min(75vw, 300px)' }}>
+              <div className="absolute inset-0 rounded-2xl" style={{ border: '1px solid rgba(155,161,166,0.15)' }} />
+              {/* Corners */}
+              <div className="absolute top-0 left-0 w-10 h-10 rounded-tl-xl" style={{ borderTop: '3px solid #ECEDEE', borderLeft: '3px solid #ECEDEE' }} />
+              <div className="absolute top-0 right-0 w-10 h-10 rounded-tr-xl" style={{ borderTop: '3px solid #ECEDEE', borderRight: '3px solid #ECEDEE' }} />
+              <div className="absolute bottom-0 left-0 w-10 h-10 rounded-bl-xl" style={{ borderBottom: '3px solid #ECEDEE', borderLeft: '3px solid #ECEDEE' }} />
+              <div className="absolute bottom-0 right-0 w-10 h-10 rounded-br-xl" style={{ borderBottom: '3px solid #ECEDEE', borderRight: '3px solid #ECEDEE' }} />
+            </div>
           </div>
         )}
+      </div>
 
-        {/* Bottom strip: last scan + hint */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-6">
-          {lastResult && !result && (
+      {/* Bottom panel — sits outside camera div so it's always visible */}
+      <div
+        className="flex-shrink-0 px-4 pt-3 z-20"
+        style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))', backgroundColor: '#151718' }}
+      >
+        {lastResult && !result && (
+          <div
+            className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-3"
+            style={{
+              backgroundColor: lastResult.status === 'success'
+                ? 'rgba(22,101,52,0.95)'
+                : 'rgba(127,29,29,0.95)',
+            }}
+          >
             <div
-              className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-3"
-              style={{
-                backgroundColor: lastResult.status === 'success'
-                  ? 'rgba(22,101,52,0.88)'
-                  : 'rgba(127,29,29,0.88)',
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              <div
-                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: lastResult.status === 'success' ? '#4ade80' : '#f87171' }}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(236,237,238,0.5)' }}>Last scan</p>
-                {lastResult.status === 'success' && (
-                  <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
-                    {lastResult.ticketType} &times;{lastResult.quantity}
-                  </p>
-                )}
-                {lastResult.status === 'already_used' && (
-                  <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>
-                    Already used{lastResult.scannedAt ? ` · ${formatScannedAt(lastResult.scannedAt)}` : ''}
-                  </p>
-                )}
-                {lastResult.status === 'ticket_not_found' && (
-                  <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Not found</p>
-                )}
-                {(lastResult.status === 'event_not_found' || lastResult.status === 'error') && (
-                  <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Error</p>
-                )}
-              </div>
+              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              style={{ backgroundColor: lastResult.status === 'success' ? '#4ade80' : '#f87171' }}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(236,237,238,0.5)' }}>Last scan</p>
+              {lastResult.status === 'success' && (
+                <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
+                  {lastResult.ticketType} &times;{lastResult.quantity}
+                </p>
+              )}
+              {lastResult.status === 'already_used' && (
+                <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>
+                  Already used{lastResult.scannedAt ? ` · ${formatScannedAt(lastResult.scannedAt)}` : ''}
+                </p>
+              )}
+              {lastResult.status === 'ticket_not_found' && (
+                <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Not found</p>
+              )}
+              {(lastResult.status === 'event_not_found' || lastResult.status === 'error') && (
+                <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Error</p>
+              )}
             </div>
-          )}
-          <p className="text-center text-sm" style={{ color: '#9BA1A6' }}>
-            Point camera anywhere at QR code
-          </p>
-        </div>
+          </div>
+        )}
+        <p className="text-center text-sm" style={{ color: '#9BA1A6' }}>
+          Point camera anywhere at QR code
+        </p>
       </div>
 
       {/* Result overlay */}
