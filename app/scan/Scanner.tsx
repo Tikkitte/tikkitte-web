@@ -104,6 +104,7 @@ export default function Scanner() {
   const [pinLoading, setPinLoading] = useState(false)
   const [pinError, setPinError] = useState('')
   const [result, setResult] = useState<TicketScanResult | null>(null)
+  const [lastResult, setLastResult] = useState<TicketScanResult | null>(null)
   const [isOnline, setIsOnline] = useState(true)
   const [cameraError, setCameraError] = useState('')
 
@@ -226,7 +227,7 @@ export default function Scanner() {
   // each other and are only called from startCamera's closure after mount.
   function scheduleScan() {
     if (!scanningRef.current) return
-    setTimeout(doScan, 500)
+    setTimeout(doScan, 250)
   }
 
   async function doScan() {
@@ -372,6 +373,7 @@ export default function Scanner() {
 
   function showResult(r: TicketScanResult) {
     setResult(r)
+    setLastResult(r)
     if (resultTimerRef.current) clearTimeout(resultTimerRef.current)
     resultTimerRef.current = setTimeout(() => {
       setResult(null)
@@ -490,20 +492,58 @@ export default function Scanner() {
             <p className="text-sm" style={{ color: '#f87171' }}>{cameraError}</p>
           </div>
         ) : (
-          /* Viewfinder */
-          <div className="relative z-10 w-64 h-64">
-            <div className="absolute inset-0 rounded-2xl" style={{ border: '1px solid rgba(155,161,166,0.2)' }} />
+          /* Viewfinder — larger box so users don't over-center */
+          <div className="relative z-10" style={{ width: 'min(82vw, 340px)', height: 'min(82vw, 340px)' }}>
+            <div className="absolute inset-0 rounded-2xl" style={{ border: '1px solid rgba(155,161,166,0.15)' }} />
             {/* Corners */}
-            <div className="absolute top-0 left-0 w-8 h-8 rounded-tl-xl" style={{ borderTop: '3px solid #ECEDEE', borderLeft: '3px solid #ECEDEE' }} />
-            <div className="absolute top-0 right-0 w-8 h-8 rounded-tr-xl" style={{ borderTop: '3px solid #ECEDEE', borderRight: '3px solid #ECEDEE' }} />
-            <div className="absolute bottom-0 left-0 w-8 h-8 rounded-bl-xl" style={{ borderBottom: '3px solid #ECEDEE', borderLeft: '3px solid #ECEDEE' }} />
-            <div className="absolute bottom-0 right-0 w-8 h-8 rounded-br-xl" style={{ borderBottom: '3px solid #ECEDEE', borderRight: '3px solid #ECEDEE' }} />
+            <div className="absolute top-0 left-0 w-10 h-10 rounded-tl-xl" style={{ borderTop: '3px solid #ECEDEE', borderLeft: '3px solid #ECEDEE' }} />
+            <div className="absolute top-0 right-0 w-10 h-10 rounded-tr-xl" style={{ borderTop: '3px solid #ECEDEE', borderRight: '3px solid #ECEDEE' }} />
+            <div className="absolute bottom-0 left-0 w-10 h-10 rounded-bl-xl" style={{ borderBottom: '3px solid #ECEDEE', borderLeft: '3px solid #ECEDEE' }} />
+            <div className="absolute bottom-0 right-0 w-10 h-10 rounded-br-xl" style={{ borderBottom: '3px solid #ECEDEE', borderRight: '3px solid #ECEDEE' }} />
           </div>
         )}
 
-        <p className="absolute bottom-8 left-0 right-0 text-center text-sm z-10" style={{ color: '#9BA1A6' }}>
-          Point camera at ticket QR code
-        </p>
+        {/* Bottom strip: last scan + hint */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-6">
+          {lastResult && !result && (
+            <div
+              className="rounded-2xl px-4 py-3 mb-3 flex items-center gap-3"
+              style={{
+                backgroundColor: lastResult.status === 'success'
+                  ? 'rgba(22,101,52,0.88)'
+                  : 'rgba(127,29,29,0.88)',
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <div
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: lastResult.status === 'success' ? '#4ade80' : '#f87171' }}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(236,237,238,0.5)' }}>Last scan</p>
+                {lastResult.status === 'success' && (
+                  <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
+                    {lastResult.ticketType} &times;{lastResult.quantity}
+                  </p>
+                )}
+                {lastResult.status === 'already_used' && (
+                  <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>
+                    Already used{lastResult.scannedAt ? ` · ${formatScannedAt(lastResult.scannedAt)}` : ''}
+                  </p>
+                )}
+                {lastResult.status === 'ticket_not_found' && (
+                  <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Not found</p>
+                )}
+                {(lastResult.status === 'event_not_found' || lastResult.status === 'error') && (
+                  <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Error</p>
+                )}
+              </div>
+            </div>
+          )}
+          <p className="text-center text-sm" style={{ color: '#9BA1A6' }}>
+            Point camera anywhere at QR code
+          </p>
+        </div>
       </div>
 
       {/* Result overlay */}
