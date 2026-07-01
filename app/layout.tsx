@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Roboto, Poppins } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import "@/lib/env";
 import "./globals.css";
 
 const roboto = Roboto({
@@ -17,8 +18,15 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
   title: "Tikkitte | Find Events in Ghana",
   description: "Discover and buy tickets to events happening in Ghana. No account needed.",
+  openGraph: {
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
 };
 
 export const viewport: Viewport = {

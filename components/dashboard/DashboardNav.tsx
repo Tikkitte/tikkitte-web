@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
 
 const navItems = [
   { href: '/dashboard', label: 'Events', match: (p: string) => p === '/dashboard' || p.startsWith('/dashboard/events') },
@@ -11,13 +10,11 @@ const navItems = [
 
 export default function DashboardNav() {
   const pathname = usePathname()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
 
   return (
     <nav className="flex gap-1">
       {navItems.map((item) => {
-        const active = mounted && item.match(pathname)
+        const active = item.match(pathname)
         return (
           <Link
             key={item.href}

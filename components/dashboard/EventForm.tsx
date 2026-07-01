@@ -278,13 +278,11 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
 
   useEffect(() => {
     if (!baseSlug) {
-      setSlugStatus('idle')
-      setResolvedSlug('')
       return
     }
 
-    setSlugStatus('checking')
     const timer = setTimeout(async () => {
+      setSlugStatus('checking')
       const supabase = createClient()
       const { data } = await supabase
         .from('event')

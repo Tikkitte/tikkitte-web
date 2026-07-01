@@ -8,6 +8,16 @@ type Props = {
   params: Promise<{ reference: string }>
 }
 
+type TicketRow = {
+  id: string
+  quantity: number
+  qr_code: string | null
+  ticket: {
+    label: string | null
+    price: number | null
+  } | null
+}
+
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
   const [y, m, d] = dateStr.split('-').map(Number)
@@ -124,7 +134,7 @@ export default async function TicketPage({ params }: Props) {
         </h2>
 
         <div className="space-y-4 mb-8">
-          {userTickets.map((ut: any) => (
+          {(userTickets as TicketRow[]).map((ut) => (
             <div
               key={ut.id}
               className="bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-5"
