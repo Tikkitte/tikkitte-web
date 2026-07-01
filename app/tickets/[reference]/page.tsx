@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { isValidReference } from '@/lib/validation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 
 type Props = {
@@ -82,8 +83,23 @@ export default async function TicketPage({ params }: Props) {
       {/* Header */}
       <header className="border-b border-gray-100 dark:border-slate-800 px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-            Tikkitte
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/images/logo.png"
+              alt=""
+              width={42}
+              height={28}
+              unoptimized
+              style={{ width: 'auto', height: '24px' }}
+            />
+            <Image
+              src="/images/text-logo-web.png"
+              alt="Tikkitte"
+              width={120}
+              height={20}
+              unoptimized
+              style={{ height: '18px', width: 'auto' }}
+            />
           </Link>
         </div>
       </header>
