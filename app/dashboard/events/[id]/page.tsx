@@ -164,13 +164,15 @@ export default async function EventDetailPage({
   })
 
   // Format attendees for the tabs component
-  const paidAttendees = (userTickets ?? []).map((ut: UserTicket & { user_profile?: { email: string; name: string } | null }) => ({
-    id: ut.id,
-    name: ut.user_profile?.name ?? '—',
-    email: ut.user_profile?.email ?? '—',
-    ticketLabel: ticketMap[ut.ticket_type_id]?.label ?? '—',
-    quantity: ut.quantity,
-  }))
+  const paidAttendees = (userTickets ?? [])
+    .filter((ut: UserTicket) => !ut.payment_reference?.startsWith('COMP-'))
+    .map((ut: UserTicket & { user_profile?: { email: string; name: string } | null }) => ({
+      id: ut.id,
+      name: ut.user_profile?.name ?? '—',
+      email: ut.user_profile?.email ?? '—',
+      ticketLabel: ticketMap[ut.ticket_type_id]?.label ?? '—',
+      quantity: ut.quantity,
+    }))
   const compAttendees = ((compTickets ?? []) as ComplimentaryTicket[]).map((compTicket) => ({
     id: compTicket.id,
     name: compTicket.recipient_name,

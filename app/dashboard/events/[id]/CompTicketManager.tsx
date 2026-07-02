@@ -24,9 +24,10 @@ function formatSentAt(value: string) {
 }
 
 export default function CompTicketManager({ eventId, tickets, initialCompTickets }: Props) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [compTickets, setCompTickets] = useState(initialCompTickets)
+  const [search, setSearch] = useState('')
   const [recipientName, setRecipientName] = useState('')
   const [recipientEmail, setRecipientEmail] = useState('')
   const [ticketTypeId, setTicketTypeId] = useState(tickets[0]?.id ?? '')
@@ -45,6 +46,14 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
 
   const selectedTicket = ticketTypeId ? ticketMap[ticketTypeId] : null
   const soldOutWarning = selectedTicket?.total_quantity !== null && (selectedTicket?.available_quantity ?? 0) <= 0
+  const filteredCompTickets = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return compTickets
+    return compTickets.filter((compTicket) => (
+      compTicket.recipient_name.toLowerCase().includes(query) ||
+      compTicket.recipient_email.toLowerCase().includes(query)
+    ))
+  }, [compTickets, search])
 
   const resetForm = () => {
     setRecipientName('')
@@ -77,49 +86,68 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
       resetForm()
       setShowForm(false)
       setIsOpen(true)
-      setMessage('Complimentary ticket recorded.')
+      setMessage('Complimentary ticket sent.')
     })
   }
 
   return (
     <section className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setIsOpen((value) => !value)}
-        className="flex w-full items-center justify-between gap-4 p-5 text-left hover:bg-gray-50/70 transition-colors"
-        aria-expanded={isOpen}
-      >
-        <div>
-          <h2 className="font-semibold text-gray-900 text-sm">Complimentary tickets</h2>
-          <p className="text-xs text-gray-400 mt-1">Send free tickets to guests, partners, or staff.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-[#1d67ba]">
-            {compTickets.length}
+      <div className="flex w-full items-start justify-between gap-4 p-5">
+        <button
+          type="button"
+          onClick={() => setIsOpen((value) => !value)}
+          className="text-left"
+          aria-expanded={isOpen}
+        >
+          <span className="block font-semibold text-gray-900 text-sm">Complimentary tickets</span>
+          <span className="block text-xs text-gray-400 mt-1">
+            Tickets sent directly to recipients by email. Recipients can use the QR code without creating an account.
           </span>
-          <span className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true">
+        </button>
+        <div className="flex flex-shrink-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen(true)
+              setShowForm((value) => !value)
+            }}
+            disabled={tickets.length === 0}
+            className="text-sm font-semibold text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:hover:bg-white"
+          >
+            {showForm ? 'Cancel' : '+ Send complimentary tickets'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsOpen((value) => !value)}
+            className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            aria-label={isOpen ? 'Collapse complimentary tickets' : 'Expand complimentary tickets'}
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m6 9 6 6 6-6" />
             </svg>
-          </span>
+          </button>
         </div>
-      </button>
+      </div>
 
       {isOpen && (
         <div className="border-t border-gray-100 p-5">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-4 flex flex-col gap-3">
             <div>
               {message && <p className="text-sm text-green-600">{message}</p>}
               {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
-            <button
-              type="button"
-              onClick={() => setShowForm((value) => !value)}
-              disabled={tickets.length === 0}
-              className="self-start text-sm font-semibold text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:hover:bg-white"
-            >
-              {showForm ? 'Cancel' : '+ Send complimentary tickets'}
-            </button>
+            <div className="relative">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full border border-gray-200 bg-white text-gray-900 rounded-lg py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] placeholder:text-gray-400"
+                placeholder="Search recipients by name or email"
+              />
+            </div>
           </div>
 
           {showForm && (
@@ -191,7 +219,12 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
             </div>
           )}
 
-          {compTickets.length === 0 ? (
+          <div className="mb-3 flex items-center justify-between text-xs text-gray-400">
+            <span>{filteredCompTickets.length} result{filteredCompTickets.length === 1 ? '' : 's'}</span>
+            <span>Last updated just now</span>
+          </div>
+
+          {filteredCompTickets.length === 0 ? (
             <p className="text-sm text-gray-400">No complimentary tickets sent yet.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -207,7 +240,7 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
                   </tr>
                 </thead>
                 <tbody>
-                  {compTickets.map((compTicket) => (
+                  {filteredCompTickets.map((compTicket) => (
                     <tr key={compTicket.id} className="border-b border-gray-50 last:border-0">
                       <td className="py-3 pr-4 font-medium text-gray-900">{compTicket.recipient_name}</td>
                       <td className="py-3 px-4 text-gray-500">{compTicket.recipient_email}</td>

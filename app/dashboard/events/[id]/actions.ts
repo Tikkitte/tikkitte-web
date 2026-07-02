@@ -71,25 +71,33 @@ export async function sendCompTicket(input: SendCompTicketInput): Promise<SendCo
     return { ok: false, message: 'Ticket type is not available for this event.' }
   }
 
-  const { data, error } = await supabase
-    .from('complimentary_ticket')
-    .insert({
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) {
+    return { ok: false, message: 'Your session expired. Please sign in again.' }
+  }
+
+  const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-comp-ticket`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({
       event_id: eventId,
       ticket_type_id: ticketTypeId,
       recipient_name: recipientName,
       recipient_email: recipientEmail,
       quantity,
       note,
-    })
-    .select('*')
-    .single()
+    }),
+  })
 
-  if (error || !data) {
-    return { ok: false, message: error?.message ?? 'Failed to send complimentary ticket.' }
+  const result = await response.json().catch(() => null) as { message?: string; comp_ticket?: ComplimentaryTicket } | null
+  if (!response.ok || !result?.comp_ticket) {
+    return { ok: false, message: result?.message ?? 'Failed to send complimentary ticket.' }
   }
 
-  // TODO: trigger edge function to email recipient
   revalidatePath(`/dashboard/events/${eventId}`)
 
-  return { ok: true, compTicket: data as ComplimentaryTicket }
+  return { ok: true, compTicket: result.comp_ticket }
 }
