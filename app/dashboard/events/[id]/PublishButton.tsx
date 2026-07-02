@@ -12,7 +12,11 @@ export default function PublishButton({ eventId, published }: { eventId: string;
     setLoading(true)
     const supabase = createClient()
     await supabase.from('event').update({ published: !published }).eq('id', eventId)
-    router.refresh()
+    if (!published) {
+      router.push(`/dashboard/events/${eventId}?shared=1`)
+    } else {
+      router.refresh()
+    }
     setLoading(false)
   }
 

@@ -5,6 +5,7 @@ import type { Event, Ticket, UserTicket, Payment } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/TicketChart'
 import CancelButton from './CancelButton'
 import PublishButton from './PublishButton'
+import ShareLiveModal from './ShareLiveModal'
 import EventDetailTabs from './EventDetailTabs'
 import CheckinStats from '@/components/dashboard/CheckinStats'
 
@@ -43,8 +44,15 @@ function formatDateTime(dateStr: string) {
   })
 }
 
-export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EventDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ shared?: string }>
+}) {
   const { id } = await params
+  const { shared } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -115,6 +123,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   }))
 
   const poster = event.image?.[0]
+  const eventUrl = `https://tikkitte.com/e/${event.slug ?? event.id}`
 
   // Group user_tickets by payment_reference to build accurate ticket summaries
   const ticketsByRef = (userTickets ?? []).reduce((acc: Record<string, Array<{ label: string; quantity: number }>>, ut: UserTicket) => {
@@ -157,6 +166,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div>
+      {shared === '1' && <ShareLiveModal eventUrl={eventUrl} />}
+
       {/* Back + actions */}
       <div className="flex items-center justify-between mb-6">
         <Link
