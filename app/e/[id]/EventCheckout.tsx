@@ -5,17 +5,43 @@ import { createClient } from '@/lib/supabase/client'
 import { validateEmail, sanitizeName } from '@/lib/validation'
 import type { Ticket } from '@/lib/types'
 
-const MAX_TICKETS_PER_ORDER = 10
 const SUPABASE_FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/functions/v1'
 
 type Props = {
   eventId: string
   eventSlug: string
   tickets: Ticket[]
-  eventName: string
 }
 
-export default function EventCheckout({ eventId, eventSlug, tickets, eventName }: Props) {
+function saleDateTime(date: string, time: string | null, endOfDay = false) {
+  return new Date(`${date}T${time ? time.slice(0, 5) : endOfDay ? '23:59' : '00:00'}`)
+}
+
+function formatSaleDate(date: string, time: string | null) {
+  const value = saleDateTime(date, time)
+  return value.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    ...(time ? { hour: 'numeric', minute: '2-digit', hour12: true } : {}),
+  })
+}
+
+function ticketSaleStatus(ticket: Ticket) {
+  const now = new Date()
+  if (ticket.sale_start_date && now < saleDateTime(ticket.sale_start_date, ticket.sale_start_time)) {
+    return {
+      available: false,
+      label: `On sale ${formatSaleDate(ticket.sale_start_date, ticket.sale_start_time)}`,
+    }
+  }
+  if (ticket.sale_end_date && now > saleDateTime(ticket.sale_end_date, ticket.sale_end_time, true)) {
+    return { available: false, label: 'Sales ended' }
+  }
+  return { available: true, label: null }
+}
+
+export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>(() =>
     Object.fromEntries(tickets.map((t) => [t.id, 0]))
   )
@@ -33,9 +59,10 @@ export default function EventCheckout({ eventId, eventSlug, tickets, eventName }
   const increment = (ticketId: string) => {
     const ticket = tickets.find((t) => t.id === ticketId)
     if (!ticket) return
+    if (!ticketSaleStatus(ticket).available) return
     const current = counts[ticketId] ?? 0
-    if (totalTickets >= MAX_TICKETS_PER_ORDER) return
     if (ticket.available_quantity !== null && current >= ticket.available_quantity) return
+    if (ticket.max_per_order !== null && current >= ticket.max_per_order) return
     setCounts((prev) => ({ ...prev, [ticketId]: current + 1 }))
   }
 
@@ -56,6 +83,28 @@ export default function EventCheckout({ eventId, eventSlug, tickets, eventName }
     if (totalTickets === 0) {
       setError('Please select at least one ticket.')
       return
+    }
+
+    for (const ticket of tickets) {
+      const quantity = counts[ticket.id] ?? 0
+      if (quantity === 0) continue
+      const saleStatus = ticketSaleStatus(ticket)
+      if (!saleStatus.available) {
+        setError(`${ticket.label} is not currently on sale.`)
+        return
+      }
+      if (quantity < ticket.min_per_order) {
+        setError(`${ticket.label} requires at least ${ticket.min_per_order} per order.`)
+        return
+      }
+      if (ticket.max_per_order !== null && quantity > ticket.max_per_order) {
+        setError(`${ticket.label} allows a maximum of ${ticket.max_per_order} per order.`)
+        return
+      }
+      if (ticket.available_quantity !== null && quantity > ticket.available_quantity) {
+        setError(`Only ${ticket.available_quantity} ${ticket.label} tickets are available.`)
+        return
+      }
     }
 
     setLoading(true)
@@ -180,8 +229,8 @@ export default function EventCheckout({ eventId, eventSlug, tickets, eventName }
     }
   }
 
-  const allSoldOut = tickets.every(
-    (t) => t.available_quantity !== null && t.available_quantity <= 0,
+  const allUnavailable = tickets.every(
+    (t) => !ticketSaleStatus(t).available || (t.available_quantity !== null && t.available_quantity <= 0),
   )
 
   if (tickets.length === 0) {
@@ -204,15 +253,20 @@ export default function EventCheckout({ eventId, eventSlug, tickets, eventName }
           const count = counts[ticket.id] ?? 0
           const available = ticket.available_quantity
           const soldOut = available !== null && available <= 0
+          const saleStatus = ticketSaleStatus(ticket)
+          const unavailable = soldOut || !saleStatus.available
           const isLow = available !== null && available > 0 && available <= 10
           const atMax =
-            (available !== null && count >= available) || totalTickets >= MAX_TICKETS_PER_ORDER
+            (available !== null && count >= available) ||
+            (ticket.max_per_order !== null && count >= ticket.max_per_order)
 
           return (
             <div
               key={ticket.id}
               className={`border rounded-xl p-4 transition-colors ${
-                count > 0
+                unavailable
+                  ? 'bg-gray-100 border-gray-200 opacity-70'
+                  : count > 0
                   ? 'bg-blue-50/50 border-[#1d67ba]/30'
                   : 'bg-gray-50 border-gray-200'
               }`}
@@ -229,36 +283,51 @@ export default function EventCheckout({ eventId, eventSlug, tickets, eventName }
                     SOLD OUT
                   </span>
                 )}
-                {isLow && !soldOut && (
+                {!soldOut && !saleStatus.available && (
+                  <span className="text-xs font-bold text-gray-600 bg-white px-2.5 py-0.5 rounded-full">
+                    {saleStatus.label}
+                  </span>
+                )}
+                {isLow && !unavailable && (
                   <span className="text-xs font-semibold text-amber-600">
                     {available} left
                   </span>
                 )}
               </div>
 
-              {soldOut ? (
-                <div className="text-center py-2 text-sm text-red-500 font-medium">Sold out</div>
-              ) : (
-                <div className="flex items-center justify-between bg-white rounded-lg px-3 py-1 border border-gray-100">
-                  <button
-                    type="button"
-                    onClick={() => decrement(ticket.id)}
-                    className="w-9 h-9 flex items-center justify-center text-lg font-bold text-gray-700 hover:text-[#1d67ba] transition-colors"
-                  >
-                    &minus;
-                  </button>
-                  <span className="text-base font-bold text-gray-900 tabular-nums w-8 text-center">
-                    {count}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => increment(ticket.id)}
-                    disabled={atMax}
-                    className="w-9 h-9 flex items-center justify-center text-lg font-bold text-gray-700 hover:text-[#1d67ba] transition-colors disabled:opacity-30"
-                  >
-                    +
-                  </button>
+              {unavailable ? (
+                <div className={`text-center py-2 text-sm font-medium ${soldOut ? 'text-red-500' : 'text-gray-500'}`}>
+                  {soldOut ? 'Sold out' : saleStatus.label}
                 </div>
+              ) : (
+                <>
+                  {(ticket.min_per_order > 1 || ticket.max_per_order !== null) && (
+                    <p className="text-xs text-gray-500 mb-2">
+                      {ticket.min_per_order > 1 ? `Min ${ticket.min_per_order}` : 'Min 1'}
+                      {ticket.max_per_order !== null ? ` · Max ${ticket.max_per_order}` : ''}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between bg-white rounded-lg px-3 py-1 border border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => decrement(ticket.id)}
+                      className="w-9 h-9 flex items-center justify-center text-lg font-bold text-gray-700 hover:text-[#1d67ba] transition-colors"
+                    >
+                      &minus;
+                    </button>
+                    <span className="text-base font-bold text-gray-900 tabular-nums w-8 text-center">
+                      {count}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => increment(ticket.id)}
+                      disabled={atMax}
+                      className="w-9 h-9 flex items-center justify-center text-lg font-bold text-gray-700 hover:text-[#1d67ba] transition-colors disabled:opacity-30"
+                    >
+                      +
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           )
@@ -315,7 +384,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets, eventName }
         <button
           type="button"
           onClick={handleCheckout}
-          disabled={loading || totalTickets === 0 || allSoldOut}
+          disabled={loading || totalTickets === 0 || allUnavailable}
           className="w-full py-3.5 rounded-xl font-semibold text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[#1d67ba] text-white hover:bg-[#1555a0] shadow-sm"
         >
           {loading ? (

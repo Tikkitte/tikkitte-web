@@ -47,7 +47,7 @@ async function getEventData(idOrSlug: string) {
 
   const { data: tickets } = await supabase
     .from('ticket')
-    .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity')
+    .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity, min_per_order, max_per_order, sale_start_date, sale_start_time, sale_end_date, sale_end_time')
     .eq('event_id', event.id)
     .order('price', { ascending: true })
 
@@ -190,7 +190,7 @@ export default async function PublicEventPage({ params }: Props) {
         <div className="lg:sticky lg:top-20">
 
           {/* Ticket checkout */}
-          <EventCheckout eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} eventName={event.name} />
+          <EventCheckout eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} />
 
           {/* Back link */}
           <div className="mt-8 pt-6 border-t border-gray-100">

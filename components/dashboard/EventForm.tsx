@@ -10,12 +10,32 @@ type TicketRow = {
   label: string
   price: string
   total_quantity: string
+  min_per_order: string
+  max_per_order: string
+  sale_start_date: string
+  sale_start_time: string
+  sale_end_date: string
+  sale_end_time: string
+  showAdvanced: boolean
 }
 
 type Props = {
   event?: Event
   tickets?: Ticket[]
   organizerId: string
+}
+
+const emptyTicketRow: TicketRow = {
+  label: '',
+  price: '',
+  total_quantity: '',
+  min_per_order: '1',
+  max_per_order: '',
+  sale_start_date: '',
+  sale_start_time: '',
+  sale_end_date: '',
+  sale_end_time: '',
+  showAdvanced: false,
 }
 
 export default function EventForm({ event, tickets, organizerId }: Props) {
@@ -41,8 +61,15 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           label: t.label,
           price: String(t.price),
           total_quantity: t.total_quantity != null ? String(t.total_quantity) : '',
+          min_per_order: String(t.min_per_order ?? 1),
+          max_per_order: t.max_per_order != null ? String(t.max_per_order) : '',
+          sale_start_date: t.sale_start_date ?? '',
+          sale_start_time: t.sale_start_time ? t.sale_start_time.slice(0, 5) : '',
+          sale_end_date: t.sale_end_date ?? '',
+          sale_end_time: t.sale_end_time ? t.sale_end_time.slice(0, 5) : '',
+          showAdvanced: false,
         }))
-      : [{ label: '', price: '', total_quantity: '' }]
+      : [{ ...emptyTicketRow }]
   )
   const [previewImages, setPreviewImages] = useState<string[]>(event?.preview_images ?? [])
   const [previewVideos, setPreviewVideos] = useState<string[]>(event?.preview_videos ?? [])
@@ -148,15 +175,70 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
   }
 
   const addTicketRow = () => {
-    setTicketRows(r => [...r, { label: '', price: '', total_quantity: '' }])
+    setTicketRows(r => [...r, { ...emptyTicketRow }])
   }
 
   const removeTicketRow = (i: number) => {
     setTicketRows(r => r.filter((_, idx) => idx !== i))
   }
 
-  const updateTicketRow = (i: number, field: keyof TicketRow, value: string) => {
+  const updateTicketRow = <K extends keyof TicketRow>(i: number, field: K, value: TicketRow[K]) => {
     setTicketRows(r => r.map((row, idx) => idx === i ? { ...row, [field]: value } : row))
+  }
+
+  const validateEventDateRange = () => {
+    if (endTime && !endDate) {
+      setError('Add an end date before setting an end time.')
+      return false
+    }
+    if (!endDate) return true
+    if (endDate < date) {
+      setError('End date cannot be before the start date.')
+      return false
+    }
+    if (endDate === date && endTime && time && endTime <= time) {
+      setError('End time must be after the start time when the event ends on the same day.')
+      return false
+    }
+    return true
+  }
+
+  const validateTicketRows = () => {
+    for (const row of ticketRows) {
+      const label = row.label.trim() || 'Each ticket type'
+      const minPerOrder = parseInt(row.min_per_order || '1')
+      const maxPerOrder = row.max_per_order ? parseInt(row.max_per_order) : null
+
+      if (!row.label.trim() || !row.price) {
+        setError('Each ticket type needs a label and price.')
+        return false
+      }
+      if (!Number.isFinite(minPerOrder) || minPerOrder < 1) {
+        setError(`${label} needs a minimum order quantity of at least 1.`)
+        return false
+      }
+      if (maxPerOrder !== null && (!Number.isFinite(maxPerOrder) || maxPerOrder < minPerOrder)) {
+        setError(`${label} max per order must be greater than or equal to min per order.`)
+        return false
+      }
+      if (row.sale_start_time && !row.sale_start_date) {
+        setError(`${label} needs a sale start date before setting a sale start time.`)
+        return false
+      }
+      if (row.sale_end_time && !row.sale_end_date) {
+        setError(`${label} needs a sale end date before setting a sale end time.`)
+        return false
+      }
+      if (row.sale_start_date && row.sale_end_date) {
+        const saleStart = `${row.sale_start_date}T${row.sale_start_time || '00:00'}`
+        const saleEnd = `${row.sale_end_date}T${row.sale_end_time || '23:59'}`
+        if (saleEnd <= saleStart) {
+          setError(`${label} sale end must be after sale start.`)
+          return false
+        }
+      }
+    }
+    return true
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -167,12 +249,8 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
       setError('Add at least one ticket type.')
       return
     }
-    for (const row of ticketRows) {
-      if (!row.label.trim() || !row.price) {
-        setError('Each ticket type needs a label and price.')
-        return
-      }
-    }
+    if (!validateEventDateRange()) return
+    if (!validateTicketRows()) return
 
     setLoading(true)
     const supabase = createClient()
@@ -222,6 +300,12 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           label: row.label,
           price: parseFloat(row.price),
           total_quantity: row.total_quantity ? parseInt(row.total_quantity) : null,
+          min_per_order: parseInt(row.min_per_order || '1'),
+          max_per_order: row.max_per_order ? parseInt(row.max_per_order) : null,
+          sale_start_date: row.sale_start_date || null,
+          sale_start_time: row.sale_start_time ? row.sale_start_time + ':00' : null,
+          sale_end_date: row.sale_end_date || null,
+          sale_end_time: row.sale_end_time ? row.sale_end_time + ':00' : null,
           type: i + 1,
         }
         if (row.id) {
@@ -266,6 +350,12 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           label: row.label,
           price: parseFloat(row.price),
           total_quantity: row.total_quantity ? parseInt(row.total_quantity) : null,
+          min_per_order: parseInt(row.min_per_order || '1'),
+          max_per_order: row.max_per_order ? parseInt(row.max_per_order) : null,
+          sale_start_date: row.sale_start_date || null,
+          sale_start_time: row.sale_start_time ? row.sale_start_time + ':00' : null,
+          sale_end_date: row.sale_end_date || null,
+          sale_end_time: row.sale_end_time ? row.sale_end_time + ':00' : null,
           type: i + 1,
           purchased_quantity: 0,
           available_quantity: row.total_quantity ? parseInt(row.total_quantity) : null,
@@ -355,7 +445,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">End date <span className="font-normal text-gray-400">(optional)</span></label>
-            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className={inputClass} />
+            <input type="date" min={date || undefined} value={endDate} onChange={e => setEndDate(e.target.value)} className={inputClass} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">End time <span className="font-normal text-gray-400">(optional)</span></label>
@@ -525,54 +615,133 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
       <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
         <h2 className="font-semibold text-gray-900">Ticket types</h2>
         {ticketRows.map((row, i) => (
-          <div key={i} className="flex gap-3 items-start">
-            <div className="flex-1">
-              <input
-                required
-                value={row.label}
-                onChange={e => updateTicketRow(i, 'label', e.target.value)}
-                className={inputClass}
-                placeholder="Label (e.g. General, VIP)"
-              />
+          <div key={i} className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+            <div className="flex gap-3 items-start">
+              <div className="flex-1">
+                <input
+                  required
+                  value={row.label}
+                  onChange={e => updateTicketRow(i, 'label', e.target.value)}
+                  className={inputClass}
+                  placeholder="Label (e.g. General, VIP)"
+                />
+              </div>
+              <div className="w-28">
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={row.price}
+                  onChange={e => updateTicketRow(i, 'price', e.target.value)}
+                  className={inputClass}
+                  placeholder="Price"
+                />
+              </div>
+              <div className="w-28">
+                <input
+                  type="number"
+                  min="1"
+                  value={row.total_quantity}
+                  onChange={e => updateTicketRow(i, 'total_quantity', e.target.value)}
+                  className={inputClass}
+                  placeholder="Qty (∞)"
+                />
+              </div>
+              {ticketRows.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeTicketRow(i)}
+                  className="text-gray-400 hover:text-red-500 transition-colors pt-2.5 text-lg leading-none"
+                  aria-label={`Remove ${row.label || 'ticket type'}`}
+                >
+                  ×
+                </button>
+              )}
             </div>
-            <div className="w-28">
-              <input
-                required
-                type="number"
-                min="0"
-                step="0.01"
-                value={row.price}
-                onChange={e => updateTicketRow(i, 'price', e.target.value)}
-                className={inputClass}
-                placeholder="Price"
-              />
+
+            <div className="flex gap-2 text-xs text-gray-400 mt-2 px-1">
+              <span className="flex-1">Label</span>
+              <span className="w-28">Price (GHS)</span>
+              <span className="w-28">Capacity (blank = ∞)</span>
+              {ticketRows.length > 1 && <span className="w-4" />}
             </div>
-            <div className="w-28">
-              <input
-                type="number"
-                min="1"
-                value={row.total_quantity}
-                onChange={e => updateTicketRow(i, 'total_quantity', e.target.value)}
-                className={inputClass}
-                placeholder="Qty (∞)"
-              />
-            </div>
-            {ticketRows.length > 1 && (
+
+            <div className="mt-3">
               <button
                 type="button"
-                onClick={() => removeTicketRow(i)}
-                className="text-gray-400 hover:text-red-500 transition-colors pt-2.5 text-lg leading-none"
+                aria-expanded={row.showAdvanced}
+                onClick={() => updateTicketRow(i, 'showAdvanced', !row.showAdvanced)}
+                className="text-sm font-medium text-[#1d67ba] hover:text-[#1555a0] transition-colors"
               >
-                ×
+                {row.showAdvanced ? '▾' : '▸'} More settings
               </button>
+            </div>
+
+            {row.showAdvanced && (
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Min per order</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={row.min_per_order}
+                    onChange={e => updateTicketRow(i, 'min_per_order', e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Max per order <span className="font-normal text-gray-400">(optional)</span></label>
+                  <input
+                    type="number"
+                    min={row.min_per_order || '1'}
+                    value={row.max_per_order}
+                    onChange={e => updateTicketRow(i, 'max_per_order', e.target.value)}
+                    className={inputClass}
+                    placeholder="No limit"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Sale starts <span className="font-normal text-gray-400">(optional)</span></label>
+                  <input
+                    type="date"
+                    value={row.sale_start_date}
+                    onChange={e => updateTicketRow(i, 'sale_start_date', e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start time <span className="font-normal text-gray-400">(optional)</span></label>
+                  <input
+                    type="time"
+                    value={row.sale_start_time}
+                    onChange={e => updateTicketRow(i, 'sale_start_time', e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Sale ends <span className="font-normal text-gray-400">(optional)</span></label>
+                  <input
+                    type="date"
+                    min={row.sale_start_date || undefined}
+                    value={row.sale_end_date}
+                    onChange={e => updateTicketRow(i, 'sale_end_date', e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End time <span className="font-normal text-gray-400">(optional)</span></label>
+                  <input
+                    type="time"
+                    value={row.sale_end_time}
+                    onChange={e => updateTicketRow(i, 'sale_end_time', e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
             )}
           </div>
         ))}
-        <div className="flex gap-2 text-xs text-gray-400 -mt-2 px-1">
-          <span className="flex-1">Label</span>
-          <span className="w-28">Price (GHS)</span>
-          <span className="w-28">Capacity (blank = ∞)</span>
-        </div>
         <button
           type="button"
           onClick={addTicketRow}
