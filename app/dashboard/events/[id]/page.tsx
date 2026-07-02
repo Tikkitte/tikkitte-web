@@ -11,6 +11,7 @@ import CompTicketManager from './CompTicketManager'
 import TrackingLinkManager from './TrackingLinkManager'
 import EventDetailTabs from './EventDetailTabs'
 import CheckinStats from '@/components/dashboard/CheckinStats'
+import MessageAttendeesButton from './MessageAttendeesButton'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -223,6 +224,11 @@ export default async function EventDetailPage({
         <div className="flex gap-2">
           {!event.cancelled && (
             <>
+              <MessageAttendeesButton
+                eventId={id}
+                lastAlertSentAt={event.last_alert_sent_at}
+                attendeeCount={formattedAttendees.length}
+              />
               <PublishButton eventId={id} published={event.published} />
               <Link
                 href={`/dashboard/events/${id}/edit`}

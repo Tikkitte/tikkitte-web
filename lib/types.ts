@@ -26,6 +26,7 @@ export type Event = {
   published: boolean
   end_date: string | null
   end_time: string | null
+  last_alert_sent_at: string | null
 }
 
 export type Ticket = {
