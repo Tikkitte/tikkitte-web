@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Ticket, UserTicket, Payment } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/TicketChart'
 import CancelButton from './CancelButton'
+import PublishButton from './PublishButton'
 import EventDetailTabs from './EventDetailTabs'
 import CheckinStats from '@/components/dashboard/CheckinStats'
 
@@ -153,6 +154,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         <div className="flex gap-2">
           {!event.cancelled && (
             <>
+              <PublishButton eventId={id} published={event.published} />
               <Link
                 href={`/dashboard/events/${id}/edit`}
                 className="bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
@@ -183,6 +185,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               )}
               <div className="p-5">
                 <div className="flex items-center gap-2 mb-2">
+                  {!event.published && (
+                    <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full">
+                      Draft
+                    </span>
+                  )}
                   {event.cancelled && (
                     <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-full">
                       Cancelled

@@ -11,6 +11,7 @@ function formatDate(dateStr: string | null | undefined) {
 }
 
 function eventStatus(event: Event): { label: string; color: string; dot: string } {
+  if (!event.published) return { label: 'Draft', color: 'text-purple-700 bg-purple-50', dot: 'bg-purple-400' }
   if (event.cancelled) return { label: 'Cancelled', color: 'text-red-600 bg-red-50', dot: 'bg-red-500' }
   const today = new Date().toISOString().slice(0, 10)
   if (event.date < today) return { label: 'Past', color: 'text-gray-500 bg-gray-100', dot: 'bg-gray-400' }

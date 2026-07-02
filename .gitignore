@@ -40,3 +40,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# design assets
+/design
+
+# codex planning docs (may contain credentials)
+CODEX_BRIEF.md
+migration.sql
+verify_phase1.sql
+
+# supabase CLI local state (project ref, pooler URL, org ID)
+supabase/.temp/

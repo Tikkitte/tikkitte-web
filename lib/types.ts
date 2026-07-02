@@ -23,6 +23,9 @@ export type Event = {
   preview_images: string[] | null
   preview_videos: string[] | null
   scanner_pin: string | null
+  published: boolean
+  end_date: string | null
+  end_time: string | null
 }
 
 export type Ticket = {
@@ -34,6 +37,12 @@ export type Ticket = {
   total_quantity: number | null
   purchased_quantity: number
   available_quantity: number | null
+  min_per_order: number
+  max_per_order: number | null
+  sale_start_date: string | null
+  sale_start_time: string | null
+  sale_end_date: string | null
+  sale_end_time: string | null
 }
 
 export type UserTicket = {
@@ -68,4 +77,38 @@ export type SalesRow = {
   ticket: Ticket
   sold: number
   revenue: number
+}
+
+export type PromoCode = {
+  id: string
+  event_id: string
+  code: string
+  discount_type: 'percent' | 'fixed'
+  discount_value: number
+  max_uses: number | null
+  uses_count: number
+  ticket_type_id: string | null
+  active: boolean
+  created_at: string
+}
+
+export type ComplimentaryTicket = {
+  id: string
+  event_id: string
+  ticket_type_id: string
+  recipient_name: string
+  recipient_email: string
+  quantity: number
+  sent_at: string
+  note: string | null
+}
+
+export type TrackingLink = {
+  id: string
+  event_id: string
+  organizer_id: string
+  name: string
+  slug: string
+  clicks: number
+  created_at: string
 }

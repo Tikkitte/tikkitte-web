@@ -34,6 +34,7 @@ async function getEventData(idOrSlug: string) {
     .from('event')
     .select('*')
     .eq(isUUID ? 'id' : 'slug', idOrSlug)
+    .eq('published', true)
     .maybeSingle()
   if (!event) return null
 

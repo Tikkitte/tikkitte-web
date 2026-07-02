@@ -16,8 +16,9 @@ export default async function EventsPage() {
 
   const { data } = await supabase
     .from('event')
-    .select('id, name, slug, date, time, venue, image, description, cancelled, organizer_id')
+    .select('id, name, slug, date, time, venue, image, description, cancelled, organizer_id, published, end_date, end_time')
     .eq('cancelled', false)
+    .eq('published', true)
     .gte('date', today)
     .order('date', { ascending: true })
     .limit(100)

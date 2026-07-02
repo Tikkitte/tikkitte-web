@@ -26,6 +26,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
   const [name, setName] = useState(event?.name ?? '')
   const [date, setDate] = useState(event?.date ?? '')
   const [time, setTime] = useState(event?.time ? event.time.slice(0, 5) : '')
+  const [published] = useState(event?.published ?? true)
   const [venue, setVenue] = useState(event?.venue ?? '')
   const [mapsLink, setMapsLink] = useState(event?.maps_link ?? '')
   const [description, setDescription] = useState(event?.description ?? '')
@@ -189,6 +190,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           preview_images: previewImages.length > 0 ? previewImages : null,
           preview_videos: previewVideos.filter(v => v.trim()).length > 0 ? previewVideos.filter(v => v.trim()) : null,
           scanner_pin: scannerPin.trim() || null,
+          published,
         })
         .eq('id', event.id)
 
@@ -244,6 +246,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           scanner_pin: scannerPin.trim() || null,
           organizer_id: organizerId,
           cancelled: false,
+          published: false,
         })
         .select('id')
         .single()
@@ -571,9 +574,9 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
         <button
           type="submit"
           disabled={loading || imageUploading}
-          className="bg-[#1d67ba] text-white font-semibold px-8 py-3 rounded-xl hover:bg-[#1555a0] transition-colors disabled:opacity-60"
+          className={`${isEdit ? 'bg-[#1d67ba] hover:bg-[#1555a0]' : 'bg-gray-900 hover:bg-gray-800'} text-white font-semibold px-8 py-3 rounded-xl transition-colors disabled:opacity-60`}
         >
-          {loading ? (isEdit ? 'Saving…' : 'Creating…') : (isEdit ? 'Save changes' : 'Create event')}
+          {loading ? 'Saving…' : (isEdit ? 'Save changes' : 'Save as draft')}
         </button>
         <button
           type="button"
