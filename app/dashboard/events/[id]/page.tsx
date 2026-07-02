@@ -133,6 +133,12 @@ export default async function EventDetailPage({
   const totalRevenue = (tickets ?? []).reduce(
     (s: number, t: Ticket) => s + t.purchased_quantity * t.price, 0
   )
+  const grossCollected = allPayments.reduce((s: number, p: Payment) => s + (p.amount ?? 0), 0) / 100
+  const collectedByTicketType = allPayments.reduce((acc: Record<string, number>, p: Payment) => {
+    if (!p.ticket_type_id) return acc
+    acc[p.ticket_type_id] = (acc[p.ticket_type_id] ?? 0) + (p.amount ?? 0) / 100
+    return acc
+  }, {})
   const totalSold = (tickets ?? []).reduce(
     (s: number, t: Ticket) => s + t.purchased_quantity, 0
   )
@@ -284,8 +290,13 @@ export default async function EventDetailPage({
               </p>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-              <p className="text-xs text-gray-500 mb-1">Revenue</p>
-              <p className="text-xl font-extrabold text-gray-900">GHS {totalRevenue.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mb-1">Gross collected</p>
+              <p className="text-xl font-extrabold text-gray-900">
+                GHS {grossCollected.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </p>
+              {grossCollected !== totalRevenue && (
+                <p className="text-xs text-gray-400 mt-1">Face value: GHS {totalRevenue.toLocaleString()}</p>
+              )}
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <p className="text-xs text-gray-500 mb-1">Transactions</p>
@@ -328,7 +339,8 @@ export default async function EventDetailPage({
                       <th className="text-left py-3 pr-4 font-medium text-gray-500">Type</th>
                       <th className="text-right py-3 px-4 font-medium text-gray-500">Price</th>
                       <th className="text-right py-3 px-4 font-medium text-gray-500">Sold</th>
-                      <th className="text-right py-3 pl-4 font-medium text-gray-500">Revenue</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-500">Revenue</th>
+                      <th className="text-right py-3 pl-4 font-medium text-gray-500">Collected</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -340,8 +352,11 @@ export default async function EventDetailPage({
                           {t.purchased_quantity}
                           {t.total_quantity != null && <span className="text-gray-400 font-normal">/{t.total_quantity}</span>}
                         </td>
-                        <td className="py-3 pl-4 text-right text-gray-900 font-semibold">
+                        <td className="py-3 px-4 text-right text-gray-900 font-semibold">
                           GHS {(t.purchased_quantity * t.price).toLocaleString()}
+                        </td>
+                        <td className="py-3 pl-4 text-right text-gray-900 font-semibold">
+                          GHS {(collectedByTicketType[t.id] ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </td>
                       </tr>
                     ))}
