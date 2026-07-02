@@ -1,12 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import type { Event, Ticket, UserTicket, Payment } from '@/lib/types'
+import type { ComplimentaryTicket, Event, Ticket, UserTicket, Payment } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/TicketChart'
 import CancelButton from './CancelButton'
 import PublishButton from './PublishButton'
 import ShareLiveModal from './ShareLiveModal'
 import PromoCodeManager from './PromoCodeManager'
+import CompTicketManager from './CompTicketManager'
 import EventDetailTabs from './EventDetailTabs'
 import CheckinStats from '@/components/dashboard/CheckinStats'
 
@@ -77,6 +78,12 @@ export default async function EventDetailPage({
     .from('user_ticket')
     .select('*, user_profile(email, name)')
     .eq('event_id', id)
+
+  const { data: compTickets } = await supabase
+    .from('complimentary_ticket')
+    .select('*')
+    .eq('event_id', id)
+    .order('sent_at', { ascending: false })
 
   const { data: payments } = await supabase
     .from('payments')
@@ -157,13 +164,21 @@ export default async function EventDetailPage({
   })
 
   // Format attendees for the tabs component
-  const formattedAttendees = (userTickets ?? []).map((ut: UserTicket & { user_profile?: { email: string; name: string } | null }) => ({
+  const paidAttendees = (userTickets ?? []).map((ut: UserTicket & { user_profile?: { email: string; name: string } | null }) => ({
     id: ut.id,
     name: ut.user_profile?.name ?? '—',
     email: ut.user_profile?.email ?? '—',
     ticketLabel: ticketMap[ut.ticket_type_id]?.label ?? '—',
     quantity: ut.quantity,
   }))
+  const compAttendees = ((compTickets ?? []) as ComplimentaryTicket[]).map((compTicket) => ({
+    id: compTicket.id,
+    name: compTicket.recipient_name,
+    email: compTicket.recipient_email,
+    ticketLabel: ticketMap[compTicket.ticket_type_id]?.label ?? '—',
+    quantity: compTicket.quantity,
+  }))
+  const formattedAttendees = [...paidAttendees, ...compAttendees]
 
   return (
     <div>
@@ -316,6 +331,12 @@ export default async function EventDetailPage({
           </div>
 
           <PromoCodeManager eventId={id} tickets={(tickets ?? []) as Ticket[]} />
+
+          <CompTicketManager
+            eventId={id}
+            tickets={(tickets ?? []) as Ticket[]}
+            initialCompTickets={(compTickets ?? []) as ComplimentaryTicket[]}
+          />
 
           {/* Tabbed section: Transactions & Attendees */}
           <EventDetailTabs
