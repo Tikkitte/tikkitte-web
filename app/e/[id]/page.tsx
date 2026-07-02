@@ -23,6 +23,13 @@ function formatTime(timeStr: string | null | undefined) {
   return `${h12}:${String(mm).padStart(2, '0')} ${am ? 'AM' : 'PM'}`
 }
 
+function formatEventDateRange(event: Event) {
+  const start = [formatDate(event.date), formatTime(event.time)].filter(Boolean).join(' · ')
+  if (!event.end_date) return start
+  const end = [formatDate(event.end_date), formatTime(event.end_time)].filter(Boolean).join(' · ')
+  return `${start} → ${end}`
+}
+
 type Props = {
   params: Promise<{ id: string }>
 }
@@ -144,7 +151,7 @@ export default async function PublicEventPage({ params }: Props) {
             <div className="p-5">
               <div className="flex items-center gap-2 mb-2" />
               <h1 className="text-xl font-bold text-gray-900 mb-1">{event.name}</h1>
-              <p className="text-sm text-gray-500">{formatDate(event.date)} &middot; {formatTime(event.time)}</p>
+              <p className="text-sm text-gray-500">{formatEventDateRange(event)}</p>
               {event.venue && (
                 event.maps_link ? (
                   <a

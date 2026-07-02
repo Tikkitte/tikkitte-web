@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import type { Ticket, UserTicket, Payment } from '@/lib/types'
+import type { Event, Ticket, UserTicket, Payment } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/TicketChart'
 import CancelButton from './CancelButton'
 import PublishButton from './PublishButton'
@@ -13,6 +13,21 @@ function formatDate(dateStr: string | null | undefined) {
   const [y, m, d] = dateStr.split('-').map(Number)
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   return `${months[m - 1]} ${d}, ${y}`
+}
+
+function formatTime(timeStr: string | null | undefined) {
+  if (!timeStr) return ''
+  const [hh, mm] = timeStr.split(':').map(Number)
+  const am = hh < 12
+  const h12 = ((hh + 11) % 12) + 1
+  return `${h12}:${String(mm).padStart(2, '0')} ${am ? 'AM' : 'PM'}`
+}
+
+function formatEventDateRange(event: Event) {
+  const start = [formatDate(event.date), formatTime(event.time)].filter(Boolean).join(' · ')
+  if (!event.end_date) return start
+  const end = [formatDate(event.end_date), formatTime(event.end_time)].filter(Boolean).join(' · ')
+  return `${start} → ${end}`
 }
 
 function formatDateTime(dateStr: string) {
@@ -198,7 +213,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 </div>
                 <h1 className="text-xl font-bold text-gray-900 mb-1">{event.name}</h1>
                 <p className="text-sm text-gray-500">
-                  {formatDate(event.date)} · {event.time?.slice(0, 5)}
+                  {formatEventDateRange(event)}
                 </p>
                 <p className="text-sm text-gray-500">{event.venue ?? 'No venue'}</p>
                 {event.description && (

@@ -26,6 +26,8 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
   const [name, setName] = useState(event?.name ?? '')
   const [date, setDate] = useState(event?.date ?? '')
   const [time, setTime] = useState(event?.time ? event.time.slice(0, 5) : '')
+  const [endDate, setEndDate] = useState(event?.end_date ?? '')
+  const [endTime, setEndTime] = useState(event?.end_time ? event.end_time.slice(0, 5) : '')
   const [published] = useState(event?.published ?? true)
   const [venue, setVenue] = useState(event?.venue ?? '')
   const [mapsLink, setMapsLink] = useState(event?.maps_link ?? '')
@@ -183,6 +185,8 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           name,
           date,
           time: time + ':00',
+          end_date: endDate || null,
+          end_time: endTime ? endTime + ':00' : null,
           venue: venue || null,
           maps_link: mapsLink || null,
           description: description || null,
@@ -237,6 +241,8 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
           name,
           date,
           time: time + ':00',
+          end_date: endDate || null,
+          end_time: endTime ? endTime + ':00' : null,
           venue: venue || null,
           maps_link: mapsLink || null,
           description: description || null,
@@ -338,14 +344,22 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
             </p>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start date</label>
             <input type="date" required value={date} onChange={e => setDate(e.target.value)} className={inputClass} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start time</label>
             <input type="time" required value={time} onChange={e => setTime(e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">End date <span className="font-normal text-gray-400">(optional)</span></label>
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">End time <span className="font-normal text-gray-400">(optional)</span></label>
+            <input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className={inputClass} />
           </div>
         </div>
         <div>
