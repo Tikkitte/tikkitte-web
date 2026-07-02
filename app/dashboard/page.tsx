@@ -18,7 +18,29 @@ function eventStatus(event: Event): { label: string; color: string; dot: string 
   return { label: 'Upcoming', color: 'text-green-700 bg-green-50', dot: 'bg-green-500' }
 }
 
-export default async function DashboardPage() {
+type EventFilter = 'all' | 'upcoming' | 'past' | 'drafts'
+
+const filterLabels: Record<EventFilter, string> = {
+  all: 'All',
+  upcoming: 'Upcoming',
+  past: 'Past',
+  drafts: 'Drafts',
+}
+
+const emptyStateCopy: Record<EventFilter, string> = {
+  all: 'Create your first event to start selling tickets.',
+  upcoming: 'No upcoming events. Create one to get started.',
+  past: 'No past events yet.',
+  drafts: 'No drafts. When you save an event it will appear here.',
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>
+}) {
+  const { filter: rawFilter = 'upcoming' } = await searchParams
+  const filter: EventFilter = rawFilter === 'all' || rawFilter === 'past' || rawFilter === 'drafts' ? rawFilter : 'upcoming'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -29,9 +51,24 @@ export default async function DashboardPage() {
     .eq('organizer_id', user.id)
 
   const today = new Date().toISOString().slice(0, 10)
-  const upcoming = (rawEvents ?? []).filter((e: Event) => e.date >= today && !e.cancelled).sort((a: Event, b: Event) => a.date.localeCompare(b.date))
-  const past = (rawEvents ?? []).filter((e: Event) => e.date < today || e.cancelled).sort((a: Event, b: Event) => b.date.localeCompare(a.date))
-  const events = [...upcoming, ...past]
+  const allEvents = (rawEvents ?? []) as Event[]
+  const upcoming = allEvents.filter((e) => e.published === true && e.date >= today && !e.cancelled).sort((a, b) => a.date.localeCompare(b.date))
+  const past = allEvents.filter((e) => e.published === true && (e.date < today || e.cancelled)).sort((a, b) => b.date.localeCompare(a.date))
+  const drafts = allEvents.filter((e) => e.published === false).sort((a, b) => b.date.localeCompare(a.date))
+  const eventsByFilter: Record<EventFilter, Event[]> = {
+    all: [...upcoming, ...drafts, ...past],
+    upcoming,
+    past,
+    drafts,
+  }
+  const events = eventsByFilter[filter]
+  const tabCounts: Record<EventFilter, number> = {
+    all: allEvents.length,
+    upcoming: upcoming.length,
+    past: past.length,
+    drafts: drafts.length,
+  }
+  const filters: EventFilter[] = ['all', 'upcoming', 'past', 'drafts']
 
   const eventIds = (events ?? []).map((e: Event) => e.id)
 
@@ -85,6 +122,28 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      {/* Filter tabs */}
+      <div className="mb-6 overflow-x-auto">
+        <div className="inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+          {filters.map((tab) => {
+            const active = filter === tab
+            return (
+              <Link
+                key={tab}
+                href={`?filter=${tab}`}
+                className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                  active
+                    ? 'bg-[#1d67ba]/10 text-[#1d67ba]'
+                    : 'text-gray-500 hover:bg-gray-100'
+                }`}
+              >
+                {filterLabels[tab]} ({tabCounts[tab]})
+              </Link>
+            )
+          })}
+        </div>
+      </div>
+
       {/* Event list */}
       {!events || events.length === 0 ? (
         <div className="text-center py-24">
@@ -93,15 +152,17 @@ export default async function DashboardPage() {
               <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
             </svg>
           </div>
-          <p className="font-semibold text-gray-700 mb-1">No events yet</p>
-          <p className="text-sm text-gray-500 mb-6">Create your first event to start selling tickets.</p>
-          <Link
-            href="/dashboard/events/new"
-            className="bg-[#1d67ba] text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#1555a0] transition-colors inline-flex items-center gap-1.5"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 3v10M3 8h10" /></svg>
-            Create event
-          </Link>
+          <p className="font-semibold text-gray-700 mb-1">{filter === 'all' ? 'No events yet' : `No ${filterLabels[filter].toLowerCase()} events`}</p>
+          <p className="text-sm text-gray-500 mb-6">{emptyStateCopy[filter]}</p>
+          {(filter === 'all' || filter === 'upcoming') && (
+            <Link
+              href="/dashboard/events/new"
+              className="bg-[#1d67ba] text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#1555a0] transition-colors inline-flex items-center gap-1.5"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 3v10M3 8h10" /></svg>
+              Create event
+            </Link>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
