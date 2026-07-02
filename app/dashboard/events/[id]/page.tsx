@@ -80,21 +80,17 @@ export default async function EventDetailPage({
     .select('*')
     .eq('event_id', id)
 
-  const userIds = [...new Set((userTickets ?? []).map((ut: UserTicket) => ut.user_id).filter(Boolean))]
-  const { data: profiles } = userIds.length > 0
-    ? await supabase
-      .from('user_profile')
-      .select('id, email, name')
-      .in('id', userIds)
-    : { data: [] }
+  const { data: attendeeProfiles } = (userTickets ?? []).length > 0
+    ? await supabase.rpc('get_event_attendee_profiles', { p_event_id: id })
+    : { data: [] as Array<{ user_id: string; email: string | null; name: string | null }> }
 
-  const profileMap = (profiles ?? []).reduce((acc: Record<string, { email: string | null; name: string | null }>, profile) => {
-    acc[profile.id] = {
-      email: profile.email,
-      name: profile.name,
-    }
-    return acc
-  }, {})
+  const profileMap = ((attendeeProfiles ?? []) as Array<{ user_id: string; email: string | null; name: string | null }>).reduce(
+    (acc: Record<string, { email: string | null; name: string | null }>, profile) => {
+      acc[profile.user_id] = { email: profile.email, name: profile.name }
+      return acc
+    },
+    {}
+  )
 
   const { data: compTickets } = await supabase
     .from('complimentary_ticket')
@@ -191,8 +187,8 @@ export default async function EventDetailPage({
     .filter((ut: UserTicket) => !ut.payment_reference?.startsWith('COMP-'))
     .map((ut: UserTicket) => ({
       id: ut.id,
-      name: profileMap[ut.user_id]?.name ?? '—',
-      email: profileMap[ut.user_id]?.email ?? '—',
+      name: profileMap[ut.user_id]?.name || '—',
+      email: profileMap[ut.user_id]?.email || '—',
       ticketLabel: ticketMap[ut.ticket_type_id]?.label ?? '—',
       quantity: ut.quantity,
     }))
