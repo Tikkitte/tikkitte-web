@@ -77,8 +77,24 @@ export default async function EventDetailPage({
 
   const { data: userTickets } = await supabase
     .from('user_ticket')
-    .select('*, user_profile(email, name)')
+    .select('*')
     .eq('event_id', id)
+
+  const userIds = [...new Set((userTickets ?? []).map((ut: UserTicket) => ut.user_id).filter(Boolean))]
+  const { data: profiles } = userIds.length > 0
+    ? await supabase
+      .from('user_profile')
+      .select('id, email, name')
+      .in('id', userIds)
+    : { data: [] }
+
+  const profileMap = (profiles ?? []).reduce((acc: Record<string, { email: string | null; name: string | null }>, profile) => {
+    acc[profile.id] = {
+      email: profile.email,
+      name: profile.name,
+    }
+    return acc
+  }, {})
 
   const { data: compTickets } = await supabase
     .from('complimentary_ticket')
@@ -173,10 +189,10 @@ export default async function EventDetailPage({
   // Format attendees for the tabs component
   const paidAttendees = (userTickets ?? [])
     .filter((ut: UserTicket) => !ut.payment_reference?.startsWith('COMP-'))
-    .map((ut: UserTicket & { user_profile?: { email: string; name: string } | null }) => ({
+    .map((ut: UserTicket) => ({
       id: ut.id,
-      name: ut.user_profile?.name ?? '—',
-      email: ut.user_profile?.email ?? '—',
+      name: profileMap[ut.user_id]?.name ?? '—',
+      email: profileMap[ut.user_id]?.email ?? '—',
       ticketLabel: ticketMap[ut.ticket_type_id]?.label ?? '—',
       quantity: ut.quantity,
     }))
