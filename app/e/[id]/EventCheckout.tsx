@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { validateEmail, sanitizeName } from '@/lib/validation'
-import type { Ticket } from '@/lib/types'
+import type { PromoCode, Ticket } from '@/lib/types'
 
 const SUPABASE_FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/functions/v1'
 
@@ -41,6 +41,12 @@ function ticketSaleStatus(ticket: Ticket) {
   return { available: true, label: null }
 }
 
+function promoDescription(promoCode: PromoCode) {
+  return promoCode.discount_type === 'percent'
+    ? `${promoCode.discount_value}% off`
+    : `GHS ${promoCode.discount_value} off`
+}
+
 export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>(() =>
     Object.fromEntries(tickets.map((t) => [t.id, 0]))
@@ -49,12 +55,64 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [promoInput, setPromoInput] = useState('')
+  const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null)
+  const [promoMessage, setPromoMessage] = useState<string | null>(null)
+  const [promoError, setPromoError] = useState<string | null>(null)
 
   const totalTickets = useMemo(() => Object.values(counts).reduce((s, n) => s + n, 0), [counts])
   const totalPrice = useMemo(
     () => tickets.reduce((s, t) => s + (counts[t.id] ?? 0) * t.price, 0),
     [tickets, counts],
   )
+  const discountAmount = useMemo(() => {
+    if (!appliedPromo) return 0
+    const eligibleSubtotal = tickets.reduce((sum, ticket) => {
+      if (appliedPromo.ticket_type_id && ticket.id !== appliedPromo.ticket_type_id) return sum
+      return sum + (counts[ticket.id] ?? 0) * ticket.price
+    }, 0)
+    if (eligibleSubtotal <= 0) return 0
+    const discount = appliedPromo.discount_type === 'percent'
+      ? eligibleSubtotal * (appliedPromo.discount_value / 100)
+      : appliedPromo.discount_value
+    return Math.min(discount, eligibleSubtotal)
+  }, [appliedPromo, counts, tickets])
+  const displayedTotal = Math.max(0, totalPrice - discountAmount)
+
+  const applyPromoCode = async () => {
+    setPromoError(null)
+    setPromoMessage(null)
+    setAppliedPromo(null)
+
+    const normalizedCode = promoInput.trim().toUpperCase()
+    if (!normalizedCode) {
+      setPromoError('Enter a promo code.')
+      return
+    }
+
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('promo_code')
+      .select('*')
+      .eq('event_id', eventId)
+      .eq('code', normalizedCode)
+      .eq('active', true)
+      .maybeSingle()
+
+    if (error || !data) {
+      setPromoError('Invalid or expired code.')
+      return
+    }
+
+    const promoCode = data as PromoCode
+    if (promoCode.max_uses !== null && promoCode.uses_count >= promoCode.max_uses) {
+      setPromoError('This code has been used the maximum number of times.')
+      return
+    }
+
+    setAppliedPromo(promoCode)
+    setPromoMessage(`✓ ${promoCode.code} applied — ${promoDescription(promoCode)}`)
+  }
 
   const increment = (ticketId: string) => {
     const ticket = tickets.find((t) => t.id === ticketId)
@@ -164,7 +222,11 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${freshToken}`,
         },
-        body: JSON.stringify({ event_id: eventId, tickets: ticketsPayload }),
+        body: JSON.stringify({
+          event_id: eventId,
+          tickets: ticketsPayload,
+          promo_code: appliedPromo?.code ?? null,
+        }),
       })
 
       const quoteData = await quoteRes.json()
@@ -188,6 +250,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
           tickets: ticketsPayload,
           quote_id: quoteData.quote_id,
           callback_url: callbackUrl,
+          promo_code: appliedPromo?.code ?? null,
         }),
       })
 
@@ -372,6 +435,33 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
         </div>
       )}
 
+      {/* Promo code */}
+      {totalTickets > 0 && (
+        <div className="mb-6">
+          <label htmlFor="promo-code" className="block text-sm font-semibold text-gray-800 mb-1">
+            Promo code
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="promo-code"
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+              className="min-w-0 flex-1 px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] focus:border-transparent placeholder:text-gray-400"
+              placeholder="Enter promo code"
+            />
+            <button
+              type="button"
+              onClick={applyPromoCode}
+              className="rounded-lg border border-[#1d67ba] px-4 py-2.5 text-sm font-semibold text-[#1d67ba] hover:bg-blue-50 transition-colors"
+            >
+              Apply
+            </button>
+          </div>
+          {promoMessage && <p className="mt-2 text-sm font-medium text-green-700">{promoMessage}</p>}
+          {promoError && <p className="mt-2 text-sm font-medium text-red-600">{promoError}</p>}
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm font-medium rounded-lg p-3 mb-4">
@@ -381,6 +471,18 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
 
       {/* Checkout button */}
       <div className="sticky bottom-4">
+        {totalTickets > 0 && discountAmount > 0 && (
+          <div className="mb-3 rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm">
+            <div className="flex justify-between text-gray-600">
+              <span>Subtotal</span>
+              <span>GHS {totalPrice.toFixed(2)}</span>
+            </div>
+            <div className="mt-1 flex justify-between font-semibold text-green-700">
+              <span>Discount</span>
+              <span>-GHS {discountAmount.toFixed(2)}</span>
+            </div>
+          </div>
+        )}
         <button
           type="button"
           onClick={handleCheckout}
@@ -397,10 +499,10 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
             </span>
           ) : totalTickets === 0 ? (
             'Select tickets'
-          ) : totalPrice === 0 ? (
+          ) : displayedTotal === 0 ? (
             `Claim ${totalTickets} Free Ticket${totalTickets > 1 ? 's' : ''}`
           ) : (
-            `Pay GHS ${totalPrice.toFixed(2)} for ${totalTickets} Ticket${totalTickets > 1 ? 's' : ''}`
+            `Pay GHS ${displayedTotal.toFixed(2)} for ${totalTickets} Ticket${totalTickets > 1 ? 's' : ''}`
           )}
         </button>
       </div>

@@ -6,6 +6,7 @@ import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/TicketC
 import CancelButton from './CancelButton'
 import PublishButton from './PublishButton'
 import ShareLiveModal from './ShareLiveModal'
+import PromoCodeManager from './PromoCodeManager'
 import EventDetailTabs from './EventDetailTabs'
 import CheckinStats from '@/components/dashboard/CheckinStats'
 
@@ -313,6 +314,8 @@ export default async function EventDetailPage({
               </div>
             )}
           </div>
+
+          <PromoCodeManager eventId={id} tickets={(tickets ?? []) as Ticket[]} />
 
           {/* Tabbed section: Transactions & Attendees */}
           <EventDetailTabs
