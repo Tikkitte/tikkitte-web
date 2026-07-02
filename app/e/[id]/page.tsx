@@ -32,6 +32,7 @@ function formatEventDateRange(event: Event) {
 
 type Props = {
   params: Promise<{ id: string }>
+  searchParams?: Promise<{ ref?: string }>
 }
 
 async function getEventData(idOrSlug: string) {
@@ -81,12 +82,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function PublicEventPage({ params }: Props) {
+export default async function PublicEventPage({ params, searchParams }: Props) {
   const { id } = await params
   const data = await getEventData(id)
   if (!data) notFound()
 
   const { event, tickets } = data
+  const ref = (await searchParams)?.ref?.trim().toLowerCase()
+  if (ref) {
+    const supabase = await createClient()
+    await supabase.rpc('record_tracking_click', {
+      p_event_id: event.id,
+      p_slug: ref,
+    })
+  }
 
   if (event.cancelled) {
     return (

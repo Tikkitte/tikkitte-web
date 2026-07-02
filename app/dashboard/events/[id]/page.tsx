@@ -1,13 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import type { ComplimentaryTicket, Event, Ticket, UserTicket, Payment } from '@/lib/types'
+import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/TicketChart'
 import CancelButton from './CancelButton'
 import PublishButton from './PublishButton'
 import ShareLiveModal from './ShareLiveModal'
 import PromoCodeManager from './PromoCodeManager'
 import CompTicketManager from './CompTicketManager'
+import TrackingLinkManager from './TrackingLinkManager'
 import EventDetailTabs from './EventDetailTabs'
 import CheckinStats from '@/components/dashboard/CheckinStats'
 
@@ -84,6 +85,12 @@ export default async function EventDetailPage({
     .select('*')
     .eq('event_id', id)
     .order('sent_at', { ascending: false })
+
+  const { data: trackingLinks } = await supabase
+    .from('tracking_link')
+    .select('*')
+    .eq('event_id', id)
+    .order('created_at', { ascending: false })
 
   const { data: payments } = await supabase
     .from('payments')
@@ -338,6 +345,12 @@ export default async function EventDetailPage({
             eventId={id}
             tickets={(tickets ?? []) as Ticket[]}
             initialCompTickets={(compTickets ?? []) as ComplimentaryTicket[]}
+          />
+
+          <TrackingLinkManager
+            eventId={id}
+            eventSlug={event.slug ?? event.id}
+            initialTrackingLinks={(trackingLinks ?? []) as TrackingLink[]}
           />
 
           {/* Tabbed section: Transactions & Attendees */}

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import type { ComplimentaryTicket } from '@/lib/types'
+import type { ComplimentaryTicket, TrackingLink } from '@/lib/types'
 
 type SendCompTicketInput = {
   eventId: string
@@ -18,6 +18,18 @@ type SendCompTicketResult =
   | { ok: false; message: string }
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+type CreateTrackingLinkInput = {
+  eventId: string
+  name: string
+  slug: string
+}
+
+type CreateTrackingLinkResult =
+  | { ok: true; trackingLink: TrackingLink }
+  | { ok: false; message: string }
+
+const slugPattern = /^[a-z0-9-]{2,20}$/
 
 export async function sendCompTicket(input: SendCompTicketInput): Promise<SendCompTicketResult> {
   const eventId = input.eventId.trim()
@@ -100,4 +112,59 @@ export async function sendCompTicket(input: SendCompTicketInput): Promise<SendCo
   revalidatePath(`/dashboard/events/${eventId}`)
 
   return { ok: true, compTicket: result.comp_ticket }
+}
+
+export async function createTrackingLink(input: CreateTrackingLinkInput): Promise<CreateTrackingLinkResult> {
+  const eventId = input.eventId.trim()
+  const name = input.name.trim()
+  const slug = input.slug.trim().toLowerCase()
+
+  if (!eventId || !name || !slug) {
+    return { ok: false, message: 'Name and slug are required.' }
+  }
+  if (name.length > 80) {
+    return { ok: false, message: 'Name must be 80 characters or fewer.' }
+  }
+  if (!slugPattern.test(slug) || slug.includes('--')) {
+    return { ok: false, message: 'Slug must be 2-20 characters using lowercase letters, numbers, or hyphens.' }
+  }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { ok: false, message: 'You must be signed in to create tracking links.' }
+  }
+
+  const { data: event, error: eventError } = await supabase
+    .from('event')
+    .select('id')
+    .eq('id', eventId)
+    .eq('organizer_id', user.id)
+    .maybeSingle()
+
+  if (eventError || !event) {
+    return { ok: false, message: 'Event not found.' }
+  }
+
+  const { data, error } = await supabase
+    .from('tracking_link')
+    .insert({
+      event_id: eventId,
+      organizer_id: user.id,
+      name,
+      slug,
+    })
+    .select('*')
+    .single()
+
+  if (error || !data) {
+    const message = error?.code === '23505'
+      ? 'A tracking link with this slug already exists for this event.'
+      : error?.message ?? 'Failed to create tracking link.'
+    return { ok: false, message }
+  }
+
+  revalidatePath(`/dashboard/events/${eventId}`)
+
+  return { ok: true, trackingLink: data as TrackingLink }
 }
