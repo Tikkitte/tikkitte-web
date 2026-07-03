@@ -3,10 +3,13 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
   const host = request.headers.get('host') ?? ''
-  if (host.startsWith('create.') && !request.nextUrl.pathname.startsWith('/dashboard')) {
+  const isStudio = host.startsWith('create.')
+
+  // On create.tikkitte.com, rewrite / → /dashboard (keeps URL as create.tikkitte.com)
+  if (isStudio && request.nextUrl.pathname === '/') {
     const url = request.nextUrl.clone()
-    url.pathname = `/dashboard${request.nextUrl.pathname === '/' ? '' : request.nextUrl.pathname}`
-    return NextResponse.redirect(url)
+    url.pathname = '/dashboard'
+    return NextResponse.rewrite(url)
   }
 
   let supabaseResponse = NextResponse.next({ request })
