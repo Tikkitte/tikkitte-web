@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import Nav from '@/components/landing/Nav'
 
 type Organizer = {
   id: string
@@ -17,8 +18,6 @@ type OrganizerEvent = {
   date: string
   image: string[] | null
   venue: string | null
-  published: boolean
-  cancelled: boolean
 }
 
 function formatDate(dateStr: string | null | undefined) {
@@ -32,32 +31,37 @@ function initialFor(name: string) {
   return name.trim()[0]?.toUpperCase() ?? 'T'
 }
 
-export default async function OrganizerPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export default async function OrganizerPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const supabase = await createClient()
 
   const { data: organizer } = await supabase
     .from('organizer_profile')
     .select('id, display_name, bio, logo_url')
-    .eq('id', id)
+    .eq('slug', slug)
     .eq('approved', true)
     .maybeSingle()
 
   if (!organizer) notFound()
 
+  const today = new Date().toISOString().slice(0, 10)
+
   const { data: events } = await supabase
     .from('event')
-    .select('id, name, slug, date, image, venue, published, cancelled')
-    .eq('organizer_id', id)
+    .select('id, name, slug, date, image, venue')
+    .eq('organizer_id', organizer.id)
     .eq('published', true)
     .eq('cancelled', false)
-    .order('date', { ascending: false })
+    .gte('date', today)
+    .order('date', { ascending: true })
 
   const organizerProfile = organizer as Organizer
   const organizerEvents = (events ?? []) as OrganizerEvent[]
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <>
+      <Nav />
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
       <section className="mb-10">
         <div className="mb-4">
           {organizerProfile.logo_url ? (
@@ -80,10 +84,10 @@ export default async function OrganizerPage({ params }: { params: Promise<{ id: 
       </section>
 
       <section>
-        <h2 className="mb-5 text-lg font-semibold text-gray-900">Events</h2>
+        <h2 className="mb-5 text-lg font-semibold text-gray-900">Upcoming events</h2>
         {organizerEvents.length === 0 ? (
           <div className="rounded-2xl border border-gray-100 bg-white px-6 py-14 text-center shadow-sm">
-            <p className="text-sm text-gray-500">No public events right now.</p>
+            <p className="text-sm text-gray-500">No upcoming events right now.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -124,5 +128,6 @@ export default async function OrganizerPage({ params }: { params: Promise<{ id: 
         )}
       </section>
     </div>
+    </>
   )
 }

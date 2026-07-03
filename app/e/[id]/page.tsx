@@ -10,6 +10,7 @@ import EventPreviewGallery from '@/components/EventPreviewGallery'
 
 type OrganizerSummary = {
   id: string
+  slug: string | null
   display_name: string
   logo_url: string | null
 }
@@ -61,7 +62,7 @@ async function getEventData(idOrSlug: string) {
   const { data: organizer } = event.organizer_id
     ? await supabase
         .from('organizer_profile')
-        .select('id, display_name, logo_url')
+        .select('id, slug, display_name, logo_url')
         .eq('id', event.organizer_id)
         .eq('approved', true)
         .maybeSingle()
@@ -201,7 +202,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
               )}
               {organizer && (
                 <Link
-                  href={`/o/${organizer.id}`}
+                  href={`/o/${organizer.slug ?? organizer.id}`}
                   className="group mt-4 flex items-center gap-2.5 border-t border-gray-100 pt-4"
                 >
                   {organizer.logo_url ? (
