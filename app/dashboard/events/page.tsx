@@ -41,7 +41,7 @@ export default async function EventsPage({
         </div>
         <Link
           href="/dashboard/events/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#1d67ba] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1555a0]"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#3d3d3d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
           Create event

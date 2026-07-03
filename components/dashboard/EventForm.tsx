@@ -100,7 +100,7 @@ function EventPreviewCard({
             </h3>
             <p className="mt-1 text-sm text-gray-500">{formatPreviewDate(date)} &middot; {formatPreviewTime(time)}</p>
             <p className="mt-1 line-clamp-1 text-sm text-gray-400">{venue.trim() || 'Venue TBA'}</p>
-            <p className="mt-4 text-sm font-semibold text-[#1d67ba]">{priceLabel}</p>
+            <p className="mt-4 text-sm font-semibold text-[#3d3d3d]">{priceLabel}</p>
           </div>
         </div>
       </div>
@@ -475,7 +475,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
 
   const slugPreview = resolvedSlug ? 'tikkitte.com/e/' + resolvedSlug : ''
 
-  const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] placeholder:text-gray-400'
+  const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400'
 
   const form = (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto w-full flex flex-col gap-6">
@@ -554,7 +554,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={imageUploading}
-          className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors disabled:opacity-50 self-start"
+          className="text-sm font-medium text-[#3d3d3d] border border-[#3d3d3d] rounded-lg px-4 py-2 hover:bg-gray-100 transition-colors disabled:opacity-50 self-start"
         >
           {imageUploading ? 'Uploading…' : imageUrl ? 'Change image' : 'Upload image'}
         </button>
@@ -603,7 +603,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
             type="button"
             onClick={() => previewFileRef.current?.click()}
             disabled={previewUploading}
-            className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors disabled:opacity-50 self-start"
+            className="text-sm font-medium text-[#3d3d3d] border border-[#3d3d3d] rounded-lg px-4 py-2 hover:bg-gray-100 transition-colors disabled:opacity-50 self-start"
           >
             {previewUploading ? 'Uploading…' : '+ Add photos'}
           </button>
@@ -636,7 +636,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
         <button
           type="button"
           onClick={addVideoUrl}
-          className="text-sm text-[#1d67ba] font-medium hover:underline self-start"
+          className="text-sm text-[#3d3d3d] font-medium hover:underline self-start"
         >
           + Add YouTube link
         </button>
@@ -665,7 +665,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
           <button
             type="button"
             onClick={() => setScannerPin(String(Math.floor(1000 + Math.random() * 9000)))}
-            className="text-sm font-medium text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors"
+            className="text-sm font-medium text-[#3d3d3d] border border-[#3d3d3d] rounded-lg px-4 py-2 hover:bg-gray-100 transition-colors"
           >
             {scannerPin ? 'Regenerate' : 'Generate PIN'}
           </button>
@@ -742,7 +742,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
                 type="button"
                 aria-expanded={row.showAdvanced}
                 onClick={() => updateTicketRow(i, 'showAdvanced', !row.showAdvanced)}
-                className="text-sm font-medium text-[#1d67ba] hover:text-[#1555a0] transition-colors"
+                className="text-sm font-medium text-[#3d3d3d] hover:text-[#2a2a2a] transition-colors"
               >
                 {row.showAdvanced ? '▾' : '▸'} More settings
               </button>
@@ -815,7 +815,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
         <button
           type="button"
           onClick={addTicketRow}
-          className="text-sm text-[#1d67ba] font-medium hover:underline self-start"
+          className="text-sm text-[#3d3d3d] font-medium hover:underline self-start"
         >
           + Add ticket type
         </button>
@@ -827,7 +827,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
         <button
           type="submit"
           disabled={loading || imageUploading}
-          className={`${isEdit ? 'bg-[#1d67ba] hover:bg-[#1555a0]' : 'bg-gray-900 hover:bg-gray-800'} text-white font-semibold px-8 py-3 rounded-xl transition-colors disabled:opacity-60`}
+          className={`${isEdit ? 'bg-[#3d3d3d] hover:bg-[#2a2a2a]' : 'bg-gray-900 hover:bg-gray-800'} text-white font-semibold px-8 py-3 rounded-xl transition-colors disabled:opacity-60`}
         >
           {loading ? 'Saving…' : (isEdit ? 'Save changes' : 'Save as draft')}
         </button>

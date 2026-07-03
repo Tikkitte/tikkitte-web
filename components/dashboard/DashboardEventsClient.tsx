@@ -108,7 +108,7 @@ export default function DashboardEventsClient({ events: allEvents, tickets, init
                 onClick={() => selectFilter(tab)}
                 className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
                   active
-                    ? 'bg-[#1d67ba]/10 text-[#1d67ba]'
+                    ? 'bg-[#3d3d3d]/10 text-[#3d3d3d]'
                     : 'text-gray-500 hover:bg-white'
                 }`}
               >
@@ -148,7 +148,7 @@ export default function DashboardEventsClient({ events: allEvents, tickets, init
           {(filter === 'all' || filter === 'upcoming') && (
             <Link
               href="/dashboard/events/new"
-              className="bg-[#1d67ba] text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#1555a0] transition-colors inline-flex items-center gap-1.5"
+              className="bg-[#3d3d3d] text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#2a2a2a] transition-colors inline-flex items-center gap-1.5"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 3v10M3 8h10" /></svg>
               Create event

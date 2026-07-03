@@ -33,7 +33,7 @@ export default function ShareLiveModal({ eventUrl }: Props) {
         </button>
 
         <div className="pt-8 text-center">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1d67ba]/10 text-[#1d67ba]">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#3d3d3d]/10 text-[#3d3d3d]">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 2 11 13" /><path d="m22 2-7 20-4-9-9-4 20-7Z" />
             </svg>
@@ -51,7 +51,7 @@ export default function ShareLiveModal({ eventUrl }: Props) {
           <button
             type="button"
             onClick={copyLink}
-            className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#1d67ba] shadow-sm hover:bg-blue-50 transition-colors"
+            className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#3d3d3d] shadow-sm hover:bg-gray-100 transition-colors"
           >
             {copied ? 'Copied' : 'Copy'}
           </button>
@@ -103,7 +103,7 @@ export default function ShareLiveModal({ eventUrl }: Props) {
         <button
           type="button"
           onClick={() => router.push('/dashboard')}
-          className="mt-6 w-full rounded-xl bg-[#1d67ba] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1555a0] transition-colors"
+          className="mt-6 w-full rounded-xl bg-[#3d3d3d] px-5 py-3 text-sm font-semibold text-white hover:bg-[#2a2a2a] transition-colors"
         >
           Go to dashboard
         </button>

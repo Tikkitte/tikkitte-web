@@ -52,7 +52,7 @@ export default function PayoutSummary({
         </div>
       </div>
 
-      <p className="mt-4 rounded-xl bg-blue-50 px-4 py-3 text-xs text-[#1d67ba]">
+      <p className="mt-4 rounded-xl bg-blue-50 px-4 py-3 text-xs text-[#3d3d3d]">
         Payouts are processed by Tikkitte within 3-5 business days after the event.
       </p>
 

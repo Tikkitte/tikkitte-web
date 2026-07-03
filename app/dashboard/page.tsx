@@ -84,7 +84,7 @@ export default async function DashboardHomePage() {
         </div>
         <Link
           href="/dashboard/events/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#1d67ba] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1555a0]"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[#3d3d3d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
           Create event
@@ -114,7 +114,7 @@ export default async function DashboardHomePage() {
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2 className="text-sm font-semibold text-gray-900">Upcoming events</h2>
           {events.length > 3 && (
-            <Link href="/dashboard/events" className="text-sm font-semibold text-[#1d67ba] transition-colors hover:text-[#1555a0]">
+            <Link href="/dashboard/events" className="text-sm font-semibold text-[#3d3d3d] transition-colors hover:text-[#2a2a2a]">
               View all events
             </Link>
           )}
@@ -131,7 +131,7 @@ export default async function DashboardHomePage() {
             <p className="mb-6 text-sm text-gray-500">Events you publish will appear here.</p>
             <Link
               href="/dashboard/events/new"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#1d67ba] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1555a0]"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#3d3d3d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
               Create event
@@ -172,7 +172,7 @@ export default async function DashboardHomePage() {
                     <p className="mt-0.5 text-xs text-gray-500">{formatDate(event.date)}</p>
                   </div>
                   <p className="hidden text-sm font-medium text-gray-600 sm:block">{sold} sold</p>
-                  <span className="text-sm font-semibold text-[#1d67ba]">View details →</span>
+                  <span className="text-sm font-semibold text-[#3d3d3d]">View details →</span>
                 </Link>
               )
             })}

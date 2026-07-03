@@ -50,7 +50,7 @@ export default function PayoutAccountsSection({ accounts }: Props) {
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="rounded-lg bg-[#1d67ba] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1555a0]"
+          className="rounded-lg bg-[#3d3d3d] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
         >
           + Add account
         </button>
@@ -88,7 +88,7 @@ export default function PayoutAccountsSection({ accounts }: Props) {
                       type="button"
                       onClick={() => runAction(account.id, 'primary')}
                       disabled={isPending && activeId === account.id}
-                      className="text-sm font-semibold text-[#1d67ba] hover:text-[#1555a0] disabled:opacity-60"
+                      className="text-sm font-semibold text-[#3d3d3d] hover:text-[#2a2a2a] disabled:opacity-60"
                     >
                       Set as primary
                     </button>

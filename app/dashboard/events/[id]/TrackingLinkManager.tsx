@@ -10,7 +10,7 @@ type Props = {
   initialTrackingLinks: TrackingLink[]
 }
 
-const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] placeholder:text-gray-400'
+const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400'
 
 function slugify(value: string) {
   const normalized = value
@@ -101,7 +101,7 @@ export default function TrackingLinkManager({ eventId, eventSlug, initialTrackin
         <button
           type="button"
           onClick={() => setShowForm((value) => !value)}
-          className="self-start text-sm font-semibold text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors"
+          className="self-start text-sm font-semibold text-[#3d3d3d] border border-[#3d3d3d] rounded-lg px-4 py-2 hover:bg-gray-100 transition-colors"
         >
           {showForm ? 'Cancel' : '+ Create tracking link'}
         </button>
@@ -132,7 +132,7 @@ export default function TrackingLinkManager({ eventId, eventSlug, initialTrackin
               />
             </div>
             <div className="md:col-span-2">
-              <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-medium text-[#1d67ba] break-all">
+              <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-[#3d3d3d] break-all">
                 {previewUrl}
               </p>
             </div>
@@ -143,7 +143,7 @@ export default function TrackingLinkManager({ eventId, eventSlug, initialTrackin
             type="button"
             onClick={handleSubmit}
             disabled={isPending}
-            className="mt-4 bg-[#1d67ba] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#1555a0] transition-colors disabled:opacity-60"
+            className="mt-4 bg-[#3d3d3d] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#2a2a2a] transition-colors disabled:opacity-60"
           >
             {isPending ? 'Creating...' : 'Create link'}
           </button>

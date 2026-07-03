@@ -36,8 +36,8 @@ function exportCSV(filename: string, headers: string[], rows: string[][]) {
   URL.revokeObjectURL(url)
 }
 
-const exportButtonClass = 'text-sm font-semibold text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors'
-const inputClass = 'w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba]'
+const exportButtonClass = 'text-sm font-semibold text-[#3d3d3d] border border-[#3d3d3d] rounded-lg px-4 py-2 hover:bg-gray-100 transition-colors'
+const inputClass = 'w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d]'
 
 export default function EventDetailTabs({ payments, attendees }: Props) {
   const [tab, setTab] = useState<'transactions' | 'attendees'>('transactions')
@@ -85,26 +85,26 @@ export default function EventDetailTabs({ payments, attendees }: Props) {
           onClick={() => setTab('transactions')}
           className={`flex-1 text-sm font-semibold py-3.5 text-center transition-colors relative ${
             tab === 'transactions'
-              ? 'text-[#1d67ba]'
+              ? 'text-[#3d3d3d]'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           Transactions ({payments.length})
           {tab === 'transactions' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1d67ba]" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3d3d3d]" />
           )}
         </button>
         <button
           onClick={() => setTab('attendees')}
           className={`flex-1 text-sm font-semibold py-3.5 text-center transition-colors relative ${
             tab === 'attendees'
-              ? 'text-[#1d67ba]'
+              ? 'text-[#3d3d3d]'
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
           Attendees ({attendees.length})
           {tab === 'attendees' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1d67ba]" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3d3d3d]" />
           )}
         </button>
       </div>

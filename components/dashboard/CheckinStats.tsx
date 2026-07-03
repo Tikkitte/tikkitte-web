@@ -79,7 +79,7 @@ export default function CheckinStats({ eventId, totalSold, initialCheckedIn, sca
           <span className="font-mono font-bold text-sm text-gray-900 tracking-[0.2em]">{scannerPin}</span>
           <button
             onClick={copyPin}
-            className="text-xs text-[#1d67ba] hover:text-[#1555a0] font-medium transition-colors"
+            className="text-xs text-[#3d3d3d] hover:text-[#2a2a2a] font-medium transition-colors"
           >
             {copied ? 'Copied!' : 'Copy'}
           </button>
@@ -95,7 +95,7 @@ export default function CheckinStats({ eventId, totalSold, initialCheckedIn, sca
       ) : (
         <p className="text-xs text-gray-400">
           No scanner PIN set.{' '}
-          <a href={`/dashboard/events/${eventId}/edit`} className="text-[#1d67ba] hover:underline">Edit event</a> to generate one.
+          <a href={`/dashboard/events/${eventId}/edit`} className="text-[#3d3d3d] hover:underline">Edit event</a> to generate one.
         </p>
       )}
     </div>

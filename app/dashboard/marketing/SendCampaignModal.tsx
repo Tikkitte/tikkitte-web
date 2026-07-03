@@ -10,7 +10,7 @@ type Props = {
   onClose: () => void
 }
 
-const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1d67ba]'
+const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3d3d3d]'
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleDateString('en-US', {
@@ -74,7 +74,7 @@ export default function SendCampaignModal({ eventId, eventName, lastAlertSentAt,
           </button>
         </div>
 
-        <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-[#1d67ba]">
+        <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[#3d3d3d]">
           You can send one attendee message per event every 24 hours.
         </div>
 
@@ -126,7 +126,7 @@ export default function SendCampaignModal({ eventId, eventName, lastAlertSentAt,
             type="button"
             onClick={handleSend}
             disabled={sendDisabled}
-            className="rounded-lg bg-[#1d67ba] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1555a0] disabled:opacity-60"
+            className="rounded-lg bg-[#3d3d3d] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#2a2a2a] disabled:opacity-60"
           >
             {isPending ? 'Sending...' : 'Send message'}
           </button>

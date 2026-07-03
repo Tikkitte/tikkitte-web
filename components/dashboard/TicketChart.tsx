@@ -10,7 +10,7 @@ type TicketData = {
   price: number
 }
 
-const COLORS = ['#1d67ba', '#3b82f6', '#60a5fa', '#93c5fd', '#2563eb', '#1e40af']
+const COLORS = ['#3d3d3d', '#555555', '#777777', '#999999', '#2a2a2a', '#1a1a1a']
 
 export function TicketBarChart({ data }: { data: TicketData[] }) {
   return (
@@ -136,8 +136,8 @@ export function RevenueAreaChart({ data }: { data: DailyData[] }) {
           <AreaChart data={data}>
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#1d67ba" stopOpacity={0.2} />
-                <stop offset="100%" stopColor="#1d67ba" stopOpacity={0} />
+                <stop offset="0%" stopColor="#3d3d3d" stopOpacity={0.2} />
+                <stop offset="100%" stopColor="#3d3d3d" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
@@ -169,7 +169,7 @@ export function RevenueAreaChart({ data }: { data: DailyData[] }) {
             <Area
               type="monotone"
               dataKey="revenue"
-              stroke="#1d67ba"
+              stroke="#3d3d3d"
               strokeWidth={2.5}
               fill="url(#revenueGradient)"
             />

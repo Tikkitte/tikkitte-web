@@ -23,7 +23,7 @@ function formatDate(dateStr: string | null | undefined) {
   return `${months[m - 1]} ${d}, ${y}`
 }
 
-const messageButtonClass = 'rounded-lg border border-[#1d67ba] px-4 py-2 text-sm font-semibold text-[#1d67ba] transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:hover:bg-transparent'
+const messageButtonClass = 'rounded-lg border border-[#3d3d3d] px-4 py-2 text-sm font-semibold text-[#3d3d3d] transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:hover:bg-transparent'
 
 export default function MarketingClient({ events, totalFans }: Props) {
   const [activeEvent, setActiveEvent] = useState<MarketingEvent | null>(null)

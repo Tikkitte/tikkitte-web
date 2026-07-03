@@ -10,7 +10,7 @@ type Props = {
   initialCompTickets: ComplimentaryTicket[]
 }
 
-const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] placeholder:text-gray-400'
+const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400'
 
 function formatSentAt(value: string) {
   return new Date(value).toLocaleDateString('en-US', {
@@ -112,7 +112,7 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
               setShowForm((value) => !value)
             }}
             disabled={tickets.length === 0}
-            className="text-sm font-semibold text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:hover:bg-white"
+            className="text-sm font-semibold text-[#3d3d3d] border border-[#3d3d3d] rounded-lg px-4 py-2 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:hover:bg-white"
           >
             {showForm ? 'Cancel' : '+ Send complimentary tickets'}
           </button>
@@ -144,7 +144,7 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full border border-gray-200 bg-white text-gray-900 rounded-lg py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] placeholder:text-gray-400"
+                className="w-full border border-gray-200 bg-white text-gray-900 rounded-lg py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400"
                 placeholder="Search recipients by name or email"
               />
             </div>
@@ -212,7 +212,7 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
                 type="button"
                 onClick={handleSubmit}
                 disabled={isPending || tickets.length === 0}
-                className="mt-4 bg-[#1d67ba] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#1555a0] transition-colors disabled:opacity-60"
+                className="mt-4 bg-[#3d3d3d] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#2a2a2a] transition-colors disabled:opacity-60"
               >
                 {isPending ? 'Sending...' : 'Send tickets'}
               </button>

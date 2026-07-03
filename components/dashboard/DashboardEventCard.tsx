@@ -63,7 +63,7 @@ export default function DashboardEventCard({ event, tickets }: Props) {
             onClick={copyLink}
             aria-label="Copy event link"
             title="Copy event link"
-            className="absolute top-3 right-3 inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-white/95 px-2 text-xs font-semibold text-gray-700 shadow-sm backdrop-blur hover:bg-white hover:text-[#1d67ba] transition-colors"
+            className="absolute top-3 right-3 inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-white/95 px-2 text-xs font-semibold text-gray-700 shadow-sm backdrop-blur hover:bg-white hover:text-[#3d3d3d] transition-colors"
           >
             {copied ? (
               'Copied!'

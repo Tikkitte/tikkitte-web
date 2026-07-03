@@ -9,7 +9,7 @@ type Props = {
   attendeeCount: number
 }
 
-const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] placeholder:text-gray-400'
+const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400'
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleDateString('en-US', {
@@ -70,7 +70,7 @@ export default function MessageAttendeesButton({ eventId, lastAlertSentAt, atten
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="border border-[#1d67ba] text-[#1d67ba] text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-blue-50 transition-colors"
+        className="border border-[#3d3d3d] text-[#3d3d3d] text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
       >
         Message attendees
       </button>
@@ -90,7 +90,7 @@ export default function MessageAttendeesButton({ eventId, lastAlertSentAt, atten
               </button>
             </div>
 
-            <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-[#1d67ba]">
+            <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[#3d3d3d]">
               You can send one attendee message per event every 24 hours.
             </div>
 
@@ -145,7 +145,7 @@ export default function MessageAttendeesButton({ eventId, lastAlertSentAt, atten
                 type="button"
                 onClick={handleSend}
                 disabled={sendDisabled}
-                className="rounded-lg bg-[#1d67ba] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1555a0] disabled:opacity-60"
+                className="rounded-lg bg-[#3d3d3d] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#2a2a2a] disabled:opacity-60"
               >
                 {isPending ? 'Sending...' : 'Send message'}
               </button>

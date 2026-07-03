@@ -10,7 +10,7 @@ type Props = {
   onClose: () => void
 }
 
-const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1d67ba]'
+const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3d3d3d]'
 
 export default function AddPayoutAccountModal({ hasAccounts, onClose }: Props) {
   const router = useRouter()
@@ -121,7 +121,7 @@ export default function AddPayoutAccountModal({ hasAccounts, onClose }: Props) {
                 type="checkbox"
                 checked={isPrimary}
                 onChange={(event) => setIsPrimary(event.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1d67ba] focus:ring-[#1d67ba]"
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-[#3d3d3d] focus:ring-[#3d3d3d]"
               />
               <span>
                 <span className="block font-medium text-gray-700">Set as primary account</span>
@@ -145,7 +145,7 @@ export default function AddPayoutAccountModal({ hasAccounts, onClose }: Props) {
             type="button"
             onClick={save}
             disabled={isPending}
-            className="rounded-lg bg-[#1d67ba] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1555a0] disabled:opacity-60"
+            className="rounded-lg bg-[#3d3d3d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a] disabled:opacity-60"
           >
             {isPending ? 'Saving...' : 'Save'}
           </button>

@@ -91,7 +91,7 @@ export default function DashboardSidebar({ displayName, logoUrl, signOutAction }
     <aside className="fixed inset-y-0 left-0 z-20 flex w-56 flex-col border-r border-gray-100 bg-white">
       <Link href="/dashboard" className="flex items-center gap-2 px-5 pb-4 pt-6">
         <Image src="/images/logo-create.png" alt="" width={42} height={28} unoptimized className="h-6 w-auto shrink-0" />
-        <Image src="/images/text-logo-create.png" alt="Tikkitte Create" width={160} height={35} unoptimized className="h-5 w-auto" />
+        <Image src="/images/text-logo-create.png" alt="Tikkitte Create" width={160} height={35} unoptimized className="h-7 w-auto" />
       </Link>
 
       <nav className="flex-1 space-y-1 px-3">
@@ -103,7 +103,7 @@ export default function DashboardSidebar({ displayName, logoUrl, signOutAction }
               href={item.href}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
                 active
-                  ? 'bg-[#1d67ba]/10 text-[#1d67ba]'
+                  ? 'bg-[#3d3d3d]/10 text-[#3d3d3d]'
                   : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
               }`}
             >
@@ -120,7 +120,7 @@ export default function DashboardSidebar({ displayName, logoUrl, signOutAction }
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
           ) : (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1d67ba]/10 text-xs font-bold text-[#1d67ba]">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3d3d3d]/10 text-xs font-bold text-[#3d3d3d]">
               {initialsFor(displayName)}
             </div>
           )}

@@ -9,7 +9,7 @@ type Props = {
   tickets: Ticket[]
 }
 
-const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] placeholder:text-gray-400'
+const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400'
 
 export default function PromoCodeManager({ eventId, tickets }: Props) {
   const [codes, setCodes] = useState<PromoCode[]>([])
@@ -141,7 +141,7 @@ export default function PromoCodeManager({ eventId, tickets }: Props) {
         <button
           type="button"
           onClick={() => setShowForm((value) => !value)}
-          className="text-sm font-semibold text-[#1d67ba] border border-[#1d67ba] rounded-lg px-4 py-2 hover:bg-blue-50 transition-colors"
+          className="text-sm font-semibold text-[#3d3d3d] border border-[#3d3d3d] rounded-lg px-4 py-2 hover:bg-gray-100 transition-colors"
         >
           {showForm ? 'Cancel' : '+ Add promo code'}
         </button>
@@ -165,14 +165,14 @@ export default function PromoCodeManager({ eventId, tickets }: Props) {
                 <button
                   type="button"
                   onClick={() => setDiscountType('percent')}
-                  className={`rounded-md px-3 py-2 text-sm font-semibold transition-colors ${discountType === 'percent' ? 'bg-[#1d67ba]/10 text-[#1d67ba]' : 'text-gray-500 hover:bg-gray-50'}`}
+                  className={`rounded-md px-3 py-2 text-sm font-semibold transition-colors ${discountType === 'percent' ? 'bg-[#3d3d3d]/10 text-[#3d3d3d]' : 'text-gray-500 hover:bg-gray-50'}`}
                 >
                   Percent off
                 </button>
                 <button
                   type="button"
                   onClick={() => setDiscountType('fixed')}
-                  className={`rounded-md px-3 py-2 text-sm font-semibold transition-colors ${discountType === 'fixed' ? 'bg-[#1d67ba]/10 text-[#1d67ba]' : 'text-gray-500 hover:bg-gray-50'}`}
+                  className={`rounded-md px-3 py-2 text-sm font-semibold transition-colors ${discountType === 'fixed' ? 'bg-[#3d3d3d]/10 text-[#3d3d3d]' : 'text-gray-500 hover:bg-gray-50'}`}
                 >
                   Fixed amount off
                 </button>
@@ -221,7 +221,7 @@ export default function PromoCodeManager({ eventId, tickets }: Props) {
             type="button"
             onClick={saveCode}
             disabled={loading}
-            className="mt-4 bg-[#1d67ba] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#1555a0] transition-colors disabled:opacity-60"
+            className="mt-4 bg-[#3d3d3d] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#2a2a2a] transition-colors disabled:opacity-60"
           >
             {loading ? 'Saving...' : 'Save code'}
           </button>

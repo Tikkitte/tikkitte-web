@@ -39,7 +39,7 @@ export default function RefreshButton() {
       <button
         onClick={handleCheck}
         disabled={checking}
-        className="bg-[#1d67ba] text-white font-semibold text-sm px-6 py-3 rounded-xl hover:bg-[#1555a0] transition-colors disabled:opacity-60"
+        className="bg-[#3d3d3d] text-white font-semibold text-sm px-6 py-3 rounded-xl hover:bg-[#2a2a2a] transition-colors disabled:opacity-60"
       >
         {checking ? 'Checking…' : 'Go to dashboard'}
       </button>

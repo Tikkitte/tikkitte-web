@@ -26,8 +26,8 @@ function exportCSV(filename: string, headers: string[], rows: string[][]) {
   URL.revokeObjectURL(url)
 }
 
-const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1d67ba]'
-const exportButtonClass = 'rounded-lg border border-[#1d67ba] px-4 py-2 text-sm font-semibold text-[#1d67ba] transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50'
+const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3d3d3d]'
+const exportButtonClass = 'rounded-lg border border-[#3d3d3d] px-4 py-2 text-sm font-semibold text-[#3d3d3d] transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
 
 export default function FansClient({ fans }: Props) {
   const [search, setSearch] = useState('')

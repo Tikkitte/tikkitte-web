@@ -16,8 +16,8 @@ type Props = {
   snapchatUrl: string
 }
 
-const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1d67ba]'
-const socialInputClass = 'w-full rounded-lg border border-gray-200 bg-white px-10 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1d67ba]'
+const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3d3d3d]'
+const socialInputClass = 'w-full rounded-lg border border-gray-200 bg-white px-10 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3d3d3d]'
 
 type SocialErrors = {
   tiktokUrl?: string
@@ -212,7 +212,7 @@ export default function OrganizerProfileForm({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrlValue} alt="" className="h-16 w-16 rounded-full object-cover" />
               ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#1d67ba]/10 text-2xl font-bold text-[#1d67ba]">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#3d3d3d]/10 text-2xl font-bold text-[#3d3d3d]">
                   {name.trim()[0]?.toUpperCase() ?? 'T'}
                 </div>
               )}
@@ -227,7 +227,7 @@ export default function OrganizerProfileForm({
                 type="button"
                 onClick={() => avatarFileRef.current?.click()}
                 disabled={photoUploading}
-                className="rounded-lg border border-[#1d67ba] px-4 py-2 text-sm font-semibold text-[#1d67ba] transition-colors hover:bg-blue-50 disabled:opacity-60"
+                className="rounded-lg border border-[#3d3d3d] px-4 py-2 text-sm font-semibold text-[#3d3d3d] transition-colors hover:bg-gray-100 disabled:opacity-60"
               >
                 {photoUploading ? 'Uploading...' : 'Upload photo'}
               </button>
@@ -349,7 +349,7 @@ export default function OrganizerProfileForm({
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-lg bg-[#1d67ba] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1555a0] disabled:opacity-60"
+              className="rounded-lg bg-[#3d3d3d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a] disabled:opacity-60"
             >
               {isPending ? 'Saving...' : 'Save changes'}
             </button>
