@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment } from '@/lib/types'
+import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment, Payout } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/TicketChart'
 import CancelButton from './CancelButton'
 import PublishButton from './PublishButton'
@@ -12,6 +12,7 @@ import TrackingLinkManager from './TrackingLinkManager'
 import EventDetailTabs from './EventDetailTabs'
 import CheckinStats from '@/components/dashboard/CheckinStats'
 import MessageAttendeesButton from './MessageAttendeesButton'
+import PayoutSummary from './PayoutSummary'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -119,6 +120,12 @@ export default async function EventDetailPage({
     .eq('status', 'free')
     .order('paid_at', { ascending: false })
 
+  const { data: payouts } = await supabase
+    .from('payout')
+    .select('*')
+    .eq('event_id', id)
+    .order('created_at', { ascending: false })
+
   const allPayments = [...(payments ?? []), ...(freePayments ?? [])]
     .sort((a, b) => {
       const da = a.paid_at ? new Date(a.paid_at).getTime() : 0
@@ -135,6 +142,10 @@ export default async function EventDetailPage({
     (s: number, t: Ticket) => s + t.purchased_quantity * t.price, 0
   )
   const grossCollected = allPayments.reduce((s: number, p: Payment) => s + (p.amount ?? 0), 0) / 100
+  const configuredPlatformFeePercent = Number(process.env.PLATFORM_FEE_PERCENT ?? '5')
+  const platformFeePercent = Number.isFinite(configuredPlatformFeePercent) ? configuredPlatformFeePercent : 5
+  const platformFeeAmount = grossCollected * platformFeePercent / 100
+  const estimatedPayout = grossCollected - platformFeeAmount
   const collectedByTicketType = allPayments.reduce((acc: Record<string, number>, p: Payment) => {
     if (!p.ticket_type_id) return acc
     acc[p.ticket_type_id] = (acc[p.ticket_type_id] ?? 0) + (p.amount ?? 0) / 100
@@ -316,6 +327,14 @@ export default async function EventDetailPage({
             totalSold={totalSold}
             initialCheckedIn={totalCheckedIn}
             scannerPin={event.scanner_pin ?? null}
+          />
+
+          <PayoutSummary
+            grossCollected={grossCollected}
+            platformFeePercent={platformFeePercent}
+            platformFeeAmount={platformFeeAmount}
+            estimatedPayout={estimatedPayout}
+            payouts={(payouts ?? []) as Payout[]}
           />
 
           {/* Charts */}

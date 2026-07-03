@@ -113,3 +113,14 @@ export type TrackingLink = {
   clicks: number
   created_at: string
 }
+
+export type Payout = {
+  id: string
+  organizer_id: string
+  event_id: string | null
+  amount: number
+  status: 'pending' | 'paid'
+  paid_at: string | null
+  note: string | null
+  created_at: string
+}

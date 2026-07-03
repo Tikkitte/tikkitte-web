@@ -90,6 +90,10 @@ export default function MessageAttendeesButton({ eventId, lastAlertSentAt, atten
               </button>
             </div>
 
+            <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-[#1d67ba]">
+              You can send one attendee message per event every 24 hours.
+            </div>
+
             {effectiveNextAvailableAt && (
               <div className="mb-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
                 Next message available at {formatDateTime(effectiveNextAvailableAt)}.
