@@ -8,16 +8,14 @@ type Props = {
   displayName: string
   email: string
   bio: string
-  logoUrl: string
 }
 
 const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1d67ba]'
 
-export default function OrganizerProfileForm({ displayName, email, bio, logoUrl }: Props) {
+export default function OrganizerProfileForm({ displayName, email, bio }: Props) {
   const router = useRouter()
   const [name, setName] = useState(displayName)
   const [bioValue, setBioValue] = useState(bio)
-  const [logoUrlValue, setLogoUrlValue] = useState(logoUrl)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -31,7 +29,6 @@ export default function OrganizerProfileForm({ displayName, email, bio, logoUrl 
       const result = await updateOrganizerProfile({
         displayName: name,
         bio: bioValue,
-        logoUrl: logoUrlValue,
       })
 
       if (!result.ok) {
@@ -79,19 +76,6 @@ export default function OrganizerProfileForm({ displayName, email, bio, logoUrl 
               rows={5}
               className={inputClass}
               placeholder="Tell attendees about your organization"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="logo-url" className="mb-1.5 block text-sm font-medium text-gray-700">
-              Logo URL
-            </label>
-            <input
-              id="logo-url"
-              value={logoUrlValue}
-              onChange={(event) => setLogoUrlValue(event.target.value)}
-              className={inputClass}
-              placeholder="https://example.com/logo.png"
             />
           </div>
 

@@ -9,7 +9,7 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from('organizer_profile')
-    .select('display_name, email, logo_url, bio')
+    .select('display_name, email, bio')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -25,7 +25,6 @@ export default async function SettingsPage() {
           displayName={profile?.display_name ?? ''}
           email={profile?.email ?? user.email ?? ''}
           bio={profile?.bio ?? ''}
-          logoUrl={profile?.logo_url ?? ''}
         />
       </div>
     </div>
