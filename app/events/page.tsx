@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: 'Browse upcoming events in Ghana and buy tickets instantly.',
 }
 
+export const revalidate = 30
+
 export default async function EventsPage() {
   const supabase = await createClient()
   const today = new Date().toISOString().slice(0, 10)

@@ -71,16 +71,52 @@ export default async function EventDetailPage({
 
   if (!event) notFound()
 
-  const { data: tickets } = await supabase
-    .from('ticket')
-    .select('*')
-    .eq('event_id', id)
-    .order('type')
-
-  const { data: userTickets } = await supabase
-    .from('user_ticket')
-    .select('*')
-    .eq('event_id', id)
+  const [
+    { data: tickets },
+    { data: userTickets },
+    { data: compTickets },
+    { data: trackingLinks },
+    { data: payments },
+    { data: freePayments },
+    { data: payouts },
+  ] = await Promise.all([
+    supabase
+      .from('ticket')
+      .select('*')
+      .eq('event_id', id)
+      .order('type'),
+    supabase
+      .from('user_ticket')
+      .select('*')
+      .eq('event_id', id),
+    supabase
+      .from('complimentary_ticket')
+      .select('*')
+      .eq('event_id', id)
+      .order('sent_at', { ascending: false }),
+    supabase
+      .from('tracking_link')
+      .select('*')
+      .eq('event_id', id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('payments')
+      .select('*')
+      .eq('event_id', id)
+      .eq('status', 'success')
+      .order('paid_at', { ascending: false }),
+    supabase
+      .from('payments')
+      .select('*')
+      .eq('event_id', id)
+      .eq('status', 'free')
+      .order('paid_at', { ascending: false }),
+    supabase
+      .from('payout')
+      .select('*')
+      .eq('event_id', id)
+      .order('created_at', { ascending: false }),
+  ])
 
   const { data: attendeeProfiles } = (userTickets ?? []).length > 0
     ? await supabase.rpc('get_event_attendee_profiles', { p_event_id: id })
@@ -93,38 +129,6 @@ export default async function EventDetailPage({
     },
     {}
   )
-
-  const { data: compTickets } = await supabase
-    .from('complimentary_ticket')
-    .select('*')
-    .eq('event_id', id)
-    .order('sent_at', { ascending: false })
-
-  const { data: trackingLinks } = await supabase
-    .from('tracking_link')
-    .select('*')
-    .eq('event_id', id)
-    .order('created_at', { ascending: false })
-
-  const { data: payments } = await supabase
-    .from('payments')
-    .select('*')
-    .eq('event_id', id)
-    .eq('status', 'success')
-    .order('paid_at', { ascending: false })
-
-  const { data: freePayments } = await supabase
-    .from('payments')
-    .select('*')
-    .eq('event_id', id)
-    .eq('status', 'free')
-    .order('paid_at', { ascending: false })
-
-  const { data: payouts } = await supabase
-    .from('payout')
-    .select('*')
-    .eq('event_id', id)
-    .order('created_at', { ascending: false })
 
   const allPayments = [...(payments ?? []), ...(freePayments ?? [])]
     .sort((a, b) => {

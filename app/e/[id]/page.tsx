@@ -53,20 +53,21 @@ async function getEventData(idOrSlug: string) {
     .maybeSingle()
   if (!event) return null
 
-  const { data: tickets } = await supabase
-    .from('ticket')
-    .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity, min_per_order, max_per_order, sale_start_date, sale_start_time, sale_end_date, sale_end_time')
-    .eq('event_id', event.id)
-    .order('price', { ascending: true })
-
-  const { data: organizer } = event.organizer_id
-    ? await supabase
-        .from('organizer_profile')
-        .select('id, slug, display_name, logo_url')
-        .eq('id', event.organizer_id)
-        .eq('approved', true)
-        .maybeSingle()
-    : { data: null }
+  const [{ data: tickets }, { data: organizer }] = await Promise.all([
+    supabase
+      .from('ticket')
+      .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity, min_per_order, max_per_order, sale_start_date, sale_start_time, sale_end_date, sale_end_time')
+      .eq('event_id', event.id)
+      .order('price', { ascending: true }),
+    event.organizer_id
+      ? supabase
+          .from('organizer_profile')
+          .select('id, slug, display_name, logo_url')
+          .eq('id', event.organizer_id)
+          .eq('approved', true)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
 
   return {
     event: event as Event,

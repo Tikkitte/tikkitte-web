@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Nav from '@/components/landing/Nav'
 
+export const revalidate = 30
+
 type Organizer = {
   id: string
   display_name: string
