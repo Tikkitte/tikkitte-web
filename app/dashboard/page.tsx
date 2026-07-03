@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import type { Event, Payment, Ticket, PayoutAccount } from '@/lib/types'
-import { RevenueAreaChart } from '@/components/dashboard/TicketChart'
+import type { Event, Ticket, PayoutAccount } from '@/lib/types'
+import InfoTip from '@/components/ui/InfoTip'
+import DashboardRevenueChart from '@/components/dashboard/DashboardRevenueChart'
 
 const PLATFORM_FEE_PCT = Number(process.env.PLATFORM_FEE_PERCENT ?? '5') / 100
 
@@ -26,21 +27,6 @@ function eventStatus(event: Event): { label: string; className: string } {
   const today = new Date().toISOString().slice(0, 10)
   if (event.date < today) return { label: 'Past', className: 'bg-gray-100 text-gray-500' }
   return { label: 'Upcoming', className: 'bg-green-50 text-green-700' }
-}
-
-type PaymentRow = { amount: number | null; paid_at: string | null }
-
-function buildMonthlyData(payments: PaymentRow[]) {
-  const now = new Date()
-  return Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = d.toLocaleDateString('en-GB', { month: 'short' })
-    const revenue = payments
-      .filter((p) => p.paid_at?.startsWith(key))
-      .reduce((sum, p) => sum + (p.amount ?? 0) / 100, 0)
-    return { date: label, revenue }
-  })
 }
 
 export default async function DashboardHomePage() {
@@ -81,7 +67,7 @@ export default async function DashboardHomePage() {
     : [{ data: [] }, { data: [] }]
 
   const tickets = (rawTickets ?? []) as Ticket[]
-  const payments = (rawPayments ?? []) as PaymentRow[]
+  const payments = (rawPayments ?? []) as { amount: number | null; paid_at: string | null }[]
   const account = primaryAccount as PayoutAccount | null
 
   const ticketsByEvent = tickets.reduce((acc: Record<string, Ticket[]>, t) => {
@@ -96,6 +82,7 @@ export default async function DashboardHomePage() {
   const totalCollected = payments.reduce((sum, p) => sum + (p.amount ?? 0) / 100, 0)
   const platformFee = totalCollected * PLATFORM_FEE_PCT
   const netAvailable = totalCollected - platformFee
+  const avgTicketValue = totalTicketsSold > 0 ? totalRevenue / totalTicketsSold : 0
 
   const today = new Date().toISOString().slice(0, 10)
   const upcomingEvents = events
@@ -104,7 +91,7 @@ export default async function DashboardHomePage() {
     .slice(0, 3)
 
   const displayName = profile?.display_name ?? user.email ?? 'there'
-  const monthlyData = buildMonthlyData(payments)
+  const feePct = (PLATFORM_FEE_PCT * 100).toFixed(0)
 
   return (
     <div>
@@ -126,14 +113,17 @@ export default async function DashboardHomePage() {
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Earnings card */}
         <div className="lg:col-span-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <p className="mb-1 text-sm text-gray-500">Total collected</p>
+          <div className="mb-1 flex items-center gap-1.5">
+            <p className="text-sm text-gray-500">Total collected</p>
+            <InfoTip
+              text="The actual cash received from ticket buyers via Paystack. May differ from Gross revenue if any payments are pending or failed."
+            />
+          </div>
           <p className="text-4xl font-extrabold tracking-tight text-gray-900">
             {formatMoney(totalCollected, 2)}
           </p>
-          <p className="mt-1 mb-6 text-xs text-gray-400">
-            Gross revenue across all events · {(PLATFORM_FEE_PCT * 100).toFixed(0)}% platform fee deducted from payouts
-          </p>
-          <RevenueAreaChart data={monthlyData} hideHeader />
+          <p className="mt-1 mb-6 text-xs text-gray-400">Across all events</p>
+          <DashboardRevenueChart payments={payments} />
         </div>
 
         {/* Payout panel */}
@@ -141,12 +131,18 @@ export default async function DashboardHomePage() {
           <h2 className="mb-5 text-sm font-semibold text-gray-900">Payout</h2>
 
           <div className="mb-5">
-            <p className="mb-0.5 text-xs text-gray-400">Available balance</p>
+            <div className="mb-0.5 flex items-center gap-1.5">
+              <p className="text-xs text-gray-400">Available balance</p>
+              <InfoTip
+                text={`Total collected minus the ${feePct}% Tikkitte platform fee (${formatMoney(platformFee, 2)}). This is the amount you can request to be paid out.`}
+                width="w-60"
+              />
+            </div>
             <p className="text-3xl font-extrabold tracking-tight text-gray-900">
               {formatMoney(netAvailable, 2)}
             </p>
             <p className="mt-1 text-xs text-gray-400">
-              After {(PLATFORM_FEE_PCT * 100).toFixed(0)}% platform fee ({formatMoney(platformFee, 2)})
+              After {feePct}% platform fee ({formatMoney(platformFee, 2)})
             </p>
           </div>
 
@@ -194,12 +190,21 @@ export default async function DashboardHomePage() {
           <p className="text-2xl font-extrabold text-gray-900">{totalTicketsSold}</p>
         </div>
         <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <p className="mb-1 text-sm text-gray-500">Gross revenue</p>
+          <div className="mb-1 flex items-center gap-1.5">
+            <p className="text-sm text-gray-500">Gross revenue</p>
+            <InfoTip
+              text="Ticket price × tickets sold across all events. This is what you charged — not necessarily what was collected. Free tickets count as GHS 0."
+              width="w-60"
+            />
+          </div>
           <p className="text-2xl font-extrabold text-gray-900">{formatMoney(totalRevenue)}</p>
         </div>
         <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <p className="mb-1 text-sm text-gray-500">Platform fee</p>
-          <p className="text-2xl font-extrabold text-gray-900">{formatMoney(platformFee, 2)}</p>
+          <div className="mb-1 flex items-center gap-1.5">
+            <p className="text-sm text-gray-500">Avg ticket value</p>
+            <InfoTip text="Average ticket price across all ticket types and events." />
+          </div>
+          <p className="text-2xl font-extrabold text-gray-900">{formatMoney(avgTicketValue, 2)}</p>
         </div>
       </div>
 
