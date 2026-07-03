@@ -68,7 +68,11 @@ export default async function DashboardHomePage() {
   const totalTicketsSold = tickets.reduce((sum, ticket) => sum + ticket.purchased_quantity, 0)
   const totalRevenue = tickets.reduce((sum, ticket) => sum + ticket.purchased_quantity * ticket.price, 0)
   const totalCollected = payments.reduce((sum, payment) => sum + (payment.amount ?? 0), 0) / 100
-  const recentEvents = [...events].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3)
+  const today = new Date().toISOString().slice(0, 10)
+  const upcomingEvents = events
+    .filter((event) => event.published && !event.cancelled && event.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 3)
   const displayName = profile?.display_name ?? user.email ?? 'there'
 
   return (
@@ -108,7 +112,7 @@ export default async function DashboardHomePage() {
 
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 className="text-sm font-semibold text-gray-900">Recent events</h2>
+          <h2 className="text-sm font-semibold text-gray-900">Upcoming events</h2>
           {events.length > 3 && (
             <Link href="/dashboard/events" className="text-sm font-semibold text-[#1d67ba] transition-colors hover:text-[#1555a0]">
               View all events
@@ -116,15 +120,15 @@ export default async function DashboardHomePage() {
           )}
         </div>
 
-        {recentEvents.length === 0 ? (
+        {upcomingEvents.length === 0 ? (
           <div className="py-14 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400" aria-hidden="true">
                 <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
               </svg>
             </div>
-            <p className="mb-1 font-semibold text-gray-700">No events yet</p>
-            <p className="mb-6 text-sm text-gray-500">Create your first event to start selling tickets.</p>
+            <p className="mb-1 font-semibold text-gray-700">No upcoming events</p>
+            <p className="mb-6 text-sm text-gray-500">Events you publish will appear here.</p>
             <Link
               href="/dashboard/events/new"
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#1d67ba] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1555a0]"
@@ -135,7 +139,7 @@ export default async function DashboardHomePage() {
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {recentEvents.map((event) => {
+            {upcomingEvents.map((event) => {
               const status = eventStatus(event)
               const sold = (ticketsByEvent[event.id] ?? []).reduce((sum, ticket) => sum + ticket.purchased_quantity, 0)
               const poster = event.image?.[0]

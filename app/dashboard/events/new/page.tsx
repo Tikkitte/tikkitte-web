@@ -10,7 +10,7 @@ export default async function NewEventPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-8 max-w-2xl mx-auto">Create event</h1>
-      <EventForm organizerId={user.id} />
+      <EventForm organizerId={user.id} showPreview />
     </div>
   )
 }

@@ -17,7 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('organizer_profile')
-    .select('display_name, approved')
+    .select('display_name, approved, logo_url')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -28,7 +28,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardSidebar displayName={profile.display_name ?? user.email ?? 'Organizer'} signOutAction={signOut} />
+      <DashboardSidebar
+        displayName={profile.display_name ?? user.email ?? 'Organizer'}
+        logoUrl={profile.logo_url ?? null}
+        signOutAction={signOut}
+      />
       <main className="min-h-screen flex-1 px-8 py-8 pl-[16rem]">
         <div className="mx-auto w-full max-w-6xl">
           {children}

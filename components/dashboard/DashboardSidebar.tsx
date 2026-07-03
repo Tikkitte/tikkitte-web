@@ -17,6 +17,7 @@ type NavItem = {
 
 type Props = {
   displayName: string
+  logoUrl: string | null
   signOutAction: () => Promise<void>
 }
 
@@ -83,7 +84,7 @@ const navItems: NavItem[] = [
   { href: '/dashboard/settings', label: 'Settings', match: (pathname) => pathname.startsWith('/dashboard/settings'), Icon: GearIcon },
 ]
 
-export default function DashboardSidebar({ displayName, signOutAction }: Props) {
+export default function DashboardSidebar({ displayName, logoUrl, signOutAction }: Props) {
   const pathname = usePathname()
 
   return (
@@ -115,9 +116,14 @@ export default function DashboardSidebar({ displayName, signOutAction }: Props) 
 
       <div className="border-t border-gray-100 px-4 pb-6 pt-4">
         <div className="mb-3 flex items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1d67ba]/10 text-xs font-bold text-[#1d67ba]">
-            {initialsFor(displayName)}
-          </div>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
+          ) : (
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1d67ba]/10 text-xs font-bold text-[#1d67ba]">
+              {initialsFor(displayName)}
+            </div>
+          )}
           <span className="truncate text-sm font-medium text-gray-700">{displayName}</span>
         </div>
         <form action={signOutAction}>

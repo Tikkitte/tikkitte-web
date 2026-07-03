@@ -124,3 +124,14 @@ export type Payout = {
   note: string | null
   created_at: string
 }
+
+export type PayoutAccount = {
+  id: string
+  organizer_id: string
+  method: 'mobile_money' | 'bank_transfer'
+  provider: string
+  account_number: string
+  account_name: string
+  is_primary: boolean
+  created_at: string | null
+}

@@ -23,6 +23,7 @@ type Props = {
   event?: Event
   tickets?: Ticket[]
   organizerId: string
+  showPreview?: boolean
 }
 
 const emptyTicketRow: TicketRow = {
@@ -38,7 +39,76 @@ const emptyTicketRow: TicketRow = {
   showAdvanced: false,
 }
 
-export default function EventForm({ event, tickets, organizerId }: Props) {
+function formatPreviewDate(dateStr: string) {
+  if (!dateStr) return 'Date TBA'
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  return `${months[m - 1]} ${d}, ${y}`
+}
+
+function formatPreviewTime(timeStr: string) {
+  if (!timeStr) return 'Time TBA'
+  const [hh, mm] = timeStr.split(':').map(Number)
+  const am = hh < 12
+  const h12 = ((hh + 11) % 12) + 1
+  return `${h12}:${String(mm).padStart(2, '0')} ${am ? 'AM' : 'PM'}`
+}
+
+function EventPreviewCard({
+  name,
+  date,
+  time,
+  venue,
+  imageUrl,
+  ticketRows,
+}: {
+  name: string
+  date: string
+  time: string
+  venue: string
+  imageUrl: string | null
+  ticketRows: TicketRow[]
+}) {
+  const validPrices = ticketRows
+    .map((row) => Number(row.price))
+    .filter((price) => Number.isFinite(price) && price >= 0)
+  const lowestPrice = validPrices.length > 0 ? Math.min(...validPrices) : 0
+  const priceLabel = lowestPrice > 0
+    ? `From GHS ${lowestPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+    : 'Free'
+
+  return (
+    <div className="hidden lg:block">
+      <div className="sticky top-8">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Preview</p>
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <div className="h-44 w-full bg-gray-100">
+            {imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300" aria-hidden="true">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
+                </svg>
+              </div>
+            )}
+          </div>
+          <div className="p-5">
+            <h3 className={`line-clamp-1 font-semibold ${name.trim() ? 'text-gray-900' : 'italic text-gray-400'}`}>
+              {name.trim() || 'Your event name'}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">{formatPreviewDate(date)} &middot; {formatPreviewTime(time)}</p>
+            <p className="mt-1 line-clamp-1 text-sm text-gray-400">{venue.trim() || 'Venue TBA'}</p>
+            <p className="mt-4 text-sm font-semibold text-[#1d67ba]">{priceLabel}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function EventForm({ event, tickets, organizerId, showPreview = false }: Props) {
   const router = useRouter()
   const isEdit = !!event
   const fileRef = useRef<HTMLInputElement>(null)
@@ -407,7 +477,7 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
 
   const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] placeholder:text-gray-400'
 
-  return (
+  const form = (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto w-full flex flex-col gap-6">
       {/* Basic info */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
@@ -770,5 +840,21 @@ export default function EventForm({ event, tickets, organizerId }: Props) {
         </button>
       </div>
     </form>
+  )
+
+  if (!showPreview) return form
+
+  return (
+    <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1fr_300px]">
+      <div>{form}</div>
+      <EventPreviewCard
+        name={name}
+        date={date}
+        time={time}
+        venue={venue}
+        imageUrl={imageUrl}
+        ticketRows={ticketRows}
+      />
+    </div>
   )
 }

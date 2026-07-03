@@ -97,23 +97,6 @@ export default function DashboardEventsClient({ events: allEvents, tickets, init
 
   return (
     <>
-      {totalEvents > 0 && (
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-sm text-gray-500 mb-1">Total events</p>
-            <p className="text-2xl font-extrabold text-gray-900">{totalEvents}</p>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-sm text-gray-500 mb-1">Tickets sold</p>
-            <p className="text-2xl font-extrabold text-gray-900">{totalSold}</p>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-sm text-gray-500 mb-1">Total revenue</p>
-            <p className="text-2xl font-extrabold text-gray-900">GHS {totalRevenue.toLocaleString()}</p>
-          </div>
-        </div>
-      )}
-
       <div className="mb-6 overflow-x-auto">
         <div className="inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1">
           {filters.map((tab) => {
@@ -135,6 +118,23 @@ export default function DashboardEventsClient({ events: allEvents, tickets, init
           })}
         </div>
       </div>
+
+      {totalEvents > 0 && (
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p className="text-sm text-gray-500 mb-1">Total events</p>
+            <p className="text-2xl font-extrabold text-gray-900">{totalEvents}</p>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p className="text-sm text-gray-500 mb-1">Tickets sold</p>
+            <p className="text-2xl font-extrabold text-gray-900">{totalSold}</p>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <p className="text-sm text-gray-500 mb-1">Total revenue</p>
+            <p className="text-2xl font-extrabold text-gray-900">GHS {totalRevenue.toLocaleString()}</p>
+          </div>
+        </div>
+      )}
 
       {visibleEvents.length === 0 ? (
         <div className="text-center py-24">
