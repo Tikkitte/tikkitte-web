@@ -52,3 +52,4 @@ verify_phase1.sql
 # supabase CLI local state (project ref, pooler URL, org ID)
 supabase/.temp/
 CODEX_BRIEF_V2.md
+CODEX_BRIEF_V3.md

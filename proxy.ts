@@ -2,6 +2,13 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
+  const host = request.headers.get('host') ?? ''
+  if (host.startsWith('create.') && !request.nextUrl.pathname.startsWith('/dashboard')) {
+    const url = request.nextUrl.clone()
+    url.pathname = `/dashboard${request.nextUrl.pathname === '/' ? '' : request.nextUrl.pathname}`
+    return NextResponse.redirect(url)
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -62,5 +69,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/signup'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 }

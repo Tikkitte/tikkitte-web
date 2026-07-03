@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import Image from 'next/image'
-import DashboardNav from '@/components/dashboard/DashboardNav'
+import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
 
 async function signOut() {
   'use server'
@@ -29,33 +27,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Top nav */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <Image src="/images/logo.png" alt="" width={42} height={28} unoptimized style={{ width: 'auto', height: '24px', display: 'block', flexShrink: 0 }} />
-              <Image src="/images/text-logo-web.png" alt="Tikkitte" width={120} height={20} unoptimized style={{ height: '18px', width: 'auto', display: 'block' }} />
-            </Link>
-            <DashboardNav />
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600 hidden sm:block">
-              {profile?.display_name ?? user.email}
-            </span>
-            <form action={signOut}>
-              <button type="submit" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
-                Sign out
-              </button>
-            </form>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      <DashboardSidebar displayName={profile.display_name ?? user.email ?? 'Organizer'} signOutAction={signOut} />
+      <main className="min-h-screen flex-1 px-8 py-8 pl-[16rem]">
+        <div className="mx-auto w-full max-w-6xl">
+          {children}
         </div>
-      </header>
-
-      <div className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
-        {children}
-      </div>
+      </main>
     </div>
   )
 }
