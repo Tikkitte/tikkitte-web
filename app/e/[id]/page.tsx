@@ -8,6 +8,12 @@ import { isValidUUID } from '@/lib/validation'
 import EventCheckout from './EventCheckout'
 import EventPreviewGallery from '@/components/EventPreviewGallery'
 
+type OrganizerSummary = {
+  id: string
+  display_name: string
+  logo_url: string | null
+}
+
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
   const [y, m, d] = dateStr.split('-').map(Number)
@@ -52,7 +58,20 @@ async function getEventData(idOrSlug: string) {
     .eq('event_id', event.id)
     .order('price', { ascending: true })
 
-  return { event: event as Event, tickets: (tickets ?? []) as Ticket[] }
+  const { data: organizer } = event.organizer_id
+    ? await supabase
+        .from('organizer_profile')
+        .select('id, display_name, logo_url')
+        .eq('id', event.organizer_id)
+        .eq('approved', true)
+        .maybeSingle()
+    : { data: null }
+
+  return {
+    event: event as Event,
+    tickets: (tickets ?? []) as Ticket[],
+    organizer: organizer as OrganizerSummary | null,
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -87,7 +106,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
   const data = await getEventData(id)
   if (!data) notFound()
 
-  const { event, tickets } = data
+  const { event, tickets, organizer } = data
   const ref = (await searchParams)?.ref?.trim().toLowerCase()
   if (ref) {
     const supabase = await createClient()
@@ -179,6 +198,30 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 <p className="text-sm text-gray-400 mt-3 leading-relaxed line-clamp-4">
                   {event.description}
                 </p>
+              )}
+              {organizer && (
+                <Link
+                  href={`/o/${organizer.id}`}
+                  className="group mt-4 flex items-center gap-2.5 border-t border-gray-100 pt-4"
+                >
+                  {organizer.logo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={organizer.logo_url} className="h-8 w-8 rounded-full object-cover" alt="" />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1d67ba]/10 text-xs font-bold text-[#1d67ba]">
+                      {organizer.display_name[0]?.toUpperCase() ?? 'T'}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs text-gray-400">Hosted by</p>
+                    <p className="text-sm font-semibold text-gray-900 transition-colors group-hover:text-[#1d67ba]">
+                      {organizer.display_name}
+                    </p>
+                  </div>
+                  <svg className="ml-auto text-gray-300 transition-colors group-hover:text-[#1d67ba]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </Link>
               )}
             </div>
           </div>
