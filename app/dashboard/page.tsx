@@ -1,7 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import type { Event, Payment, Ticket } from '@/lib/types'
+import type { Event, Payment, Ticket, PayoutAccount } from '@/lib/types'
+import { RevenueAreaChart } from '@/components/dashboard/TicketChart'
+
+const PLATFORM_FEE_PCT = Number(process.env.PLATFORM_FEE_PERCENT ?? '5') / 100
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -25,62 +28,90 @@ function eventStatus(event: Event): { label: string; className: string } {
   return { label: 'Upcoming', className: 'bg-green-50 text-green-700' }
 }
 
+type PaymentRow = { amount: number | null; paid_at: string | null }
+
+function buildMonthlyData(payments: PaymentRow[]) {
+  const now = new Date()
+  return Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const label = d.toLocaleDateString('en-GB', { month: 'short' })
+    const revenue = payments
+      .filter((p) => p.paid_at?.startsWith(key))
+      .reduce((sum, p) => sum + (p.amount ?? 0) / 100, 0)
+    return { date: label, revenue }
+  })
+}
+
 export default async function DashboardHomePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('organizer_profile')
-    .select('display_name')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  const { data: rawEvents } = await supabase
-    .from('event')
-    .select('*')
-    .eq('organizer_id', user.id)
+  const [{ data: profile }, { data: rawEvents }, { data: primaryAccount }] = await Promise.all([
+    supabase
+      .from('organizer_profile')
+      .select('display_name')
+      .eq('id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('event')
+      .select('*')
+      .eq('organizer_id', user.id),
+    supabase
+      .from('payout_account')
+      .select('*')
+      .eq('organizer_id', user.id)
+      .eq('is_primary', true)
+      .maybeSingle(),
+  ])
 
   const events = (rawEvents ?? []) as Event[]
-  const eventIds = events.map((event) => event.id)
+  const eventIds = events.map((e) => e.id)
 
-  const { data: rawTickets } = eventIds.length
-    ? await supabase.from('ticket').select('*').in('event_id', eventIds)
-    : { data: [] }
-
-  const { data: rawPayments } = eventIds.length
-    ? await supabase
-        .from('payments')
-        .select('amount')
-        .in('event_id', eventIds)
-        .in('status', ['success', 'free'])
-    : { data: [] }
+  const [{ data: rawTickets }, { data: rawPayments }] = eventIds.length
+    ? await Promise.all([
+        supabase.from('ticket').select('*').in('event_id', eventIds),
+        supabase
+          .from('payments')
+          .select('amount, paid_at')
+          .in('event_id', eventIds)
+          .in('status', ['success', 'free']),
+      ])
+    : [{ data: [] }, { data: [] }]
 
   const tickets = (rawTickets ?? []) as Ticket[]
-  const payments = (rawPayments ?? []) as Pick<Payment, 'amount'>[]
-  const ticketsByEvent = tickets.reduce((acc: Record<string, Ticket[]>, ticket) => {
-    if (!acc[ticket.event_id]) acc[ticket.event_id] = []
-    acc[ticket.event_id].push(ticket)
+  const payments = (rawPayments ?? []) as PaymentRow[]
+  const account = primaryAccount as PayoutAccount | null
+
+  const ticketsByEvent = tickets.reduce((acc: Record<string, Ticket[]>, t) => {
+    if (!acc[t.event_id]) acc[t.event_id] = []
+    acc[t.event_id].push(t)
     return acc
   }, {})
 
   const totalEvents = events.length
-  const totalTicketsSold = tickets.reduce((sum, ticket) => sum + ticket.purchased_quantity, 0)
-  const totalRevenue = tickets.reduce((sum, ticket) => sum + ticket.purchased_quantity * ticket.price, 0)
-  const totalCollected = payments.reduce((sum, payment) => sum + (payment.amount ?? 0), 0) / 100
+  const totalTicketsSold = tickets.reduce((sum, t) => sum + t.purchased_quantity, 0)
+  const totalRevenue = tickets.reduce((sum, t) => sum + t.purchased_quantity * t.price, 0)
+  const totalCollected = payments.reduce((sum, p) => sum + (p.amount ?? 0) / 100, 0)
+  const platformFee = totalCollected * PLATFORM_FEE_PCT
+  const netAvailable = totalCollected - platformFee
+
   const today = new Date().toISOString().slice(0, 10)
   const upcomingEvents = events
-    .filter((event) => event.published && !event.cancelled && event.date >= today)
+    .filter((e) => e.published && !e.cancelled && e.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 3)
+
   const displayName = profile?.display_name ?? user.email ?? 'there'
+  const monthlyData = buildMonthlyData(payments)
 
   return (
     <div>
       <div className="mb-8 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Welcome back, {displayName}</h1>
-          <p className="mt-1 text-sm text-gray-500">Here is the current snapshot across your events.</p>
+          <p className="mt-1 text-sm text-gray-500">Here is your earnings summary.</p>
         </div>
         <Link
           href="/dashboard/events/new"
@@ -91,7 +122,69 @@ export default async function DashboardHomePage() {
         </Link>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Earnings + Payout panel */}
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Earnings card */}
+        <div className="lg:col-span-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <p className="mb-1 text-sm text-gray-500">Total collected</p>
+          <p className="text-4xl font-extrabold tracking-tight text-gray-900">
+            {formatMoney(totalCollected, 2)}
+          </p>
+          <p className="mt-1 mb-6 text-xs text-gray-400">
+            Gross revenue across all events · {(PLATFORM_FEE_PCT * 100).toFixed(0)}% platform fee deducted from payouts
+          </p>
+          <RevenueAreaChart data={monthlyData} hideHeader />
+        </div>
+
+        {/* Payout panel */}
+        <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="mb-5 text-sm font-semibold text-gray-900">Payout</h2>
+
+          <div className="mb-5">
+            <p className="mb-0.5 text-xs text-gray-400">Available balance</p>
+            <p className="text-3xl font-extrabold tracking-tight text-gray-900">
+              {formatMoney(netAvailable, 2)}
+            </p>
+            <p className="mt-1 text-xs text-gray-400">
+              After {(PLATFORM_FEE_PCT * 100).toFixed(0)}% platform fee ({formatMoney(platformFee, 2)})
+            </p>
+          </div>
+
+          {account ? (
+            <div className="mb-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">
+                Payout to
+              </p>
+              <p className="text-sm font-semibold text-gray-900">{account.provider}</p>
+              <p className="text-sm text-gray-600">{account.account_name}</p>
+              <p className="mt-0.5 text-xs text-gray-400">{account.account_number}</p>
+            </div>
+          ) : (
+            <div className="mb-5 rounded-xl border border-dashed border-gray-200 p-4 text-center">
+              <p className="mb-2 text-sm text-gray-500">No payout account added yet</p>
+              <Link
+                href="/dashboard/settings"
+                className="text-xs font-semibold text-[#3d3d3d] underline underline-offset-2 transition-colors hover:text-[#2a2a2a]"
+              >
+                Add account in Settings →
+              </Link>
+            </div>
+          )}
+
+          <div className="mt-auto space-y-2">
+            <a
+              href="mailto:support@tikkitte.com?subject=Payout%20Request"
+              className="flex w-full items-center justify-center rounded-lg bg-[#3d3d3d] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
+            >
+              Request payout
+            </a>
+            <p className="text-center text-xs text-gray-400">Processed within 2–3 business days</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Stat cards */}
+      <div className="mb-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
         <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
           <p className="mb-1 text-sm text-gray-500">Total events</p>
           <p className="text-2xl font-extrabold text-gray-900">{totalEvents}</p>
@@ -101,15 +194,16 @@ export default async function DashboardHomePage() {
           <p className="text-2xl font-extrabold text-gray-900">{totalTicketsSold}</p>
         </div>
         <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <p className="mb-1 text-sm text-gray-500">Revenue</p>
+          <p className="mb-1 text-sm text-gray-500">Gross revenue</p>
           <p className="text-2xl font-extrabold text-gray-900">{formatMoney(totalRevenue)}</p>
         </div>
         <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <p className="mb-1 text-sm text-gray-500">Collected</p>
-          <p className="text-2xl font-extrabold text-gray-900">{formatMoney(totalCollected, 2)}</p>
+          <p className="mb-1 text-sm text-gray-500">Platform fee</p>
+          <p className="text-2xl font-extrabold text-gray-900">{formatMoney(platformFee, 2)}</p>
         </div>
       </div>
 
+      {/* Upcoming events */}
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2 className="text-sm font-semibold text-gray-900">Upcoming events</h2>
@@ -141,7 +235,7 @@ export default async function DashboardHomePage() {
           <div className="divide-y divide-gray-100">
             {upcomingEvents.map((event) => {
               const status = eventStatus(event)
-              const sold = (ticketsByEvent[event.id] ?? []).reduce((sum, ticket) => sum + ticket.purchased_quantity, 0)
+              const sold = (ticketsByEvent[event.id] ?? []).reduce((sum, t) => sum + t.purchased_quantity, 0)
               const poster = event.image?.[0]
 
               return (

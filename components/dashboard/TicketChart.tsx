@@ -114,7 +114,7 @@ type DailyData = {
   revenue: number
 }
 
-export function RevenueAreaChart({ data }: { data: DailyData[] }) {
+export function RevenueAreaChart({ data, hideHeader }: { data: DailyData[]; hideHeader?: boolean }) {
   if (data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-sm text-gray-400">
@@ -127,10 +127,12 @@ export function RevenueAreaChart({ data }: { data: DailyData[] }) {
 
   return (
     <div>
-      <div className="mb-4">
-        <p className="text-sm text-gray-500">Revenue</p>
-        <p className="text-3xl font-extrabold text-gray-900">GHS {total.toLocaleString()}</p>
-      </div>
+      {!hideHeader && (
+        <div className="mb-4">
+          <p className="text-sm text-gray-500">Revenue</p>
+          <p className="text-3xl font-extrabold text-gray-900">GHS {total.toLocaleString()}</p>
+        </div>
+      )}
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <AreaChart data={data}>
