@@ -2,12 +2,12 @@ import Link from 'next/link'
 
 export default function OrganizerCTA() {
   return (
-    <section className="bg-gray-50 dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800">
+    <section className="bg-gray-50 border-t border-gray-100">
       <div className="max-w-6xl mx-auto px-6 py-16 text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight mb-3">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight mb-3">
           Want to sell tickets?
         </h2>
-        <p className="text-gray-600 dark:text-slate-300 max-w-lg mx-auto mb-8">
+        <p className="text-gray-600 max-w-lg mx-auto mb-8">
           List your event on Tikkitte and reach thousands of people looking for things to do in Ghana. Set up in minutes.
         </p>
         <Link

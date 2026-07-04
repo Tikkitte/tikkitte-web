@@ -79,9 +79,9 @@ export default async function TicketPage({ params }: Props) {
   const totalAmount = payment.amount ? Number(payment.amount) / 100 : 0
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="border-b border-gray-100 dark:border-slate-800 px-4 py-3">
+      <header className="border-b border-gray-100 px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Image
@@ -118,8 +118,8 @@ export default async function TicketPage({ params }: Props) {
                 />
               </div>
             )}
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{event.name}</h1>
-            <div className="flex flex-col gap-1 text-sm text-gray-500 dark:text-slate-400">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{event.name}</h1>
+            <div className="flex flex-col gap-1 text-sm text-gray-500">
               <div className="flex items-center gap-2">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
@@ -132,7 +132,7 @@ export default async function TicketPage({ params }: Props) {
                     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" />
                   </svg>
                   {event.maps_link ? (
-                    <a href={event.maps_link} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-gray-900 dark:hover:text-white">
+                    <a href={event.maps_link} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-gray-900">
                       {event.venue}
                     </a>
                   ) : (
@@ -145,7 +145,7 @@ export default async function TicketPage({ params }: Props) {
         )}
 
         {/* Tickets */}
-        <h2 className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-4">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           Your Tickets
         </h2>
 
@@ -153,21 +153,21 @@ export default async function TicketPage({ params }: Props) {
           {(userTickets as TicketRow[]).map((ut) => (
             <div
               key={ut.id}
-              className="bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-5"
+              className="bg-gray-50 border border-gray-100 rounded-2xl p-5"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <p className="font-semibold text-gray-900 dark:text-white">
+                  <p className="font-semibold text-gray-900">
                     {ut.ticket?.label ?? 'Ticket'}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-slate-400">
+                  <p className="text-sm text-gray-500">
                     Qty: {ut.quantity}
                     {ut.ticket?.price != null && (
                       <span> &middot; {ut.ticket.price === 0 ? 'Free' : `GHS ${ut.ticket.price}`}</span>
                     )}
                   </p>
                 </div>
-                <span className="text-xs font-medium text-green-600 bg-green-50 dark:bg-green-950 dark:text-green-400 px-2.5 py-1 rounded-full">
+                <span className="text-xs font-medium text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
                   Confirmed
                 </span>
               </div>
@@ -179,9 +179,9 @@ export default async function TicketPage({ params }: Props) {
                   <img
                     src={ut.qr_code}
                     alt="Ticket QR Code"
-                    className="w-48 h-48 rounded-lg border border-gray-200 dark:border-slate-700"
+                    className="w-48 h-48 rounded-lg border border-gray-200"
                   />
-                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-2">
+                  <p className="text-xs text-gray-400 mt-2">
                     Show this QR code at the entrance
                   </p>
                 </div>
@@ -191,17 +191,17 @@ export default async function TicketPage({ params }: Props) {
         </div>
 
         {/* Order summary */}
-        <div className="bg-gray-50 dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-5 mb-8">
-          <h3 className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+        <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 mb-8">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
             Order Summary
           </h3>
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-gray-500 dark:text-slate-400">Reference</span>
-            <span className="text-gray-900 dark:text-white font-mono text-xs">{reference}</span>
+            <span className="text-gray-500">Reference</span>
+            <span className="text-gray-900 font-mono text-xs">{reference}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500 dark:text-slate-400">Total</span>
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="text-gray-500">Total</span>
+            <span className="font-semibold text-gray-900">
               {totalAmount === 0 ? 'Free' : `GHS ${totalAmount.toFixed(2)}`}
             </span>
           </div>
@@ -211,15 +211,15 @@ export default async function TicketPage({ params }: Props) {
         {event && (
           <Link
             href={`/e/${event.slug ?? event.id}`}
-            className="block w-full text-center py-3 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+            className="block w-full text-center py-3 border border-gray-200 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors"
           >
             View Event
           </Link>
         )}
       </main>
 
-      <footer className="border-t border-gray-100 dark:border-slate-800 px-4 py-6 mt-8">
-        <div className="max-w-2xl mx-auto text-center text-xs text-gray-400 dark:text-slate-500">
+      <footer className="border-t border-gray-100 px-4 py-6 mt-8">
+        <div className="max-w-2xl mx-auto text-center text-xs text-gray-400">
           Powered by Tikkitte &middot; Event Ticketing for Ghana
         </div>
       </footer>
