@@ -150,14 +150,14 @@ export default function Nav({ showOrganizerCta = false }: Props) {
         {/* Drawer CTA */}
         <div className="px-4 pb-8 flex flex-col gap-3">
           <Link
-            href="/signup"
+            href="https://create.tikkitte.com/signup"
             onClick={() => setMenuOpen(false)}
             className="w-full text-center text-sm font-semibold bg-[#3B82F6] text-white px-4 py-3 rounded-xl hover:bg-[#2563EB] transition-colors"
           >
             List your event
           </Link>
           <Link
-            href="/login"
+            href="https://create.tikkitte.com/login"
             onClick={() => setMenuOpen(false)}
             className="w-full text-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
           >

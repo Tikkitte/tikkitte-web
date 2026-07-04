@@ -32,7 +32,7 @@ export default function OrganizerHero() {
             <p className="text-gray-400 text-sm font-medium uppercase tracking-widest mb-2">Get started</p>
 
             <Link
-              href="/signup"
+              href="https://create.tikkitte.com/signup"
               className="group flex flex-col gap-2 bg-[#3B82F6] text-white rounded-2xl px-8 py-7 hover:bg-[#2563EB] transition-colors duration-200"
             >
               <div className="flex items-center justify-between">
@@ -47,7 +47,7 @@ export default function OrganizerHero() {
             </Link>
 
             <Link
-              href="/login"
+              href="https://create.tikkitte.com/login"
               className="group flex flex-col gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-8 py-7 hover:bg-gray-100 transition-colors duration-200"
             >
               <div className="flex items-center justify-between">

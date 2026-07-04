@@ -54,7 +54,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                <Link href="https://create.tikkitte.com/login" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
                   Organizer sign in
                 </Link>
               </li>
