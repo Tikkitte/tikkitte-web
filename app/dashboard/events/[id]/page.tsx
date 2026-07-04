@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment, Payout } from '@/lib/types'
-import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/TicketChart'
+import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/LazyTicketChart'
 import CancelButton from './CancelButton'
 import PublishButton from './PublishButton'
 import ShareLiveModal from './ShareLiveModal'
@@ -264,8 +265,14 @@ export default async function EventDetailPage({
           <div className="lg:sticky lg:top-20">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               {poster ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={poster} alt={event.name} className="w-full max-h-[480px] object-cover" />
+                <Image
+                  src={poster}
+                  alt={event.name}
+                  width={760}
+                  height={960}
+                  className="w-full max-h-[480px] object-cover"
+                  priority
+                />
               ) : (
                 <div className="w-full h-48 bg-gradient-to-br from-[#3d3d3d]/10 to-[#3d3d3d]/5 flex items-center justify-center">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#3d3d3d]/30">

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Event, Ticket, PayoutAccount } from '@/lib/types'
 import InfoTip from '@/components/ui/InfoTip'
-import DashboardRevenueChart from '@/components/dashboard/DashboardRevenueChart'
+import DashboardRevenueChart from '@/components/dashboard/LazyDashboardRevenueChart'
 
 const PLATFORM_FEE_PCT = Number(process.env.PLATFORM_FEE_PERCENT ?? '5') / 100
 
