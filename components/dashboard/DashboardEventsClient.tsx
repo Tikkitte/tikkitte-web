@@ -120,7 +120,7 @@ export default function DashboardEventsClient({ events: allEvents, tickets, init
       </div>
 
       {totalEvents > 0 && (
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <p className="text-sm text-gray-500 mb-1">Total events</p>
             <p className="text-2xl font-extrabold text-gray-900">{totalEvents}</p>

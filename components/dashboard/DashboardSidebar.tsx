@@ -88,7 +88,8 @@ export default function DashboardSidebar({ displayName, logoUrl, signOutAction }
   const pathname = usePathname()
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 flex w-56 flex-col border-r border-gray-100 bg-white">
+    <>
+    <aside className="fixed inset-y-0 left-0 z-20 hidden w-56 flex-col border-r border-gray-100 bg-white md:flex">
       <Link href="/dashboard" className="flex items-center gap-2 px-5 pb-4 pt-6">
         <Image src="/images/logo-create.png" alt="" width={42} height={28} className="h-6 w-auto shrink-0" />
         <Image src="/images/text-logo-create.png" alt="Tikkitte Create" width={160} height={35} className="h-7 w-auto" />
@@ -133,5 +134,25 @@ export default function DashboardSidebar({ displayName, logoUrl, signOutAction }
         </form>
       </div>
     </aside>
+
+    {/* Mobile bottom tab bar */}
+    <nav className="fixed bottom-0 inset-x-0 z-20 flex border-t border-gray-100 bg-white md:hidden">
+      {navItems.map((item) => {
+        const active = item.match(pathname)
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold transition-colors ${
+              active ? 'text-[#3d3d3d]' : 'text-gray-400'
+            }`}
+          >
+            <item.Icon className="shrink-0" />
+            <span>{item.label}</span>
+          </Link>
+        )
+      })}
+    </nav>
+    </>
   )
 }

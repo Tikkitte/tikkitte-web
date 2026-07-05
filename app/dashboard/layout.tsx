@@ -33,7 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         logoUrl={profile.logo_url ?? null}
         signOutAction={signOut}
       />
-      <main className="min-h-screen flex-1 px-8 py-8 pl-[16rem]">
+      <main className="min-h-screen flex-1 px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8 md:pl-[16rem]">
         <div className="mx-auto w-full max-w-6xl">
           {children}
         </div>

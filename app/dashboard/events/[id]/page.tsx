@@ -229,7 +229,7 @@ export default async function EventDetailPage({
       {shared === '1' && <ShareLiveModal eventUrl={eventUrl} />}
 
       {/* Back + actions */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
@@ -237,7 +237,7 @@ export default async function EventDetailPage({
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
           All events
         </Link>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {!event.cancelled && (
             <>
               <MessageAttendeesButton
@@ -309,7 +309,7 @@ export default async function EventDetailPage({
         {/* Right column — scrollable content */}
         <div className="flex-1 min-w-0 space-y-5">
           {/* Stats row */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <p className="text-xs text-gray-500 mb-1">Tickets sold</p>
               <p className="text-xl font-extrabold text-gray-900">

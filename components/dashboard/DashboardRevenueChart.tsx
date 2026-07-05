@@ -132,7 +132,7 @@ export default function DashboardRevenueChart({ payments }: { payments: PaymentR
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1">
           {RANGES.map((r) => (
             <button
