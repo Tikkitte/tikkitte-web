@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
+import MobileTabBar from '@/components/dashboard/MobileTabBar'
 
 async function signOut() {
   'use server'
@@ -27,17 +28,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
       <DashboardSidebar
         displayName={profile.display_name ?? user.email ?? 'Organizer'}
         logoUrl={profile.logo_url ?? null}
         signOutAction={signOut}
       />
-      <main className="min-h-screen flex-1 px-4 py-6 pb-24 md:px-8 md:py-8 md:pb-8 md:pl-[16rem]">
-        <div className="mx-auto w-full max-w-6xl">
-          {children}
-        </div>
-      </main>
+      <div className="flex flex-1 flex-col min-w-0">
+        <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
+          <div className="mx-auto w-full max-w-6xl">
+            {children}
+          </div>
+        </main>
+        <MobileTabBar />
+      </div>
     </div>
   )
 }
