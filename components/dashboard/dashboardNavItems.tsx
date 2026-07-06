@@ -59,7 +59,6 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Home', match: (p) => p === '/dashboard', Icon: HomeIcon },
   { href: '/dashboard/events', label: 'Events', match: (p) => p.startsWith('/dashboard/events'), Icon: CalendarIcon },
-  { href: '/dashboard/fans', label: 'Fans', match: (p) => p.startsWith('/dashboard/fans'), Icon: UsersIcon },
-  { href: '/dashboard/marketing', label: 'Marketing', match: (p) => p.startsWith('/dashboard/marketing'), Icon: MegaphoneIcon },
+  { href: '/dashboard/audience', label: 'Audience', match: (p) => p.startsWith('/dashboard/audience'), Icon: UsersIcon },
   { href: '/dashboard/settings', label: 'Settings', match: (p) => p.startsWith('/dashboard/settings'), Icon: GearIcon },
 ]

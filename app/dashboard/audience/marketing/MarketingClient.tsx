@@ -14,7 +14,12 @@ export type MarketingEvent = {
 type Props = {
   events: MarketingEvent[]
   totalFans: number
+  lastBroadcastSentAt: string | null
 }
+
+type ActiveCampaign =
+  | { mode: 'event'; eventId: string; eventName: string; lastAlertSentAt: string | null }
+  | { mode: 'broadcast' }
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -25,8 +30,8 @@ function formatDate(dateStr: string | null | undefined) {
 
 const messageButtonClass = 'rounded-lg border border-[#3d3d3d] px-4 py-2 text-sm font-semibold text-[#3d3d3d] transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:hover:bg-transparent'
 
-export default function MarketingClient({ events, totalFans }: Props) {
-  const [activeEvent, setActiveEvent] = useState<MarketingEvent | null>(null)
+export default function MarketingClient({ events, totalFans, lastBroadcastSentAt }: Props) {
+  const [activeCampaign, setActiveCampaign] = useState<ActiveCampaign | null>(null)
 
   return (
     <>
@@ -62,7 +67,7 @@ export default function MarketingClient({ events, totalFans }: Props) {
                     <td className="px-5 py-3 text-right">
                       <button
                         type="button"
-                        onClick={() => setActiveEvent(event)}
+                        onClick={() => setActiveCampaign({ mode: 'event', eventId: event.id, eventName: event.name, lastAlertSentAt: event.last_alert_sent_at })}
                         className={messageButtonClass}
                       >
                         Message
@@ -79,11 +84,12 @@ export default function MarketingClient({ events, totalFans }: Props) {
                 <td className="px-5 py-3 text-right">
                   <button
                     type="button"
-                    disabled
-                    title="Cross-event messaging coming soon"
+                    onClick={() => setActiveCampaign({ mode: 'broadcast' })}
+                    disabled={totalFans === 0}
+                    title={totalFans === 0 ? 'No fans to message yet' : undefined}
                     className={messageButtonClass}
                   >
-                    Message ↗
+                    Message
                   </button>
                 </td>
               </tr>
@@ -92,12 +98,21 @@ export default function MarketingClient({ events, totalFans }: Props) {
         </div>
       </div>
 
-      {activeEvent && (
+      {activeCampaign?.mode === 'event' && (
         <SendCampaignModal
-          eventId={activeEvent.id}
-          eventName={activeEvent.name}
-          lastAlertSentAt={activeEvent.last_alert_sent_at}
-          onClose={() => setActiveEvent(null)}
+          mode="event"
+          eventId={activeCampaign.eventId}
+          eventName={activeCampaign.eventName}
+          lastAlertSentAt={activeCampaign.lastAlertSentAt}
+          onClose={() => setActiveCampaign(null)}
+        />
+      )}
+
+      {activeCampaign?.mode === 'broadcast' && (
+        <SendCampaignModal
+          mode="broadcast"
+          lastAlertSentAt={lastBroadcastSentAt}
+          onClose={() => setActiveCampaign(null)}
         />
       )}
     </>

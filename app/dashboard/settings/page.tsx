@@ -29,18 +29,18 @@ export default async function SettingsPage() {
         <p className="mt-1 text-sm text-gray-500">Manage your public organizer profile.</p>
       </div>
 
-      <div className="max-w-2xl">
-        <div className="space-y-6">
-          <OrganizerProfileForm
-            organizerId={user.id}
-            displayName={profile?.display_name ?? ''}
-            email={profile?.email ?? user.email ?? ''}
-            bio={profile?.bio ?? ''}
-            logoUrl={profile?.logo_url ?? null}
-            tiktokUrl={profile?.tiktok_url ?? ''}
-            instagramUrl={profile?.instagram_url ?? ''}
-            snapchatUrl={profile?.snapchat_url ?? ''}
-          />
+      <div className="max-w-5xl grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px] lg:items-start">
+        <OrganizerProfileForm
+          organizerId={user.id}
+          displayName={profile?.display_name ?? ''}
+          email={profile?.email ?? user.email ?? ''}
+          bio={profile?.bio ?? ''}
+          logoUrl={profile?.logo_url ?? null}
+          tiktokUrl={profile?.tiktok_url ?? ''}
+          instagramUrl={profile?.instagram_url ?? ''}
+          snapchatUrl={profile?.snapchat_url ?? ''}
+        />
+        <div className="lg:sticky lg:top-8">
           <PayoutAccountsSection accounts={(payoutAccounts ?? []) as PayoutAccount[]} />
         </div>
       </div>

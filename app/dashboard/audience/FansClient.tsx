@@ -14,6 +14,17 @@ type Props = {
   fans: FanRow[]
 }
 
+type FanFilter = 'all' | 'repeat' | 'first-time' | 'top'
+
+const filters: FanFilter[] = ['all', 'repeat', 'first-time', 'top']
+
+const filterLabels: Record<FanFilter, string> = {
+  all: 'All',
+  repeat: 'Repeat attendees',
+  'first-time': 'First-timers',
+  top: 'Top spenders',
+}
+
 function exportCSV(filename: string, headers: string[], rows: string[][]) {
   const escape = (value: string) => `"${value.replace(/"/g, '""')}"`
   const csv = [headers, ...rows].map((row) => row.map(escape).join(',')).join('\n')
@@ -30,16 +41,45 @@ const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.
 const exportButtonClass = 'rounded-lg border border-[#3d3d3d] px-4 py-2 text-sm font-semibold text-[#3d3d3d] transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
 
 export default function FansClient({ fans }: Props) {
+  const [filter, setFilter] = useState<FanFilter>('all')
   const [search, setSearch] = useState('')
   const normalizedSearch = search.trim().toLowerCase()
 
+  const { fansByFilter, tabCounts } = useMemo(() => {
+    const repeat = fans.filter((fan) => fan.event_count > 1)
+    const firstTime = fans.filter((fan) => fan.event_count === 1)
+
+    const topCount = Math.max(1, Math.ceil(fans.length * 0.2))
+    const top = [...fans]
+      .sort((a, b) => b.ticket_count - a.ticket_count)
+      .slice(0, fans.length > 0 ? topCount : 0)
+    const topIds = new Set(top.map((fan) => fan.user_id))
+
+    return {
+      fansByFilter: {
+        all: fans,
+        repeat,
+        'first-time': firstTime,
+        top: fans.filter((fan) => topIds.has(fan.user_id)),
+      },
+      tabCounts: {
+        all: fans.length,
+        repeat: repeat.length,
+        'first-time': firstTime.length,
+        top: topIds.size,
+      },
+    }
+  }, [fans])
+
+  const visibleFans = fansByFilter[filter]
+
   const filteredFans = useMemo(() => (
-    fans.filter((fan) => (
+    visibleFans.filter((fan) => (
       !normalizedSearch ||
       (fan.name ?? '').toLowerCase().includes(normalizedSearch) ||
       (fan.email ?? '').toLowerCase().includes(normalizedSearch)
     ))
-  ), [fans, normalizedSearch])
+  ), [visibleFans, normalizedSearch])
 
   const exportFans = () => {
     exportCSV(
@@ -73,6 +113,28 @@ export default function FansClient({ fans }: Props) {
 
   return (
     <div className="space-y-5">
+      <div className="overflow-x-auto">
+        <div className="inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+          {filters.map((tab) => {
+            const active = filter === tab
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setFilter(tab)}
+                className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                  active
+                    ? 'bg-[#3d3d3d]/10 text-[#3d3d3d]'
+                    : 'text-gray-500 hover:bg-white'
+                }`}
+              >
+                {filterLabels[tab]} ({tabCounts[tab]})
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="w-full sm:max-w-sm">
           <label htmlFor="fan-search" className="sr-only">Search fans</label>

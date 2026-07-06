@@ -1,14 +1,12 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
-import { sendEventAlert } from '../events/[id]/actions'
+import { sendEventAlert } from '@/app/dashboard/events/[id]/actions'
+import { sendFanAlert } from './actions'
 
-type Props = {
-  eventId: string
-  eventName: string
-  lastAlertSentAt: string | null
-  onClose: () => void
-}
+type Props =
+  | { mode: 'event'; eventId: string; eventName: string; lastAlertSentAt: string | null; onClose: () => void }
+  | { mode: 'broadcast'; lastAlertSentAt: string | null; onClose: () => void }
 
 const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3d3d3d]'
 
@@ -23,7 +21,8 @@ function formatDateTime(value: string) {
   })
 }
 
-export default function SendCampaignModal({ eventId, eventName, lastAlertSentAt, onClose }: Props) {
+export default function SendCampaignModal(props: Props) {
+  const { mode, lastAlertSentAt, onClose } = props
   const [subject, setSubject] = useState('')
   const [body, setBody] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -40,19 +39,31 @@ export default function SendCampaignModal({ eventId, eventName, lastAlertSentAt,
   const effectiveNextAvailableAt = nextAvailableAt ?? initialNextAvailableAt
   const sendDisabled = Boolean(effectiveNextAvailableAt) || isPending || !subject.trim() || !body.trim()
 
+  const title = mode === 'event' ? `Message ${props.eventName}` : 'Message all fans'
+  const description = mode === 'event'
+    ? 'Will be sent to ticket holders for this event.'
+    : 'Will be sent to every fan across all your events.'
+  const rateLimitCopy = mode === 'event'
+    ? 'You can send one attendee message per event every 24 hours.'
+    : 'You can send one all-fans message every 24 hours.'
+  const recipientNoun = mode === 'event' ? 'attendee' : 'fan'
+
   const handleSend = () => {
     setError(null)
     setSuccess(null)
 
     startTransition(async () => {
-      const result = await sendEventAlert({ eventId, subject, body })
+      const result = mode === 'event'
+        ? await sendEventAlert({ eventId: props.eventId, subject, body })
+        : await sendFanAlert({ subject, body })
+
       if (!result.ok) {
         setError(result.message)
         setNextAvailableAt(result.nextAvailableAt ?? null)
         return
       }
 
-      setSuccess(`Sent to ${result.sentCount} attendee${result.sentCount === 1 ? '' : 's'}.`)
+      setSuccess(`Sent to ${result.sentCount} ${recipientNoun}${result.sentCount === 1 ? '' : 's'}.`)
       setSubject('')
       setBody('')
       window.setTimeout(() => onClose(), 2000)
@@ -64,8 +75,8 @@ export default function SendCampaignModal({ eventId, eventName, lastAlertSentAt,
       <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Message {eventName}</h2>
-            <p className="mt-1 text-sm text-gray-500">Will be sent to ticket holders for this event.</p>
+            <h2 className="text-lg font-bold text-gray-900">{title}</h2>
+            <p className="mt-1 text-sm text-gray-500">{description}</p>
           </div>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -75,7 +86,7 @@ export default function SendCampaignModal({ eventId, eventName, lastAlertSentAt,
         </div>
 
         <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-[#3d3d3d]">
-          You can send one attendee message per event every 24 hours.
+          {rateLimitCopy}
         </div>
 
         {effectiveNextAvailableAt && (
