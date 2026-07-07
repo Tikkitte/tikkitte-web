@@ -6,7 +6,7 @@ export const BANK_PROVIDERS = [
   'Cal Bank',
   'Ecobank',
   'Fidelity Bank',
-  'FNB',
+  'First National Bank',
   'GCB Bank',
   'GT Bank',
   'NIB Bank',

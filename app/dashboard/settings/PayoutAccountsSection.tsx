@@ -51,7 +51,7 @@ export default function PayoutAccountsSection({ accounts }: Props) {
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="rounded-lg bg-[#3d3d3d] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
+          className="shrink-0 whitespace-nowrap rounded-lg bg-[#3d3d3d] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
         >
           + Add account
         </button>
