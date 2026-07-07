@@ -1,0 +1,54 @@
+import { createClient } from '@/lib/supabase/server'
+import type { Payout, PayoutAccount } from '@/lib/types'
+import PayoutsClient, { type PayoutAdminRow } from './PayoutsClient'
+
+type OrganizerSummary = {
+  id: string
+  display_name: string
+  email: string
+}
+
+export default async function AdminPayoutsPage() {
+  const supabase = await createClient()
+
+  const { data: rawPayouts } = await supabase
+    .from('payout')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  const payouts = (rawPayouts ?? []) as Payout[]
+  const organizerIds = Array.from(new Set(payouts.map((payout) => payout.organizer_id)))
+  const accountIds = Array.from(new Set(
+    payouts
+      .map((payout) => payout.payout_account_id)
+      .filter((id): id is string => Boolean(id))
+  ))
+
+  const [{ data: profiles }, { data: accounts }] = await Promise.all([
+    organizerIds.length
+      ? supabase.from('organizer_profile').select('id, display_name, email').in('id', organizerIds)
+      : Promise.resolve({ data: [] as OrganizerSummary[] }),
+    accountIds.length
+      ? supabase.from('payout_account').select('*').in('id', accountIds)
+      : Promise.resolve({ data: [] as PayoutAccount[] }),
+  ])
+
+  const profileById = new Map(((profiles ?? []) as OrganizerSummary[]).map((profile) => [profile.id, profile]))
+  const accountById = new Map(((accounts ?? []) as PayoutAccount[]).map((account) => [account.id, account]))
+
+  const rows: PayoutAdminRow[] = payouts.map((payout) => ({
+    payout,
+    organizer: profileById.get(payout.organizer_id),
+    account: payout.payout_account_id ? accountById.get(payout.payout_account_id) : undefined,
+  }))
+
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Payouts</h1>
+        <p className="mt-1 text-sm text-gray-500">Confirm payouts once they have been sent.</p>
+      </div>
+      <PayoutsClient rows={rows} />
+    </div>
+  )
+}

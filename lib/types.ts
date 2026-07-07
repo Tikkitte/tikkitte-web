@@ -5,6 +5,12 @@ export type OrganizerProfile = {
   approved: boolean
   logo_url: string | null
   bio: string | null
+  slug: string | null
+  created_at: string
+}
+
+export type AdminUser = {
+  user_id: string
   created_at: string
 }
 
