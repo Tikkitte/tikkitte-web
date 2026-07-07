@@ -9,7 +9,7 @@ const PROVIDER_LOGOS: Record<string, string> = {
   'Cal Bank': '/images/providers/cal-bank.png',
   'Ecobank': '/images/providers/ecobank.svg',
   'Fidelity Bank': '/images/providers/fidelity-bank.png',
-  'First National Bank': '/images/providers/first-national-bank.svg',
+  'FNB': '/images/providers/fnb.svg',
   'GCB Bank': '/images/providers/gcb-bank.svg',
   'GT Bank': '/images/providers/gt-bank.svg',
   'NIB Bank': '/images/providers/nib-bank.jpg',
