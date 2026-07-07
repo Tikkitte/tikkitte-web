@@ -51,7 +51,7 @@ function VerifyForm() {
         display_name,
         email,
         approved: false,
-      })
+      }, { onConflict: 'id', ignoreDuplicates: true })
       setLoading(false)
       if (profileError) {
         console.error('[auth/verify] organizer_profile upsert failed', profileError)
@@ -66,18 +66,13 @@ function VerifyForm() {
     setLoading(false)
     // Create organizer profile (pending approval)
     if (data.user) {
-      // Explicitly apply the session verifyOtp just returned before the next
-      // request, so this call can't race a not-yet-settled client session.
-      if (data.session) {
-        await supabase.auth.setSession(data.session)
-      }
       const display_name = data.user.user_metadata?.display_name ?? ''
       const { error: profileError } = await supabase.from('organizer_profile').upsert({
         id: data.user.id,
         display_name,
         email,
         approved: false,
-      })
+      }, { onConflict: 'id', ignoreDuplicates: true })
       if (profileError) {
         console.error('[auth/verify] organizer_profile upsert failed', profileError)
         setError('Your email was verified, but we could not finish setting up your account. Please contact support.')
