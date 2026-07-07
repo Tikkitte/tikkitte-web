@@ -29,7 +29,7 @@ export default async function SettingsPage() {
         <p className="mt-1 text-sm text-gray-500">Manage your public organizer profile.</p>
       </div>
 
-      <div className="max-w-5xl grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px] lg:items-start">
+      <div className="max-w-6xl grid grid-cols-1 gap-6 lg:grid-cols-[1fr_460px] lg:items-start">
         <OrganizerProfileForm
           organizerId={user.id}
           displayName={profile?.display_name ?? ''}

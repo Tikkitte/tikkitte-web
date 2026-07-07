@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import type { PayoutAccount } from '@/lib/types'
 import AddPayoutAccountModal from './AddPayoutAccountModal'
+import ProviderLogo from './ProviderLogo'
 import { deletePayoutAccount, setPrimaryPayoutAccount } from './payout-actions'
 
 type Props = {
@@ -68,18 +69,21 @@ export default function PayoutAccountsSection({ accounts }: Props) {
           {accounts.map((account) => (
             <div key={account.id} className="py-4 first:pt-0 last:pb-0">
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-gray-900">{account.provider}</p>
-                    {account.is_primary && (
-                      <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
-                        PRIMARY
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-400">{methodLabel(account.method)}</span>
+                <div className="flex items-start gap-3">
+                  <ProviderLogo provider={account.provider} />
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold text-gray-900">{account.provider}</p>
+                      {account.is_primary && (
+                        <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
+                          PRIMARY
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-400">{methodLabel(account.method)}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-600">{account.account_number}</p>
+                    <p className="mt-1 text-sm text-gray-400">{account.account_name}</p>
                   </div>
-                  <p className="mt-1 text-sm text-gray-600">{account.account_number}</p>
-                  <p className="mt-1 text-sm text-gray-400">{account.account_name}</p>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-3">
