@@ -12,17 +12,19 @@ export default function SignupForm() {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false)
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setAlreadyRegistered(false)
     if (password.length < 6) {
       setError('Password must be at least 6 characters.')
       return
     }
     setLoading(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { display_name: name } },
@@ -32,12 +34,26 @@ export default function SignupForm() {
       setError(error.message)
       return
     }
+    if (data.user?.identities && data.user.identities.length === 0) {
+      setLoading(false)
+      setAlreadyRegistered(true)
+      return
+    }
     setLoading(false)
     router.push(`/auth/verify?email=${encodeURIComponent(email)}`)
   }
 
   return (
     <>
+      {alreadyRegistered && (
+        <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+          An account with this email already exists.{' '}
+          <Link href="/login" className="font-medium text-[#3d3d3d] hover:underline">
+            Sign in instead
+          </Link>
+        </div>
+      )}
+
       <form onSubmit={handleSignup} className="flex flex-col gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Your name or organization</label>
@@ -56,7 +72,10 @@ export default function SignupForm() {
             type="email"
             required
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => {
+              setEmail(e.target.value)
+              setAlreadyRegistered(false)
+            }}
             className="w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400"
             placeholder="you@example.com"
           />

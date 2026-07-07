@@ -46,13 +46,18 @@ function VerifyForm() {
       }
       // User is already confirmed — continue with profile creation
       const display_name = user.user_metadata?.display_name ?? ''
-      await supabase.from('organizer_profile').upsert({
+      const { error: profileError } = await supabase.from('organizer_profile').upsert({
         id: user.id,
         display_name,
         email,
         approved: false,
       })
       setLoading(false)
+      if (profileError) {
+        console.error('[auth/verify] organizer_profile upsert failed', profileError)
+        setError('Your email was verified, but we could not finish setting up your account. Please contact support.')
+        return
+      }
       router.push('/dashboard')
       router.refresh()
       return
@@ -61,13 +66,23 @@ function VerifyForm() {
     setLoading(false)
     // Create organizer profile (pending approval)
     if (data.user) {
+      // Explicitly apply the session verifyOtp just returned before the next
+      // request, so this call can't race a not-yet-settled client session.
+      if (data.session) {
+        await supabase.auth.setSession(data.session)
+      }
       const display_name = data.user.user_metadata?.display_name ?? ''
-      await supabase.from('organizer_profile').upsert({
+      const { error: profileError } = await supabase.from('organizer_profile').upsert({
         id: data.user.id,
         display_name,
         email,
         approved: false,
       })
+      if (profileError) {
+        console.error('[auth/verify] organizer_profile upsert failed', profileError)
+        setError('Your email was verified, but we could not finish setting up your account. Please contact support.')
+        return
+      }
     }
     router.push('/dashboard')
     router.refresh()
