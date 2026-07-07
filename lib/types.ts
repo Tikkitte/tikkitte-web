@@ -118,6 +118,7 @@ export type Payout = {
   id: string
   organizer_id: string
   event_id: string | null
+  payout_account_id: string | null
   amount: number
   status: 'pending' | 'paid'
   paid_at: string | null

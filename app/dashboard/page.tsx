@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import type { Event, Ticket, PayoutAccount } from '@/lib/types'
+import type { Event, Ticket, Payout, PayoutAccount } from '@/lib/types'
 import InfoTip from '@/components/ui/InfoTip'
 import DashboardRevenueChart from '@/components/dashboard/LazyDashboardRevenueChart'
+import RequestPayoutButton from '@/components/dashboard/RequestPayoutButton'
 
 const PLATFORM_FEE_PCT = Number(process.env.PLATFORM_FEE_PERCENT ?? '5') / 100
 
@@ -34,7 +35,7 @@ export default async function DashboardHomePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: rawEvents }, { data: primaryAccount }] = await Promise.all([
+  const [{ data: profile }, { data: rawEvents }, { data: primaryAccount }, { data: rawPayouts }] = await Promise.all([
     supabase
       .from('organizer_profile')
       .select('display_name')
@@ -50,6 +51,11 @@ export default async function DashboardHomePage() {
       .eq('organizer_id', user.id)
       .eq('is_primary', true)
       .maybeSingle(),
+    supabase
+      .from('payout')
+      .select('amount, status')
+      .eq('organizer_id', user.id)
+      .in('status', ['pending', 'paid']),
   ])
 
   const events = (rawEvents ?? []) as Event[]
@@ -68,6 +74,7 @@ export default async function DashboardHomePage() {
 
   const tickets = (rawTickets ?? []) as Ticket[]
   const payments = (rawPayments ?? []) as { amount: number | null; paid_at: string | null }[]
+  const payouts = (rawPayouts ?? []) as Pick<Payout, 'amount' | 'status'>[]
   const account = primaryAccount as PayoutAccount | null
 
   const ticketsByEvent = tickets.reduce((acc: Record<string, Ticket[]>, t) => {
@@ -81,7 +88,9 @@ export default async function DashboardHomePage() {
   const totalRevenue = tickets.reduce((sum, t) => sum + t.purchased_quantity * t.price, 0)
   const totalCollected = payments.reduce((sum, p) => sum + (p.amount ?? 0) / 100, 0)
   const platformFee = totalCollected * PLATFORM_FEE_PCT
-  const netAvailable = totalCollected - platformFee
+  const totalRequestedOrPaid = payouts.reduce((sum, payout) => sum + Number(payout.amount), 0)
+  const netAvailable = totalCollected - platformFee - totalRequestedOrPaid
+  const displayAvailable = Math.max(0, netAvailable)
   const avgTicketValue = totalTicketsSold > 0 ? totalRevenue / totalTicketsSold : 0
 
   const today = new Date().toISOString().slice(0, 10)
@@ -134,12 +143,12 @@ export default async function DashboardHomePage() {
             <div className="mb-0.5 flex items-center gap-1.5">
               <p className="text-xs text-gray-400">Available balance</p>
               <InfoTip
-                text={`Total collected minus the ${feePct}% Tikkitte platform fee (${formatMoney(platformFee, 2)}). This is the amount you can request to be paid out.`}
+                text={`Total collected minus the ${feePct}% Tikkitte platform fee (${formatMoney(platformFee, 2)}) and existing payout requests (${formatMoney(totalRequestedOrPaid, 2)}). This is the amount you can request to be paid out.`}
                 width="w-60"
               />
             </div>
             <p className="text-3xl font-extrabold tracking-tight text-gray-900">
-              {formatMoney(netAvailable, 2)}
+              {formatMoney(displayAvailable, 2)}
             </p>
             <p className="mt-1 text-xs text-gray-400">
               After {feePct}% platform fee ({formatMoney(platformFee, 2)})
@@ -168,12 +177,10 @@ export default async function DashboardHomePage() {
           )}
 
           <div className="mt-auto space-y-2">
-            <a
-              href="mailto:support@tikkitte.com?subject=Payout%20Request"
-              className="flex w-full items-center justify-center rounded-lg bg-[#3d3d3d] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
-            >
-              Request payout
-            </a>
+            <RequestPayoutButton
+              availableBalance={displayAvailable}
+              hasPayoutAccount={Boolean(account)}
+            />
             <p className="text-center text-xs text-gray-400">Processed within 2–3 business days</p>
           </div>
         </div>
