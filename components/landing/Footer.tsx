@@ -80,10 +80,18 @@ export default function Footer() {
 
         </div>
 
-        <div className="mt-12 pt-6 border-t border-gray-200">
+        <div className="mt-12 flex flex-col gap-4 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-gray-400">
-            &copy; {new Date().getFullYear()} Tikkitte. All rights reserved.
+            &copy; {new Date().getFullYear()} FIRSTPASS EVENTS LTD. Tikkitte is a trading name of FIRSTPASS EVENTS LTD.
           </p>
+          <div className="flex items-center gap-4">
+            <Link href="/terms" className="text-xs text-gray-400 transition-colors hover:text-gray-700">
+              Terms
+            </Link>
+            <Link href="/privacy" className="text-xs text-gray-400 transition-colors hover:text-gray-700">
+              Privacy
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
