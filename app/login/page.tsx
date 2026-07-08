@@ -8,8 +8,8 @@ export default function LoginPage() {
       {/* Left panel — server-rendered, no JS needed */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-[#1a1a1a] p-12">
         <Link href="/" className="flex items-center gap-2.5">
-          <Image src="/images/logo-create.png" alt="" width={42} height={28} priority className="h-7 w-auto" />
-          <Image src="/images/text-logo-create.png" alt="Tikkitte Create" width={160} height={35} priority className="h-8 w-auto" />
+          <Image src="/images/logo-create.png" alt="" width={42} height={28} loading="eager" className="h-7 w-auto" />
+          <Image src="/images/text-logo-create.png" alt="Tikkitte Create" width={160} height={35} loading="eager" className="h-8 w-auto" />
         </Link>
         <div>
           <p className="text-3xl font-extrabold leading-snug text-white">
@@ -26,8 +26,8 @@ export default function LoginPage() {
       {/* Right panel */}
       <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-16">
         <Link href="/" className="flex items-center gap-2 mb-10 lg:hidden">
-          <Image src="/images/logo-create.png" alt="" width={42} height={28} priority className="h-6 w-auto" />
-          <Image src="/images/text-logo-create.png" alt="Tikkitte Create" width={160} height={35} priority className="h-7 w-auto" />
+          <Image src="/images/logo-create.png" alt="" width={42} height={28} loading="eager" className="h-6 w-auto" />
+          <Image src="/images/text-logo-create.png" alt="Tikkitte Create" width={160} height={35} loading="eager" className="h-7 w-auto" />
         </Link>
         <div className="w-full max-w-sm mx-auto lg:mx-0">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Sign in</h1>

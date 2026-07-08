@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Event, Ticket, Payout, PayoutAccount } from '@/lib/types'
@@ -32,7 +32,7 @@ function eventStatus(event: Event): { label: string; className: string } {
 
 export default async function DashboardHomePage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
   if (!user) redirect('/login')
 
   const [{ data: profile }, { data: rawEvents }, { data: primaryAccount }, { data: rawPayouts }] = await Promise.all([

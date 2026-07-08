@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { PayoutAccount } from '@/lib/types'
 import OrganizerProfileForm from './OrganizerProfileForm'
@@ -6,7 +6,7 @@ import PayoutAccountsSection from './PayoutAccountsSection'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
   if (!user) redirect('/login')
 
   const [{ data: profile }, { data: payoutAccounts }] = await Promise.all([

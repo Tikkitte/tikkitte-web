@@ -8,6 +8,7 @@ export default async function AdminOrganizersPage() {
     .from('organizer_profile')
     .select('id, display_name, email, logo_url, created_at, approved, slug')
     .order('created_at', { ascending: false })
+    .limit(200)
 
   return (
     <div>

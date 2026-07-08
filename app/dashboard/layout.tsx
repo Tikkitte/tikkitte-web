@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
 import MobileTabBar from '@/components/dashboard/MobileTabBar'
@@ -13,7 +13,7 @@ async function signOut() {
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase

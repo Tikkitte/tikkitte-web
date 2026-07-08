@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -60,7 +60,7 @@ export default async function EventDetailPage({
   const { id } = await params
   const { shared } = await searchParams
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
   if (!user) redirect('/login')
 
   const { data: event } = await supabase
@@ -80,6 +80,7 @@ export default async function EventDetailPage({
     { data: payments },
     { data: freePayments },
     { data: payouts },
+    { data: attendeeProfiles },
   ] = await Promise.all([
     supabase
       .from('ticket')
@@ -117,11 +118,8 @@ export default async function EventDetailPage({
       .select('*')
       .eq('event_id', id)
       .order('created_at', { ascending: false }),
+    supabase.rpc('get_event_attendee_profiles', { p_event_id: id }),
   ])
-
-  const { data: attendeeProfiles } = (userTickets ?? []).length > 0
-    ? await supabase.rpc('get_event_attendee_profiles', { p_event_id: id })
-    : { data: [] as Array<{ user_id: string; email: string | null; name: string | null }> }
 
   const profileMap = ((attendeeProfiles ?? []) as Array<{ user_id: string; email: string | null; name: string | null }>).reduce(
     (acc: Record<string, { email: string | null; name: string | null }>, profile) => {
