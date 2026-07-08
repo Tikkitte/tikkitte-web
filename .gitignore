@@ -45,17 +45,9 @@ next-env.d.ts
 /design
 
 # codex planning docs (may contain credentials)
-CODEX_BRIEF.md
+/codex-briefs/
 migration.sql
 verify_phase1.sql
 
 # supabase CLI local state (project ref, pooler URL, org ID)
 supabase/.temp/
-CODEX_BRIEF_V2.md
-CODEX_BRIEF_V3.md
-CODEX_PERF_V1.md
-CODEX_BRIEF_V4.md
-CODEX_PERF_V2.md
-CODEX_BRIEF_V5.md
-CODEX_BRIEF_V6.md
-CODEX_BRIEF_V7.md
