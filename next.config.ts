@@ -63,6 +63,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/scan/iphone',
+        destination: '/scan',
+        permanent: true,
+      },
+    ];
+  },
   images: {
     qualities: [75, 90],
     remotePatterns: [
