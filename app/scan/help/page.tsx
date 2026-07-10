@@ -58,8 +58,9 @@ export default function ScanHelpPage() {
               <h2 className="font-semibold" style={{ color: '#ECEDEE' }}>Open the scanner</h2>
             </div>
             <p className="text-sm leading-relaxed pl-10" style={{ color: '#9BA1A6' }}>
-              Go to <span style={{ color: '#ECEDEE', fontWeight: 500 }}>tikkitte.com/scan</span> on an Android phone using Chrome.
-              No app download needed — scanning requires Chrome on Android (not supported on iPhone or Safari).
+              Go to <span style={{ color: '#ECEDEE', fontWeight: 500 }}>tikkitte.com/scan</span> on an Android phone using Chrome, or{' '}
+              <span style={{ color: '#ECEDEE', fontWeight: 500 }}>tikkitte.com/scan/iphone</span> on an iPhone.
+              No app download needed.
             </p>
           </div>
 
