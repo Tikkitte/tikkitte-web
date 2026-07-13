@@ -7,27 +7,13 @@ import type { Event, Ticket } from '@/lib/types'
 import { isValidUUID } from '@/lib/validation'
 import EventCheckout from './EventCheckout'
 import EventPreviewGallery from '@/components/EventPreviewGallery'
+import { formatDate, formatTime } from '@/lib/format'
 
 type OrganizerSummary = {
   id: string
   slug: string | null
   display_name: string
   logo_url: string | null
-}
-
-function formatDate(dateStr: string | null | undefined) {
-  if (!dateStr) return 'TBA'
-  const [y, m, d] = dateStr.split('-').map(Number)
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  return `${months[m - 1]} ${d}, ${y}`
-}
-
-function formatTime(timeStr: string | null | undefined) {
-  if (!timeStr) return ''
-  const [hh, mm] = timeStr.split(':').map(Number)
-  const am = hh < 12
-  const h12 = ((hh + 11) % 12) + 1
-  return `${h12}:${String(mm).padStart(2, '0')} ${am ? 'AM' : 'PM'}`
 }
 
 function formatEventDateRange(event: Event) {
@@ -120,15 +106,15 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
 
   if (event.cancelled) {
     return (
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-12 py-24 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 mb-5">
+      <div className="mx-auto max-w-[1440px] px-6 py-24 text-center lg:px-12">
+        <div className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
             <circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" />
           </svg>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Event Cancelled</h1>
-        <p className="text-gray-500 mb-8">{event.name} has been cancelled.</p>
-        <Link href="/events" className="text-sm font-semibold text-[#3B82F6] hover:text-[#2563EB] transition-colors">
+        <h1 className="mb-2 font-anton text-4xl uppercase text-[#191917]">Event cancelled</h1>
+        <p className="mb-8 text-[#5F5D54]">{event.name} has been cancelled.</p>
+        <Link href="/events" className="text-sm font-semibold text-[#2565D0] transition-colors hover:text-[#1E56B5]">
           ← Browse other events
         </Link>
       </div>
@@ -138,16 +124,16 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
   const poster = event.image?.[0]
 
   return (
-    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-10 lg:py-16">
+    <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 sm:py-10 lg:px-12 lg:py-16">
 
       {/* Two-column layout on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-[55fr_45fr] gap-10 lg:gap-16 items-start">
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[55fr_45fr] lg:gap-16">
 
         {/* ── Left column: event info card + preview gallery ─────────── */}
         <div>
 
           {/* Event info card */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-8">
+          <div className="mb-8 overflow-hidden rounded-[24px] border border-[#E4DFD1] bg-white shadow-[0_24px_70px_rgba(25,25,23,0.08)]">
             {poster ? (
               <div className="relative w-full bg-black" style={{ minHeight: '280px', maxHeight: '600px', height: '55vw' }}>
                 {/* Blurred backdrop */}
@@ -172,55 +158,55 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 />
               </div>
             ) : (
-              <div className="w-full bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center" style={{ height: '220px' }}>
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300">
+              <div className="flex w-full items-center justify-center bg-[#ECE7D8]" style={{ height: '220px' }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#C8C3B2]">
                   <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
                 </svg>
               </div>
             )}
             <div className="p-5">
               <div className="flex items-center gap-2 mb-2" />
-              <h1 className="text-xl font-bold text-gray-900 mb-1">{event.name}</h1>
-              <p className="text-sm text-gray-500">{formatEventDateRange(event)}</p>
+              <h1 className="mb-1 font-anton text-[clamp(30px,4vw,52px)] uppercase leading-[1.02] text-[#191917]">{event.name}</h1>
+              <p className="text-sm font-semibold text-[#2565D0]">{formatEventDateRange(event)}</p>
               {event.venue && (
                 event.maps_link ? (
                   <a
                     href={event.maps_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-gray-500 hover:text-[#3B82F6] transition-colors"
+                    className="text-sm text-[#5F5D54] transition-colors hover:text-[#2565D0]"
                   >
                     {event.venue}
                   </a>
                 ) : (
-                  <p className="text-sm text-gray-500">{event.venue}</p>
+                  <p className="text-sm text-[#5F5D54]">{event.venue}</p>
                 )
               )}
               {event.description && (
-                <p className="text-sm text-gray-400 mt-3 leading-relaxed line-clamp-4">
+                <p className="mt-4 line-clamp-4 text-sm leading-relaxed text-[#5F5D54]">
                   {event.description}
                 </p>
               )}
               {organizer && (
                 <Link
                   href={`/o/${organizer.slug ?? organizer.id}`}
-                  className="group mt-4 flex items-center gap-2.5 border-t border-gray-100 pt-4"
+                  className="group mt-5 flex items-center gap-2.5 border-t border-[#E7E2D4] pt-4"
                 >
                   {organizer.logo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={organizer.logo_url} className="h-8 w-8 rounded-full object-cover" alt="" />
                   ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1d67ba]/10 text-xs font-bold text-[#1d67ba]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2565D0]/10 text-xs font-bold text-[#2565D0]">
                       {organizer.display_name[0]?.toUpperCase() ?? 'T'}
                     </div>
                   )}
                   <div>
-                    <p className="text-xs text-gray-400">Hosted by</p>
-                    <p className="text-sm font-semibold text-gray-900 transition-colors group-hover:text-[#1d67ba]">
+                    <p className="text-xs text-[#8a887c]">Hosted by</p>
+                    <p className="text-sm font-semibold text-[#191917] transition-colors group-hover:text-[#2565D0]">
                       {organizer.display_name}
                     </p>
                   </div>
-                  <svg className="ml-auto text-gray-300 transition-colors group-hover:text-[#1d67ba]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <svg className="ml-auto text-[#C8C3B2] transition-colors group-hover:text-[#2565D0]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M9 18l6-6-6-6" />
                   </svg>
                 </Link>
@@ -231,7 +217,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
           {/* Preview gallery */}
           {((event.preview_images?.length ?? 0) + (event.preview_videos?.length ?? 0)) > 0 && (
             <div>
-              <h2 className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-3">Preview</h2>
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#8a887c]">Preview</h2>
               <EventPreviewGallery
                 images={event.preview_images ?? []}
                 videos={event.preview_videos ?? []}
@@ -241,16 +227,18 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
         </div>
 
         {/* ── Right column: checkout (sticky on desktop) ────────────── */}
-        <div className="lg:sticky lg:top-20">
+        <div className="lg:sticky lg:top-24">
 
           {/* Ticket checkout */}
-          <EventCheckout eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} />
+          <div className="rounded-[24px] border border-[#E4DFD1] bg-white p-5 shadow-[0_24px_70px_rgba(25,25,23,0.08)]">
+            <EventCheckout eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} />
+          </div>
 
           {/* Back link */}
-          <div className="mt-8 pt-6 border-t border-gray-100">
+          <div className="mt-8 border-t border-[#E7E2D4] pt-6">
             <Link
               href="/events"
-              className="text-sm font-semibold text-[#3B82F6] hover:text-[#2563EB] transition-colors"
+              className="text-sm font-semibold text-[#2565D0] transition-colors hover:text-[#1E56B5]"
             >
               ← All events
             </Link>

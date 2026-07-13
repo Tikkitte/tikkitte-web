@@ -10,19 +10,19 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="flex flex-col min-h-full">
+    <main className="flex min-h-full flex-col bg-[#F4F2EC] font-grotesk">
       <Nav />
 
       {/* Page header */}
-      <div className="bg-white">
+      <div className="bg-[#F4F2EC]">
         <div className="max-w-[1440px] mx-auto px-6 lg:px-12 py-12 sm:py-20">
-          <span className="text-xs font-semibold tracking-widest text-[#3B82F6] uppercase">
+          <span className="text-[13px] font-bold uppercase tracking-[0.16em] text-[#2565D0]">
             Our story
           </span>
-          <h1 className="mt-3 text-4xl sm:text-5xl font-bold text-gray-900 leading-tight">
+          <h1 className="mt-3 font-anton text-4xl uppercase leading-tight text-[#191917] sm:text-5xl">
             About Tikkitte
           </h1>
-          <p className="mt-4 text-lg text-gray-500 max-w-lg">
+          <p className="mt-4 max-w-lg text-lg text-[#5F5D54]">
             Built in Ghana, for Ghana. We&apos;re making it easier to discover, buy, and sell tickets to live events.
           </p>
         </div>

@@ -1,80 +1,75 @@
-import Reveal from './Reveal'
+import Image from 'next/image'
+import type { EventWithPrice } from '@/lib/events'
 
-const features = [
-  {
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" />
-        <path d="M14 14h1m3 0h3M14 17h4M14 20h7" />
-      </svg>
-    ),
-    label: 'Seamless Tickets',
-    title: 'Your ticket lives in your pocket.',
-    description:
-      'Every ticket comes with a unique QR code. Just open the app at the door — no printing, no screenshots, no stress.',
-  },
-  {
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-      </svg>
-    ),
-    label: "Discover What's On",
-    title: 'Find your next experience.',
-    description:
-      'Browse concerts, parties, sports, and more — all happening near you in Ghana. Updated in real time as new events go live.',
-  },
-  {
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
-      </svg>
-    ),
-    label: 'Never Miss a Show',
-    title: 'Reminders that actually work.',
-    description:
-      'Get a push notification 24 hours and 1 hour before your event. You bought the ticket — we make sure you show up.',
-  },
-]
-
-export default function AttendeeFeatures() {
+function QrMark() {
+  const filled = new Set([0, 1, 2, 4, 6, 9, 11, 13, 14, 15])
   return (
-    <section className="bg-gray-50 py-14 sm:py-24">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
+    <div className="grid w-[120px] -rotate-[4deg] grid-cols-4 grid-rows-4 gap-[3px] rounded-2xl bg-white p-3 shadow-[0_12px_28px_rgba(25,25,23,0.13)]">
+      {Array.from({ length: 16 }).map((_, i) => (
+        <span key={i} className={`aspect-square rounded-[2px] ${filled.has(i) ? 'bg-[#191917]' : 'bg-[#E4DFD1]'}`} />
+      ))}
+    </div>
+  )
+}
 
-        {/* Section header */}
-        <Reveal>
-          <div className="max-w-2xl mb-10 sm:mb-16">
-            <span className="text-xs font-semibold tracking-widest text-[#3B82F6] uppercase">
-              For event-goers
-            </span>
-            <h2 className="mt-3 text-4xl sm:text-5xl font-bold text-gray-900 leading-tight">
-              Going out, made simple.
-            </h2>
-            <p className="mt-4 text-lg text-gray-500 leading-relaxed">
-              From discovery to door entry — Tikkitte handles everything so you can just enjoy the night.
-            </p>
+export default function AttendeeFeatures({ events }: { events: EventWithPrice[] }) {
+  const flyers = events.filter((e) => e.image?.[0]).slice(0, 3)
+
+  return (
+    <section className="mx-auto max-w-[1280px] px-5 pt-[clamp(72px,10vh,120px)] lg:px-14">
+      <div className="text-center">
+        <div className="text-[13px] font-bold uppercase tracking-[0.16em] text-[#2565D0]">For event-goers</div>
+        <h2 className="mx-auto mt-4 max-w-[820px] font-anton text-[clamp(36px,5vw,68px)] uppercase leading-[1.02] text-[#191917]">
+          Going out, made stupid simple
+        </h2>
+      </div>
+
+      <div className="mt-14 grid grid-cols-1 gap-5 [grid-template-columns:repeat(auto-fit,minmax(280px,1fr))]">
+        <div className="flex flex-col gap-4 rounded-[24px] border border-[#E4DFD1] bg-white p-8">
+          <div className="flex h-[170px] items-center justify-center rounded-2xl bg-[#F4F2EC]">
+            <QrMark />
           </div>
-        </Reveal>
-
-        {/* Feature grid — staggered */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {features.map((f, i) => (
-            <Reveal key={f.label} delay={i * 100}>
-              <div className="bg-white rounded-2xl p-8 border border-gray-100 hover:border-blue-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 h-full">
-                <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-[#3B82F6] mb-6">
-                  {f.icon}
-                </div>
-                <p className="text-xs font-semibold tracking-widest text-[#3B82F6] uppercase mb-2">
-                  {f.label}
-                </p>
-                <h3 className="text-xl font-bold text-gray-900 mb-3 leading-snug">{f.title}</h3>
-                <p className="text-gray-500 leading-relaxed text-sm">{f.description}</p>
-              </div>
-            </Reveal>
-          ))}
+          <h3 className="mt-2 font-anton text-[26px] uppercase text-[#191917]">Your ticket is a QR code</h3>
+          <p className="text-base leading-relaxed text-[#5F5D54]">
+            Buy in seconds and get a unique QR straight to your phone. Flash it at the door. No printing, no screenshots, no stress.
+          </p>
         </div>
 
+        <div className="flex flex-col gap-4 rounded-[24px] border border-[#E4DFD1] bg-white p-8">
+          <div className="flex h-[170px] items-center justify-center gap-0 overflow-hidden rounded-2xl bg-[#F4F2EC]">
+            {flyers.map((event, i) => (
+              <div
+                key={event.id}
+                className={`relative h-[92px] w-[76px] overflow-hidden rounded-[10px] shadow-[0_12px_28px_rgba(25,25,23,0.13)] ${
+                  i === 0 ? '-rotate-[8deg] translate-x-3' : i === 1 ? 'z-[1] -translate-y-1.5' : 'rotate-[8deg] -translate-x-3'
+                }`}
+              >
+                <Image src={event.image![0]} alt="" fill className="object-cover" sizes="76px" />
+              </div>
+            ))}
+          </div>
+          <h3 className="mt-2 font-anton text-[26px] uppercase text-[#191917]">Find your next night out</h3>
+          <p className="text-base leading-relaxed text-[#5F5D54]">
+            Concerts, parties, beach days, game nights. Everything happening near you, updated live as events drop.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4 rounded-[24px] border border-[#E4DFD1] bg-white p-8">
+          <div className="flex h-[170px] flex-col justify-center gap-2.5 rounded-2xl bg-[#F4F2EC] px-5">
+            <div className="flex items-center gap-2.5 rounded-xl border border-[#E4DFD1] bg-white px-4 py-3 text-sm">
+              <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[#2565D0]" />
+              <span><strong>Tomorrow, 9 PM:</strong> you&apos;ve got tickets to On A Tuesday</span>
+            </div>
+            <div className="flex items-center gap-2.5 rounded-xl border border-[#E4DFD1] bg-white px-4 py-3 text-sm opacity-60">
+              <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[#2565D0]" />
+              <span><strong>In 1 hour:</strong> doors open at Kruna The Club</span>
+            </div>
+          </div>
+          <h3 className="mt-2 font-anton text-[26px] uppercase text-[#191917]">Reminders that work</h3>
+          <p className="text-base leading-relaxed text-[#5F5D54]">
+            A nudge 24 hours before and again at the 1-hour mark. You bought the ticket, we make sure you show up.
+          </p>
+        </div>
       </div>
     </section>
   )

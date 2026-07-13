@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Roboto, Poppins } from "next/font/google";
+import { Roboto, Poppins, Anton, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "@/lib/env";
@@ -15,6 +15,18 @@ const poppins = Poppins({
   subsets: ["latin"],
   weight: ["600", "700", "800"],
   variable: "--font-poppins",
+});
+
+const anton = Anton({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-anton",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-grotesk",
 });
 
 export const metadata: Metadata = {
@@ -42,7 +54,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className={`${roboto.variable} ${poppins.variable} font-sans min-h-full flex flex-col bg-white text-gray-900`}>
+      <body className={`${roboto.variable} ${poppins.variable} ${anton.variable} ${spaceGrotesk.variable} font-sans min-h-full flex flex-col bg-white text-gray-900`}>
         {children}
         <Analytics />
         <SpeedInsights />

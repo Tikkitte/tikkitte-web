@@ -48,13 +48,13 @@ export default function EventPreviewGallery({ images, videos }: Props) {
                 key={`img-${i}`}
                 type="button"
                 onClick={() => open(i)}
-                className="flex-shrink-0 w-40 h-[110px] rounded-xl overflow-hidden bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]"
+                className="h-[110px] w-40 flex-shrink-0 overflow-hidden rounded-xl bg-[#ECE7D8] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2565D0]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.url}
                   alt={`Preview ${i + 1}`}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                  className="h-full w-full object-cover transition-transform duration-200 hover:scale-105"
                 />
               </button>
             )
@@ -66,13 +66,13 @@ export default function EventPreviewGallery({ images, videos }: Props) {
               key={`vid-${i}`}
               type="button"
               onClick={() => open(i)}
-              className="relative flex-shrink-0 w-40 h-[110px] rounded-xl overflow-hidden bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]"
+              className="relative h-[110px] w-40 flex-shrink-0 overflow-hidden rounded-xl bg-[#ECE7D8] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2565D0]"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={thumb}
                 alt={`Video preview ${i + 1}`}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                className="h-full w-full object-cover transition-transform duration-200 hover:scale-105"
               />
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center">

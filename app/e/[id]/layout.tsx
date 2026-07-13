@@ -3,16 +3,16 @@ import Image from 'next/image'
 
 export default function EventLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-[#F4F2EC] font-grotesk text-[#191917]">
 
       {/* Nav */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-12 h-16 flex items-center justify-between">
+      <header className="sticky top-0 z-50 border-b border-[#E7E2D4] bg-[#F4F2EC]/95 backdrop-blur-sm">
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-6 lg:px-12">
 
           {/* Back → events list */}
           <Link
             href="/events"
-            className="flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors duration-150 group"
+            className="group flex items-center gap-2 text-[#8a887c] transition-colors duration-150 hover:text-[#191917]"
           >
             <svg
               width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -41,7 +41,7 @@ export default function EventLayout({ children }: { children: React.ReactNode })
 
           <Link
             href="/events"
-            className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors whitespace-nowrap"
+            className="whitespace-nowrap rounded-full border border-[#C8C3B2] px-4 py-2 text-sm font-semibold text-[#5F5D54] transition-colors hover:border-[#191917] hover:text-[#191917]"
           >
             All events
           </Link>
@@ -52,13 +52,13 @@ export default function EventLayout({ children }: { children: React.ReactNode })
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200 py-6 mt-12">
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-12 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
+      <footer className="mt-12 border-t border-[#E7E2D4] bg-[#F4F2EC] py-6">
+        <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-3 px-6 text-xs text-[#8a887c] sm:flex-row lg:px-12">
           <span>Powered by Tikkitte &middot; Event Ticketing for Ghana</span>
           <div className="flex gap-4">
-            <Link href="/events" className="hover:text-gray-900 transition-colors">Events</Link>
-            <Link href="/organizers" className="hover:text-gray-900 transition-colors">Sell tickets</Link>
-            <a href="mailto:admin@tikkitte.com" className="hover:text-gray-900 transition-colors">Contact</a>
+            <Link href="/events" className="transition-colors hover:text-[#191917]">Events</Link>
+            <Link href="/organizers" className="transition-colors hover:text-[#191917]">Sell tickets</Link>
+            <a href="mailto:admin@tikkitte.com" className="transition-colors hover:text-[#191917]">Contact</a>
           </div>
         </div>
       </footer>

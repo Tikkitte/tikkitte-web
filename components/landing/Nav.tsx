@@ -2,22 +2,59 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 type Props = {
-  showOrganizerCta?: boolean // kept for compatibility but no longer used
+  listEventHref?: string
 }
 
 const links = [
   { label: 'Home', href: '/' },
-  { label: 'Browse Events', href: '/events' },
+  { label: 'Browse events', href: '/events' },
   { label: 'Organizers', href: '/organizers' },
-  { label: 'About', href: '/about' },
 ]
 
-export default function Nav({ showOrganizerCta = false }: Props) {
+function HomeIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11.5 12 4l9 7.5" />
+      <path d="M5.5 9.8V20h13V9.8" />
+    </svg>
+  )
+}
+
+function TicketIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5Z" />
+      <line x1="15" y1="6.5" x2="15" y2="17.5" strokeDasharray="2 3" />
+    </svg>
+  )
+}
+
+function CalendarPlusIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="6" width="16" height="14" rx="2" />
+      <path d="M8 4v3" />
+      <path d="M16 4v3" />
+      <path d="M4 11h16" />
+      <path d="M12 13.5v4" />
+      <path d="M10 15.5h4" />
+    </svg>
+  )
+}
+
+const mobileLinks = [
+  { href: '/', label: 'Home', Icon: HomeIcon },
+  { href: '/events', label: 'Browse events', Icon: TicketIcon },
+  { href: '/organizers', label: 'Organizers', Icon: CalendarPlusIcon },
+]
+
+export default function Nav({ listEventHref = '/organizers' }: Props) {
+  const pathname = usePathname()
   const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -25,146 +62,60 @@ export default function Nav({ showOrganizerCta = false }: Props) {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Lock body scroll when mobile menu is open
-  useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
-  }, [menuOpen])
-
   return (
-    <>
-      <header
-        className={`sticky top-0 z-50 bg-white border-b transition-all duration-300 ${
-          scrolled
-            ? 'border-gray-200 shadow-[0_1px_12px_rgba(0,0,0,0.06)]'
-            : 'border-gray-100 shadow-none'
-        }`}
-      >
-        <nav className="max-w-[1440px] mx-auto px-6 lg:px-12 h-16 flex items-center justify-between gap-8">
+    <header
+      className={`sticky top-0 z-50 bg-[#F4F2EC]/95 backdrop-blur-sm transition-shadow duration-300 ${
+        scrolled ? 'shadow-[0_1px_12px_rgba(25,25,23,0.06)]' : ''
+      }`}
+    >
+      <nav className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-4 px-6 font-grotesk lg:px-12">
+        <Link href="/" className="flex flex-shrink-0 select-none items-center gap-2.5">
+          <Image src="/images/logo.png" alt="" width={42} height={28} priority unoptimized style={{ width: 'auto', height: '30px' }} />
+          <Image src="/images/text-logo-web.png" alt="Tikkitte" width={120} height={20} priority unoptimized style={{ height: '20px', width: 'auto' }} />
+        </Link>
 
-          {/* Logo — col 1 */}
-          <div className="flex-shrink-0 select-none flex items-center gap-2">
-            <Image
-              src="/images/logo.png"
-              alt=""
-              width={42}
-              height={28}
-              priority
-              unoptimized
-              style={{ width: 'auto', height: '24px', display: 'block', flexShrink: 0 }}
-            />
-            <Image
-              src="/images/text-logo-web.png"
-              alt="Tikkitte"
-              width={120}
-              height={20}
-              priority
-              unoptimized
-              style={{ height: '18px', width: 'auto', display: 'block' }}
-            />
-          </div>
-
-          {/* Desktop centre links */}
-          <div className="hidden md:flex items-center gap-8">
-            {links.map(({ label, href }) => (
+        <div className="hidden items-center gap-8 min-[760px]:flex">
+          {links.map(({ label, href }) => {
+            const active = pathname === href
+            return (
               <Link
                 key={href}
                 href={href}
-                className={`
-                  relative text-sm font-medium text-gray-500 hover:text-gray-900
-                  transition-colors duration-150
-                  after:absolute after:bottom-[-2px] after:left-0
-                  after:h-[2px] after:w-0 after:rounded-full after:bg-gray-900
-                  after:transition-[width] after:duration-200
-                  hover:after:w-full
-                `}
+                className={`text-[15px] font-medium transition-colors ${active ? 'text-[#191917]' : 'text-[#5F5D54] hover:text-[#191917]'}`}
               >
                 {label}
               </Link>
-            ))}
-          </div>
-
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-[5px] rounded-lg hover:bg-gray-50 transition-colors"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Toggle menu"
-          >
-            <span className={`block w-5 h-0.5 bg-gray-700 rounded transition-all duration-200 ${menuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
-            <span className={`block w-5 h-0.5 bg-gray-700 rounded transition-all duration-200 ${menuOpen ? 'opacity-0' : ''}`} />
-            <span className={`block w-5 h-0.5 bg-gray-700 rounded transition-all duration-200 ${menuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
-          </button>
-
-        </nav>
-      </header>
-
-      {/* Mobile menu overlay */}
-      {menuOpen && (
-        <div
-          className="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
-          onClick={() => setMenuOpen(false)}
-        />
-      )}
-
-      {/* Mobile menu drawer */}
-      <div
-        className={`md:hidden fixed top-0 right-0 z-50 h-full w-72 bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
-          menuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        {/* Drawer header */}
-        <div className="flex items-center justify-between px-6 h-16 border-b border-gray-100">
-          <Image
-            src="/images/logo.png"
-            alt="Tikkitte"
-            width={54}
-            height={36}
-            unoptimized
-            style={{ height: '32px', width: 'auto', display: 'block' }}
-          />
-          <button
-            onClick={() => setMenuOpen(false)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label="Close menu"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
+            )
+          })}
         </div>
 
-        {/* Drawer links */}
-        <nav className="flex-1 flex flex-col px-4 py-6 gap-1">
-          {links.map(({ label, href }) => (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => setMenuOpen(false)}
-              className="text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 px-3 py-3 rounded-xl transition-colors"
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
+        <Link
+          href={listEventHref}
+          className="hidden rounded-full bg-[#2565D0] px-[22px] py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#1E56B5] min-[760px]:inline-block"
+        >
+          List your event
+        </Link>
 
-        {/* Drawer CTA */}
-        <div className="px-4 pb-8 flex flex-col gap-3">
-          <Link
-            href="https://create.tikkitte.com/signup"
-            onClick={() => setMenuOpen(false)}
-            className="w-full text-center text-sm font-semibold bg-[#3B82F6] text-white px-4 py-3 rounded-xl hover:bg-[#2563EB] transition-colors"
-          >
-            List your event
-          </Link>
-          <Link
-            href="https://create.tikkitte.com/login"
-            onClick={() => setMenuOpen(false)}
-            className="w-full text-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
-          >
-            Organizer sign in
-          </Link>
+        <div className="flex items-center gap-[10px] min-[760px]:hidden">
+          {mobileLinks.map(({ href, label, Icon }) => {
+            const active = pathname === href
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-label={label}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border transition-colors ${
+                  active
+                    ? 'border-[#2565D0] bg-[#2565D0] text-white'
+                    : 'border-[#C8C3B2] bg-transparent text-[#5F5D54] hover:border-[#2565D0] hover:text-[#2565D0]'
+                }`}
+              >
+                <Icon />
+              </Link>
+            )
+          })}
         </div>
-      </div>
-    </>
+      </nav>
+    </header>
   )
 }

@@ -20,20 +20,25 @@ export default function CancelButton({ eventId }: { eventId: string }) {
 
   if (confirming) {
     return (
-      <div className="flex gap-2">
-        <button
-          onClick={() => setConfirming(false)}
-          className="text-sm font-semibold px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          Keep event
-        </button>
-        <button
-          onClick={handleCancel}
-          disabled={loading}
-          className="text-sm font-semibold px-4 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-60"
-        >
-          {loading ? 'Cancelling...' : 'Yes, cancel event'}
-        </button>
+      <div className="flex flex-col items-end gap-2">
+        <p className="text-xs text-gray-500 max-w-[240px] text-right">
+          Ticket holders will be notified and automatically refunded in full via Paystack. This can&apos;t be undone.
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setConfirming(false)}
+            className="text-sm font-semibold px-4 py-2.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Keep event
+          </button>
+          <button
+            onClick={handleCancel}
+            disabled={loading}
+            className="text-sm font-semibold px-4 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-60"
+          >
+            {loading ? 'Cancelling...' : 'Yes, cancel event'}
+          </button>
+        </div>
       </div>
     )
   }

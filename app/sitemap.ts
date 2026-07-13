@@ -1,13 +1,9 @@
 import type { MetadataRoute } from 'next'
 import { createClient } from '@/lib/supabase/server'
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tikkitte.com').replace(/\/$/, '')
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  if (!siteUrl) {
-    return []
-  }
-
   const supabase = await createClient()
   const { data: events } = await supabase
     .from('event')
@@ -20,8 +16,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/events',
     '/organizers',
     '/about',
+    '/contact',
     '/terms',
     '/privacy',
+    '/refund-policy',
   ].map((path) => ({
     url: `${siteUrl}${path}`,
     lastModified: new Date(),

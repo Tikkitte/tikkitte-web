@@ -1,67 +1,71 @@
 import Link from 'next/link'
 import Nav from './Nav'
-import PhoneCarousel from './PhoneCarousel'
 
 export default function OrganizerHero() {
   return (
-    <section className="bg-white">
-      <Nav />
+    <section className="bg-[#F4F2EC]">
+      <Nav listEventHref="https://create.tikkitte.com/signup" />
 
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-12 py-16 sm:py-24">
-
-        {/* Eyebrow */}
-        <span className="inline-block text-xs font-semibold tracking-widest text-[#3B82F6] uppercase mb-6">
-          For organizers
-        </span>
-
-        {/* Headline */}
-        <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight max-w-2xl mb-16">
-          Sell tickets to your event — instantly.
+      <div className="mx-auto max-w-[1280px] px-5 pt-[clamp(40px,7vh,80px)] text-center lg:px-14">
+        <div className="text-[13px] font-bold uppercase tracking-[0.16em] text-[#2565D0]">For organizers</div>
+        <h1 className="mx-auto mt-4 max-w-[1000px] font-anton text-[clamp(48px,8.5vw,120px)] uppercase leading-[0.98] text-[#191917]">
+          Sell out faster.<br /><span className="text-[#2E6FE6]">Get paid directly.</span>
         </h1>
+        <p className="mx-auto mt-5 max-w-[540px] text-[clamp(16px,1.6vw,20px)] leading-relaxed text-[#5F5D54]">
+          List your event in minutes and reach thousands of people actively looking for something to do. No spreadsheets, no stress.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3.5">
+          <Link href="https://create.tikkitte.com/signup" className="rounded-full bg-[#2565D0] px-[34px] py-4 text-[17px] font-bold text-white hover:bg-[#1E56B5]">
+            List your event for free
+          </Link>
+          <Link href="https://create.tikkitte.com/login" className="rounded-full border-[1.5px] border-[#C8C3B2] px-[34px] py-4 text-[17px] font-bold text-[#191917] hover:border-[#191917]">
+            Organizer sign in
+          </Link>
+        </div>
 
-        {/* Two-column: phone left, action cards right */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
-
-          {/* Phone */}
-          <div className="flex justify-center lg:justify-start">
-            <PhoneCarousel minimal />
-          </div>
-
-          {/* Action cards */}
-          <div className="flex flex-col gap-5">
-            <p className="text-gray-400 text-sm font-medium uppercase tracking-widest mb-2">Get started</p>
-
-            <Link
-              href="https://create.tikkitte.com/signup"
-              className="group flex flex-col gap-2 bg-[#3B82F6] text-white rounded-2xl px-8 py-7 hover:bg-[#2563EB] transition-colors duration-200"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xl font-bold">List your event</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-70 group-hover:translate-x-1 transition-transform duration-200">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
+        <div className="relative mx-auto mt-[60px] max-w-[960px] pb-8 text-left">
+          <div className="rounded-[24px] border border-[#E4DFD1] bg-white p-3.5 shadow-[0_40px_90px_rgba(25,25,23,0.16)]">
+            <div className="flex gap-[7px] px-1.5 pb-3 pt-0.5">
+              <span className="h-[11px] w-[11px] rounded-full bg-[#C8C3B2]" />
+              <span className="h-[11px] w-[11px] rounded-full bg-[#C8C3B2]" />
+              <span className="h-[11px] w-[11px] rounded-full bg-[#C8C3B2]" />
+            </div>
+            <div className="flex flex-col gap-[18px] rounded-[14px] bg-[#F4F2EC] p-[clamp(18px,3vw,32px)]">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <div className="text-[clamp(17px,2vw,22px)] font-bold">Welcome back, Ama</div>
+                  <div className="text-sm text-[#8a887c]">Here is your earnings summary.</div>
+                </div>
+                <span className="rounded-full bg-[#2565D0] px-5 py-2.5 text-sm font-semibold text-white">+ Create event</span>
               </div>
-              <span className="text-blue-100 text-sm leading-relaxed">
-                Create your event page in minutes. Set ticket types, prices, and capacity — then go live.
-              </span>
-            </Link>
 
-            <Link
-              href="https://create.tikkitte.com/login"
-              className="group flex flex-col gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-8 py-7 hover:bg-gray-100 transition-colors duration-200"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xl font-bold text-gray-900">Organizer sign in</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 group-hover:translate-x-1 transition-transform duration-200">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
+              <div className="grid grid-cols-1 gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(250px,1fr))]">
+                <div className="min-w-0 rounded-2xl border border-[#E4DFD1] bg-white p-5">
+                  <div className="text-[13px] text-[#8a887c]">Total collected</div>
+                  <div className="mt-1 text-[clamp(24px,3vw,34px)] font-bold">GH₵ 48,210.50</div>
+                  <div className="text-xs text-[#8a887c]">Across all events</div>
+                  <svg viewBox="0 0 400 110" className="mt-3.5 block w-full" preserveAspectRatio="none">
+                    <path d="M0,100 C60,98 90,92 130,80 C170,68 190,84 230,74 C270,64 310,40 400,12 L400,110 L0,110 Z" fill="#2565D0" opacity="0.18" />
+                    <path d="M0,100 C60,98 90,92 130,80 C170,68 190,84 230,74 C270,64 310,40 400,12" fill="none" stroke="#2E6FE6" strokeWidth="3" />
+                  </svg>
+                </div>
+                <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-[#E4DFD1] bg-white p-5">
+                  <div className="text-[13px] text-[#8a887c]">Available balance</div>
+                  <div className="text-[clamp(20px,2.4vw,28px)] font-bold">GH₵ 45,800.00</div>
+                  <span className="mt-auto rounded-full bg-[#191917] px-4 py-2.5 text-center text-[13px] font-bold text-[#F4F2EC]">Request payout</span>
+                </div>
               </div>
-              <span className="text-gray-400 text-sm leading-relaxed">
-                Already have an account? Sign in to manage your events, track sales, and view attendees.
-              </span>
-            </Link>
-          </div>
 
+              <div className="grid grid-cols-1 gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(130px,1fr))]">
+                {[['Total events', '14'], ['Tickets sold', '1,268'], ['Avg ticket value', 'GH₵ 38']].map(([label, value]) => (
+                  <div key={label} className="rounded-2xl border border-[#E4DFD1] bg-white px-5 py-4">
+                    <div className="text-[13px] text-[#8a887c]">{label}</div>
+                    <div className="mt-1 text-[22px] font-bold">{value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

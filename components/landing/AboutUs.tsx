@@ -32,7 +32,7 @@ function PhotoPlaceholder() {
 
 export default function AboutUs() {
   return (
-    <section className="bg-white py-16 sm:py-28">
+    <section className="bg-[#F4F2EC] py-16 sm:py-28">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
 
         {/* Quote + founders side by side */}
@@ -40,7 +40,7 @@ export default function AboutUs() {
 
           {/* Story pull-quote */}
           <Reveal>
-            <p className="text-2xl sm:text-3xl font-light text-gray-700 leading-relaxed italic border-l-2 border-[#3B82F6] pl-6">
+            <p className="border-l-2 border-[#2565D0] pl-6 text-2xl font-light leading-relaxed text-[#5F5D54] italic sm:text-3xl">
               &ldquo;Ghana&apos;s event scene is thriving — but getting tickets has always been an afterthought.
               We started Tikkitte to give organisers a real platform and give fans a way to show up without the hassle.&rdquo;
             </p>
@@ -66,11 +66,11 @@ export default function AboutUs() {
                   )}
 
                   {/* Blue tint on hover */}
-                  <div className="absolute inset-0 bg-[#3B82F6] opacity-0 group-hover:opacity-5 transition-opacity duration-500" />
+                  <div className="absolute inset-0 bg-[#2565D0] opacity-0 group-hover:opacity-5 transition-opacity duration-500" />
                 </div>
 
                 {/* Name */}
-                <p className="text-xl font-bold text-gray-900 group-hover:text-[#3B82F6] transition-colors duration-300">
+                <p className="text-xl font-bold text-[#191917] transition-colors duration-300 group-hover:text-[#2565D0]">
                   {founder.name}
                 </p>
 

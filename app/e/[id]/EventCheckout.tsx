@@ -44,7 +44,7 @@ function ticketSaleStatus(ticket: Ticket) {
 function promoDescription(promoCode: PromoCode) {
   return promoCode.discount_type === 'percent'
     ? `${promoCode.discount_value}% off`
-    : `GHS ${promoCode.discount_value} off`
+    : `GH₵ ${promoCode.discount_value} off`
 }
 
 export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
@@ -298,7 +298,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
 
   if (tickets.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-400">
+      <div className="py-8 text-center text-[#8a887c]">
         No tickets available for this event.
       </div>
     )
@@ -307,7 +307,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
   return (
     <div>
       {/* Ticket selection */}
-      <h2 className="text-xs font-bold text-[#1d67ba] uppercase tracking-widest mb-4">
+      <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-[#2565D0]">
         Tickets
       </h2>
 
@@ -328,17 +328,17 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
               key={ticket.id}
               className={`border rounded-xl p-4 transition-colors ${
                 unavailable
-                  ? 'bg-gray-100 border-gray-200 opacity-70'
+                  ? 'border-[#E4DFD1] bg-[#F4F2EC] opacity-70'
                   : count > 0
-                  ? 'bg-blue-50/50 border-[#1d67ba]/30'
-                  : 'bg-gray-50 border-gray-200'
+                  ? 'border-[#2565D0]/35 bg-[#2565D0]/5'
+                  : 'border-[#E4DFD1] bg-[#F4F2EC]'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <span className="font-bold text-gray-900">{ticket.label}</span>
-                  <span className="ml-2 text-gray-600 font-medium">
-                    {ticket.price === 0 ? 'Free' : `GHS ${ticket.price}`}
+                  <span className="font-bold text-[#191917]">{ticket.label}</span>
+                  <span className="ml-2 font-medium text-[#5F5D54]">
+                    {ticket.price === 0 ? 'Free' : `GH₵ ${ticket.price}`}
                   </span>
                 </div>
                 {soldOut && (
@@ -347,7 +347,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
                   </span>
                 )}
                 {!soldOut && !saleStatus.available && (
-                  <span className="text-xs font-bold text-gray-600 bg-white px-2.5 py-0.5 rounded-full">
+                  <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-[#5F5D54]">
                     {saleStatus.label}
                   </span>
                 )}
@@ -359,33 +359,33 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
               </div>
 
               {unavailable ? (
-                <div className={`text-center py-2 text-sm font-medium ${soldOut ? 'text-red-500' : 'text-gray-500'}`}>
+                <div className={`py-2 text-center text-sm font-medium ${soldOut ? 'text-red-500' : 'text-[#8a887c]'}`}>
                   {soldOut ? 'Sold out' : saleStatus.label}
                 </div>
               ) : (
                 <>
                   {(ticket.min_per_order > 1 || ticket.max_per_order !== null) && (
-                    <p className="text-xs text-gray-500 mb-2">
+                    <p className="mb-2 text-xs text-[#8a887c]">
                       {ticket.min_per_order > 1 ? `Min ${ticket.min_per_order}` : 'Min 1'}
                       {ticket.max_per_order !== null ? ` · Max ${ticket.max_per_order}` : ''}
                     </p>
                   )}
-                  <div className="flex items-center justify-between bg-white rounded-lg px-3 py-1 border border-gray-100">
+                  <div className="flex items-center justify-between rounded-lg border border-[#E7E2D4] bg-white px-3 py-1">
                     <button
                       type="button"
                       onClick={() => decrement(ticket.id)}
-                      className="w-9 h-9 flex items-center justify-center text-lg font-bold text-gray-700 hover:text-[#1d67ba] transition-colors"
+                      className="flex h-9 w-9 items-center justify-center text-lg font-bold text-[#5F5D54] transition-colors hover:text-[#2565D0]"
                     >
                       &minus;
                     </button>
-                    <span className="text-base font-bold text-gray-900 tabular-nums w-8 text-center">
+                    <span className="w-8 text-center text-base font-bold tabular-nums text-[#191917]">
                       {count}
                     </span>
                     <button
                       type="button"
                       onClick={() => increment(ticket.id)}
                       disabled={atMax}
-                      className="w-9 h-9 flex items-center justify-center text-lg font-bold text-gray-700 hover:text-[#1d67ba] transition-colors disabled:opacity-30"
+                      className="flex h-9 w-9 items-center justify-center text-lg font-bold text-[#5F5D54] transition-colors hover:text-[#2565D0] disabled:opacity-30"
                     >
                       +
                     </button>
@@ -401,7 +401,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
       {totalTickets > 0 && (
         <div className="space-y-3 mb-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-semibold text-gray-800 mb-1">
+            <label htmlFor="email" className="mb-1 block text-sm font-semibold text-[#191917]">
               Email address <span className="text-red-500">*</span>
             </label>
             <input
@@ -412,15 +412,15 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] focus:border-transparent placeholder:text-gray-400"
+              className="w-full rounded-lg border border-[#E4DFD1] bg-white px-4 py-2.5 text-sm text-[#191917] placeholder:text-[#8a887c] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#2565D0]"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="mt-1 text-xs text-[#8a887c]">
               Your tickets and QR code will be sent here
             </p>
           </div>
           <div>
-            <label htmlFor="name" className="block text-sm font-semibold text-gray-800 mb-1">
-              Name <span className="text-gray-400 font-normal">(optional)</span>
+            <label htmlFor="name" className="mb-1 block text-sm font-semibold text-[#191917]">
+              Name <span className="font-normal text-[#8a887c]">(optional)</span>
             </label>
             <input
               id="name"
@@ -429,7 +429,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
               placeholder="Your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] focus:border-transparent placeholder:text-gray-400"
+              className="w-full rounded-lg border border-[#E4DFD1] bg-white px-4 py-2.5 text-sm text-[#191917] placeholder:text-[#8a887c] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#2565D0]"
             />
           </div>
         </div>
@@ -438,7 +438,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
       {/* Promo code */}
       {totalTickets > 0 && (
         <div className="mb-6">
-          <label htmlFor="promo-code" className="block text-sm font-semibold text-gray-800 mb-1">
+          <label htmlFor="promo-code" className="mb-1 block text-sm font-semibold text-[#191917]">
             Promo code
           </label>
           <div className="flex gap-2">
@@ -446,13 +446,13 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
               id="promo-code"
               value={promoInput}
               onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-              className="min-w-0 flex-1 px-4 py-2.5 rounded-lg border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#1d67ba] focus:border-transparent placeholder:text-gray-400"
+              className="min-w-0 flex-1 rounded-lg border border-[#E4DFD1] bg-white px-4 py-2.5 text-sm text-[#191917] placeholder:text-[#8a887c] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#2565D0]"
               placeholder="Enter promo code"
             />
             <button
               type="button"
               onClick={applyPromoCode}
-              className="rounded-lg border border-[#1d67ba] px-4 py-2.5 text-sm font-semibold text-[#1d67ba] hover:bg-blue-50 transition-colors"
+              className="rounded-lg border border-[#2565D0] px-4 py-2.5 text-sm font-semibold text-[#2565D0] transition-colors hover:bg-[#2565D0]/5"
             >
               Apply
             </button>
@@ -473,13 +473,13 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
       <div className="sticky bottom-4">
         {totalTickets > 0 && discountAmount > 0 && (
           <div className="mb-3 rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm">
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between text-[#5F5D54]">
               <span>Subtotal</span>
-              <span>GHS {totalPrice.toFixed(2)}</span>
+              <span>GH₵ {totalPrice.toFixed(2)}</span>
             </div>
             <div className="mt-1 flex justify-between font-semibold text-green-700">
               <span>Discount</span>
-              <span>-GHS {discountAmount.toFixed(2)}</span>
+              <span>-GH₵ {discountAmount.toFixed(2)}</span>
             </div>
           </div>
         )}
@@ -487,7 +487,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
           type="button"
           onClick={handleCheckout}
           disabled={loading || totalTickets === 0 || allUnavailable}
-          className="w-full py-3.5 rounded-xl font-semibold text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-[#1d67ba] text-white hover:bg-[#1555a0] shadow-sm"
+          className="w-full rounded-xl bg-[#2565D0] py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#1E56B5] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {loading ? (
             <span className="inline-flex items-center gap-2">
@@ -502,7 +502,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
           ) : displayedTotal === 0 ? (
             `Claim ${totalTickets} Free Ticket${totalTickets > 1 ? 's' : ''}`
           ) : (
-            `Pay GHS ${displayedTotal.toFixed(2)} for ${totalTickets} Ticket${totalTickets > 1 ? 's' : ''}`
+            `Pay GH₵ ${displayedTotal.toFixed(2)} for ${totalTickets} Ticket${totalTickets > 1 ? 's' : ''}`
           )}
         </button>
       </div>

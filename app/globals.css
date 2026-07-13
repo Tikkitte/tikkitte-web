@@ -20,6 +20,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-roboto), system-ui, sans-serif;
   --font-display: var(--font-poppins), system-ui, sans-serif;
+  --font-anton: var(--font-anton), sans-serif;
+  --font-grotesk: var(--font-grotesk), sans-serif;
 }
 
 *, *::before, *::after {
@@ -70,23 +72,18 @@ h1, h2, h3, h4 {
   animation: float 5s ease-in-out infinite;
 }
 
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+
 /* ─── Subtle shimmer on cards ──────────────────────────── */
 
 @keyframes shimmer-in {
   from { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
   to   { box-shadow: 0 0 0 4px rgba(59,130,246,0.08); }
-}
-
-/* ─── Watermark text — cursor-reactive ─────────────────── */
-
-.watermark-text {
-  display: block;
-  font-size: clamp(5rem, 18vw, 18rem);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  color: transparent;
-  -webkit-text-stroke-width: 4px;
-  -webkit-text-stroke-color: rgba(59, 130, 246, 0.45);
-  pointer-events: none;
 }

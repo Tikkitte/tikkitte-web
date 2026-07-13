@@ -1,100 +1,127 @@
+import Link from 'next/link'
 import Image from 'next/image'
 import Nav from './Nav'
-import PhoneCarousel from './PhoneCarousel'
-import CursorGlow from './CursorGlow'
-import Reveal from './Reveal'
+import type { EventWithPrice } from '@/lib/events'
+import { formatDate } from '@/lib/format'
 
-function AppleIcon() {
+type Props = {
+  events: EventWithPrice[]
+}
+
+function QrMark() {
+  const filled = new Set([0, 1, 2, 4, 6, 9, 11, 13, 14, 15])
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-    </svg>
+    <div className="grid w-full grid-cols-4 grid-rows-4 gap-[3px] rounded-2xl bg-white p-3 shadow-[0_18px_40px_rgba(25,25,23,0.13)]">
+      {Array.from({ length: 16 }).map((_, i) => (
+        <span key={i} className={`aspect-square rounded-[2px] ${filled.has(i) ? 'bg-[#191917]' : 'bg-[#E4DFD1]'}`} />
+      ))}
+    </div>
   )
 }
 
-function PlayIcon() {
+function BarcodeStrip({ className = '' }: { className?: string }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.36.6 1.24 0 1.6l-14 8.5c-.66.5-1.6.03-1.6-.8z" />
-    </svg>
+    <div className={`flex h-10 items-end gap-[3px] rounded-[10px] bg-white/90 px-3 py-2 opacity-90 ${className}`}>
+      {Array.from({ length: 24 }).map((_, i) => (
+        <span key={i} style={{ height: `${(i % 5) * 4 + 8}px` }} className="w-[2px] bg-[#191917]" />
+      ))}
+    </div>
   )
 }
 
-export default function Hero() {
-  return (
-    <section className="bg-white relative overflow-hidden">
-      {/* Cursor glow — follows mouse around the whole hero */}
-      <CursorGlow />
+export default function Hero({ events }: Props) {
+  const rows = events.slice(0, 3)
 
+  return (
+    <section className="relative overflow-hidden bg-[#F4F2EC]">
       <Nav />
 
-      {/* Hero content */}
-      <div className="relative z-10 max-w-[1440px] mx-auto px-6 lg:px-12 pt-14 sm:pt-20 lg:pt-24 pb-10 sm:pb-16 text-center">
-        <Reveal>
-          {/* Icon mark */}
-          <div className="flex justify-center mb-6">
-            <Image
-              src="/images/logo.png"
-              alt="Tikkitte"
-              width={96}
-              height={64}
-              unoptimized
-              style={{ width: 'auto', height: '64px' }}
-            />
-          </div>
-
-          {/* Eyebrow */}
-          <span className="inline-block text-xs font-semibold tracking-widest text-[#3B82F6] uppercase mb-6">
-            Now available in Ghana
-          </span>
-
-          {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-gray-900 leading-[1.08] tracking-tight max-w-3xl mx-auto">
-            Ghana&apos;s home<br />for live events.
-          </h1>
-
-          {/* Sub-headline */}
-          <p className="mt-6 text-lg sm:text-xl text-gray-500 max-w-xl mx-auto leading-relaxed">
-            Discover events near you and buy tickets in seconds.
-            No account needed.
-          </p>
-
-          {/* App store buttons */}
-          <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <div>
-              <a
-                href="#"
-                className="inline-flex items-center gap-3 bg-gray-900 text-white px-6 py-3.5 rounded-2xl hover:bg-gray-800 hover:scale-[1.03] active:scale-[0.98] transition-all duration-150"
-              >
-                <AppleIcon />
-                <div className="text-left">
-                  <p className="text-[10px] leading-none text-gray-400 font-medium">Download on the</p>
-                  <p className="text-base font-semibold leading-tight mt-0.5">App Store</p>
-                </div>
-              </a>
-            </div>
-            <div>
-              <a
-                href="#"
-                className="inline-flex items-center gap-3 bg-gray-900 text-white px-6 py-3.5 rounded-2xl hover:bg-gray-800 hover:scale-[1.03] active:scale-[0.98] transition-all duration-150"
-              >
-                <PlayIcon />
-                <div className="text-left">
-                  <p className="text-[10px] leading-none text-gray-400 font-medium">Get it on</p>
-                  <p className="text-base font-semibold leading-tight mt-0.5">Google Play</p>
-                </div>
-              </a>
-            </div>
-          </div>
-        </Reveal>
-      </div>
-
-      {/* Phone mockup — floats */}
-      <Reveal delay={200}>
-        <div className="pb-24 relative z-10">
-          <PhoneCarousel />
+      <header className="px-5 pt-[clamp(40px,7vh,80px)] text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#E4DFD1] bg-white px-[18px] py-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-[#2565D0]">
+          <span className="h-2 w-2 rounded-full bg-[#2565D0]" />
+          Now live in Ghana
         </div>
-      </Reveal>
+
+        <h1 className="mx-auto mt-7 max-w-[1100px] font-anton text-[clamp(52px,9vw,132px)] uppercase leading-[0.98] tracking-[0.01em] text-[#191917]">
+          Ghana&apos;s home<br />for live events
+        </h1>
+
+        <p className="mx-auto mt-6 max-w-[520px] text-[clamp(16px,1.6vw,20px)] leading-relaxed text-[#5F5D54]">
+          Find the night, buy the ticket, walk in. Straight from your browser. No app, no account, no stress.
+        </p>
+
+        <div className="mt-8 flex flex-wrap justify-center gap-3.5">
+          <Link href="/events" className="rounded-full bg-[#2565D0] px-[34px] py-4 text-[17px] font-bold text-white transition-colors hover:bg-[#1E56B5]">
+            Browse events
+          </Link>
+          <Link href="/organizers" className="rounded-full border-[1.5px] border-[#C8C3B2] px-[34px] py-4 text-[17px] font-bold text-[#191917] transition-colors hover:border-[#191917]">
+            List your event
+          </Link>
+        </div>
+
+        <div className="relative mx-auto mt-16 max-w-[1200px] px-3 pb-16">
+          <div className="relative z-[2] mx-auto max-w-[820px] rounded-[24px] border border-[#E4DFD1] bg-white p-3.5 shadow-[0_40px_90px_rgba(25,25,23,0.16)]">
+            <div className="flex gap-[7px] px-1.5 pb-3 pt-0.5">
+              <span className="h-[11px] w-[11px] rounded-full bg-[#C8C3B2]" />
+              <span className="h-[11px] w-[11px] rounded-full bg-[#C8C3B2]" />
+              <span className="h-[11px] w-[11px] rounded-full bg-[#C8C3B2]" />
+            </div>
+            <div className="flex min-h-[clamp(240px,38vw,440px)] flex-col justify-center gap-[clamp(10px,1.4vw,18px)] rounded-[14px] bg-[#F4F2EC] px-[clamp(16px,3vw,44px)] py-[clamp(16px,2.6vw,36px)] text-left">
+              <div>
+                <div className="text-[clamp(10px,1vw,13px)] font-bold uppercase tracking-[0.16em] text-[#2565D0]">Ghana&apos;s events</div>
+                <div className="mt-1.5 font-anton text-[clamp(26px,3.6vw,48px)] uppercase leading-none text-[#191917]">What&apos;s on</div>
+              </div>
+              {rows.length > 0 && (
+                <div className="flex flex-col">
+                  {rows.map((event) => (
+                    <Link
+                      key={event.id}
+                      href={`/e/${event.slug ?? event.id}`}
+                      className="flex items-center gap-[clamp(10px,1.6vw,20px)] border-t border-[#E7E2D4] py-[clamp(8px,1.2vw,14px)]"
+                    >
+                      <div className="relative h-[clamp(42px,5vw,64px)] w-[clamp(34px,4vw,52px)] flex-shrink-0 overflow-hidden rounded-lg bg-white">
+                        {event.image?.[0] && <Image src={event.image[0]} alt="" fill className="object-cover" sizes="52px" />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[clamp(9px,0.9vw,12px)] font-bold uppercase tracking-[0.1em] text-[#2565D0]">{formatDate(event.date)}</div>
+                        <div className="truncate font-anton text-[clamp(14px,1.7vw,22px)] uppercase leading-tight text-[#191917]">{event.name}</div>
+                        <div className="truncate text-[clamp(10px,1vw,13px)] text-[#8a887c]">{event.venue}</div>
+                      </div>
+                      <span className="whitespace-nowrap rounded-full bg-[#2565D0] px-[clamp(12px,1.6vw,20px)] py-[clamp(6px,0.8vw,10px)] text-[clamp(9px,1vw,13px)] font-bold text-white">
+                        Get tickets
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="absolute right-[clamp(-8px,2vw,60px)] top-[-44px] z-[3] w-[clamp(90px,11vw,150px)] rotate-[8deg]">
+            <QrMark />
+          </div>
+
+          <Image
+            src="/images/logo-square.png"
+            alt=""
+            width={140}
+            height={140}
+            className="absolute left-[clamp(-6px,2vw,48px)] top-[-30px] z-[3] w-[clamp(80px,10vw,140px)] -rotate-[10deg] rounded-[22%] drop-shadow-[0_16px_30px_rgba(25,25,23,0.13)]"
+          />
+
+          {rows[0]?.image?.[0] && (
+            <div className="absolute bottom-[-30px] left-[clamp(-30px,-1vw,10px)] z-[3] h-[clamp(76px,9vw,124px)] w-[clamp(100px,12vw,170px)] -rotate-[7deg] overflow-hidden rounded-2xl shadow-[0_18px_40px_rgba(25,25,23,0.13)]">
+              <Image src={rows[0].image[0]} alt="" fill className="object-cover" sizes="170px" />
+            </div>
+          )}
+
+          <div className="absolute bottom-[-20px] right-[clamp(0px,3.5vw,110px)] z-[3] rotate-[5deg] rounded-full bg-[#2565D0] px-[26px] py-3.5 font-anton text-[clamp(15px,1.6vw,22px)] uppercase tracking-[0.06em] text-white shadow-[0_18px_40px_rgba(25,25,23,0.13)]">
+            Accra&nbsp;●&nbsp;Tonight
+          </div>
+
+          <BarcodeStrip className="absolute bottom-[-34px] left-1/2 z-[1] w-[clamp(140px,18vw,240px)] -translate-x-[70%] -rotate-[3deg]" />
+        </div>
+      </header>
     </section>
   )
 }

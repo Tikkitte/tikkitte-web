@@ -4,6 +4,7 @@ import { isValidReference } from '@/lib/validation'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
+import { formatDate } from '@/lib/format'
 
 type Props = {
   params: Promise<{ reference: string }>
@@ -17,13 +18,6 @@ type TicketRow = {
     label: string | null
     price: number | null
   } | null
-}
-
-function formatDate(dateStr: string | null | undefined) {
-  if (!dateStr) return 'TBA'
-  const [y, m, d] = dateStr.split('-').map(Number)
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  return `${months[m - 1]} ${d}, ${y}`
 }
 
 async function getTicketData(reference: string) {
@@ -79,10 +73,10 @@ export default async function TicketPage({ params }: Props) {
   const totalAmount = payment.amount ? Number(payment.amount) / 100 : 0
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#F4F2EC] font-grotesk text-[#191917]">
       {/* Header */}
-      <header className="border-b border-gray-100 px-4 py-3">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+      <header className="border-b border-[#E7E2D4] bg-[#F4F2EC]/95 px-4 py-3 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-2xl items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/images/logo.png"
@@ -104,12 +98,12 @@ export default async function TicketPage({ params }: Props) {
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main className="mx-auto max-w-2xl px-4 py-8">
         {/* Event info */}
         {event && (
           <div className="mb-8">
             {event.image?.[0] && (
-              <div className="rounded-2xl overflow-hidden mb-4">
+              <div className="mb-4 overflow-hidden rounded-[24px] border border-[#E4DFD1] bg-white">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={event.image[0]}
@@ -118,8 +112,8 @@ export default async function TicketPage({ params }: Props) {
                 />
               </div>
             )}
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{event.name}</h1>
-            <div className="flex flex-col gap-1 text-sm text-gray-500">
+            <h1 className="mb-2 font-anton text-[clamp(34px,7vw,54px)] uppercase leading-[1.02] text-[#191917]">{event.name}</h1>
+            <div className="flex flex-col gap-1 text-sm text-[#5F5D54]">
               <div className="flex items-center gap-2">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
@@ -132,7 +126,7 @@ export default async function TicketPage({ params }: Props) {
                     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" />
                   </svg>
                   {event.maps_link ? (
-                    <a href={event.maps_link} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-gray-900">
+                    <a href={event.maps_link} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-[#2565D0]">
                       {event.venue}
                     </a>
                   ) : (
@@ -145,7 +139,7 @@ export default async function TicketPage({ params }: Props) {
         )}
 
         {/* Tickets */}
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+        <h2 className="mb-4 text-sm font-bold uppercase tracking-[0.16em] text-[#2565D0]">
           Your Tickets
         </h2>
 
@@ -153,21 +147,21 @@ export default async function TicketPage({ params }: Props) {
           {(userTickets as TicketRow[]).map((ut) => (
             <div
               key={ut.id}
-              className="bg-gray-50 border border-gray-100 rounded-2xl p-5"
+              className="rounded-[24px] border border-[#E4DFD1] bg-white p-5 shadow-[0_18px_50px_rgba(25,25,23,0.06)]"
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <p className="font-semibold text-gray-900">
+                  <p className="font-semibold text-[#191917]">
                     {ut.ticket?.label ?? 'Ticket'}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-[#5F5D54]">
                     Qty: {ut.quantity}
                     {ut.ticket?.price != null && (
-                      <span> &middot; {ut.ticket.price === 0 ? 'Free' : `GHS ${ut.ticket.price}`}</span>
+                      <span> &middot; {ut.ticket.price === 0 ? 'Free' : `GH₵ ${ut.ticket.price}`}</span>
                     )}
                   </p>
                 </div>
-                <span className="text-xs font-medium text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+                <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                   Confirmed
                 </span>
               </div>
@@ -179,9 +173,9 @@ export default async function TicketPage({ params }: Props) {
                   <img
                     src={ut.qr_code}
                     alt="Ticket QR Code"
-                    className="w-48 h-48 rounded-lg border border-gray-200"
+                    className="h-48 w-48 rounded-xl border border-[#E4DFD1] bg-white"
                   />
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="mt-2 text-xs text-[#8a887c]">
                     Show this QR code at the entrance
                   </p>
                 </div>
@@ -191,18 +185,18 @@ export default async function TicketPage({ params }: Props) {
         </div>
 
         {/* Order summary */}
-        <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 mb-8">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+        <div className="mb-8 rounded-[24px] border border-[#E4DFD1] bg-white p-5">
+          <h3 className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-[#8a887c]">
             Order Summary
           </h3>
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-gray-500">Reference</span>
-            <span className="text-gray-900 font-mono text-xs">{reference}</span>
+            <span className="text-[#5F5D54]">Reference</span>
+            <span className="font-mono text-xs text-[#191917]">{reference}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Total</span>
-            <span className="font-semibold text-gray-900">
-              {totalAmount === 0 ? 'Free' : `GHS ${totalAmount.toFixed(2)}`}
+            <span className="text-[#5F5D54]">Total</span>
+            <span className="font-semibold text-[#191917]">
+              {totalAmount === 0 ? 'Free' : `GH₵ ${totalAmount.toFixed(2)}`}
             </span>
           </div>
         </div>
@@ -211,15 +205,15 @@ export default async function TicketPage({ params }: Props) {
         {event && (
           <Link
             href={`/e/${event.slug ?? event.id}`}
-            className="block w-full text-center py-3 border border-gray-200 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors"
+            className="block w-full rounded-full border border-[#C8C3B2] py-3 text-center text-sm font-semibold text-[#191917] transition-colors hover:border-[#191917]"
           >
             View Event
           </Link>
         )}
       </main>
 
-      <footer className="border-t border-gray-100 px-4 py-6 mt-8">
-        <div className="max-w-2xl mx-auto text-center text-xs text-gray-400">
+      <footer className="mt-8 border-t border-[#E7E2D4] px-4 py-6">
+        <div className="mx-auto max-w-2xl text-center text-xs text-[#8a887c]">
           Powered by Tikkitte &middot; Event Ticketing for Ghana
         </div>
       </footer>

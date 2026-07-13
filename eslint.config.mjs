@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Static design handoff exports are reference artifacts, not app source.
+    "design/**",
   ]),
 ]);
 

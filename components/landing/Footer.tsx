@@ -3,94 +3,41 @@ import Image from 'next/image'
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-50 border-t border-gray-200">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-12 py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
-
-          {/* Brand */}
-          <div>
-            <Link href="/" className="inline-flex items-center gap-3 mb-3">
-              <Image
-                src="/images/logo.png"
-                alt=""
-                width={54}
-                height={36}
-                unoptimized
-                style={{ width: 'auto', height: '36px', display: 'block' }}
-              />
-              <Image
-                src="/images/text-logo-web.png"
-                alt="Tikkitte"
-                width={120}
-                height={20}
-                unoptimized
-                style={{ height: '20px', width: 'auto', display: 'block' }}
-              />
+    <footer className="border-t border-[#E7E2D4] bg-[#F4F2EC] font-grotesk">
+      <div className="mx-auto max-w-[1400px] px-6 py-12 lg:px-12">
+        <div className="flex flex-wrap justify-between gap-8">
+          <div className="flex flex-col gap-3">
+            <Link href="/" className="flex items-center gap-2.5">
+              <Image src="/images/logo.png" alt="" width={54} height={36} unoptimized style={{ height: '28px', width: 'auto' }} />
+              <Image src="/images/text-logo-web.png" alt="Tikkitte" width={120} height={20} unoptimized style={{ height: '18px', width: 'auto' }} />
             </Link>
-            <p className="text-sm text-gray-500 leading-relaxed">
-              Event ticketing for Ghana.
-            </p>
+            <p className="text-sm text-[#8a887c]">Event ticketing for Ghana.</p>
           </div>
 
-          {/* Links */}
-          <div>
-            <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">
-              Explore
-            </p>
-            <ul className="space-y-2.5">
-              <li>
-                <Link href="/events" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                  Browse events
-                </Link>
-              </li>
-              <li>
-                <Link href="/organizers" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                  Sell tickets
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                  About us
-                </Link>
-              </li>
-              <li>
-                <Link href="https://create.tikkitte.com/login" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                  Organizer sign in
-                </Link>
-              </li>
-            </ul>
+          <div className="flex flex-wrap gap-16">
+            <div className="flex flex-col gap-2.5">
+              <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-[#8a887c]">Explore</p>
+              <Link href="/events" className="text-sm text-[#5F5D54] hover:text-[#191917]">Browse events</Link>
+              <Link href="/organizers" className="text-sm text-[#5F5D54] hover:text-[#191917]">Sell tickets</Link>
+              <Link href="/about" className="text-sm text-[#5F5D54] hover:text-[#191917]">About us</Link>
+              <Link href="https://create.tikkitte.com/login" className="text-sm text-[#5F5D54] hover:text-[#191917]">Organizer sign in</Link>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-[#8a887c]">Contact</p>
+              <Link href="/contact" className="text-sm text-[#5F5D54] hover:text-[#191917]">Contact us</Link>
+              <a href="mailto:admin@tikkitte.com" className="text-sm text-[#5F5D54] hover:text-[#191917]">admin@tikkitte.com</a>
+            </div>
           </div>
-
-          {/* Contact */}
-          <div>
-            <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase mb-4">
-              Contact
-            </p>
-            <ul className="space-y-2.5">
-              <li>
-                <a
-                  href="mailto:admin@tikkitte.com"
-                  className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
-                >
-                  admin@tikkitte.com
-                </a>
-              </li>
-            </ul>
-          </div>
-
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-gray-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-gray-400">
-            &copy; {new Date().getFullYear()} FIRSTPASS EVENTS LTD. Tikkitte is a trading name of FIRSTPASS EVENTS LTD.
+        <div className="mt-9 flex flex-wrap items-center justify-between gap-4 border-t border-[#E7E2D4] pt-6">
+          <p className="text-[13px] text-[#8a887c]">
+            © {new Date().getFullYear()} FIRSTPASS EVENTS LTD. Tikkitte is a trading name of FIRSTPASS EVENTS LTD.
           </p>
-          <div className="flex items-center gap-4">
-            <Link href="/terms" className="text-xs text-gray-400 transition-colors hover:text-gray-700">
-              Terms
-            </Link>
-            <Link href="/privacy" className="text-xs text-gray-400 transition-colors hover:text-gray-700">
-              Privacy
-            </Link>
+          <div className="flex gap-6">
+            <Link href="/terms" className="text-[13px] text-[#8a887c] hover:text-[#191917]">Terms</Link>
+            <Link href="/privacy" className="text-[13px] text-[#8a887c] hover:text-[#191917]">Privacy</Link>
+            <Link href="/refund-policy" className="text-[13px] text-[#8a887c] hover:text-[#191917]">Refunds</Link>
           </div>
         </div>
       </div>

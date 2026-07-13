@@ -69,6 +69,7 @@ export type EventWithTickets = Event & {
 }
 
 export type Payment = {
+  id: string
   reference: string
   user_id: string
   event_id: string
@@ -78,6 +79,10 @@ export type Payment = {
   quantity: number
   paid_at: string | null
   metadata: Record<string, unknown> | null
+  refund_status: 'pending' | 'success' | 'failed' | null
+  refund_reference: string | null
+  refunded_at: string | null
+  refund_error: string | null
 }
 
 export type SalesRow = {
