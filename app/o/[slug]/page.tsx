@@ -105,7 +105,7 @@ export default async function OrganizerPage({ params }: { params: Promise<{ slug
             )}
           </div>
           <div className="text-[13px] font-bold uppercase tracking-[0.16em] text-[#2565D0]">Organizer</div>
-          <h1 className="mt-3 font-anton text-[clamp(42px,7vw,86px)] uppercase leading-[0.98] text-[#191917]">{organizerProfile.display_name}</h1>
+          <h1 className="mt-3 font-anton font-normal text-[clamp(42px,7vw,86px)] uppercase leading-[0.98] text-[#191917]">{organizerProfile.display_name}</h1>
           {organizerProfile.bio && (
             <p className="mt-5 max-w-2xl text-base leading-7 text-[#5F5D54]">{organizerProfile.bio}</p>
           )}
@@ -152,7 +152,7 @@ export default async function OrganizerPage({ params }: { params: Promise<{ slug
           <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="text-[13px] font-bold uppercase tracking-[0.16em] text-[#2565D0]">Upcoming events</div>
-              <h2 className="mt-2 font-anton text-[clamp(34px,5vw,58px)] uppercase leading-[1.02] text-[#191917]">What&apos;s next</h2>
+              <h2 className="mt-2 font-anton font-normal text-[clamp(34px,5vw,58px)] uppercase leading-[1.02] text-[#191917]">What&apos;s next</h2>
             </div>
             <Link href="/events" className="rounded-full border border-[#C8C3B2] px-5 py-2.5 text-sm font-semibold text-[#191917] transition-colors hover:border-[#191917]">
               Browse all events
@@ -172,7 +172,7 @@ export default async function OrganizerPage({ params }: { params: Promise<{ slug
                     href={`/e/${event.slug ?? event.id}`}
                     className="overflow-hidden rounded-[20px] border border-[#E4DFD1] bg-white transition-colors hover:border-[#2565D0]"
                   >
-                    <div className="relative h-44 bg-[#ECE7D8]">
+                    <div className="relative aspect-[4/5] bg-[#ECE7D8]">
                       {poster ? (
                         <Image
                           src={poster}
@@ -190,7 +190,7 @@ export default async function OrganizerPage({ params }: { params: Promise<{ slug
                       )}
                     </div>
                     <div className="p-5">
-                      <h3 className="line-clamp-1 font-anton text-2xl uppercase leading-[1.05] text-[#191917]">{event.name}</h3>
+                      <h3 className="line-clamp-1 font-anton font-normal text-2xl uppercase leading-[1.05] text-[#191917]">{event.name}</h3>
                       <p className="mt-2 text-sm font-semibold text-[#2565D0]">{formatDate(event.date)}</p>
                       <p className="mt-1 line-clamp-1 text-sm text-[#5F5D54]">{event.venue ?? 'No venue'}</p>
                     </div>

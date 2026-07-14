@@ -6,7 +6,7 @@ export default function PublicEventLoading() {
       <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[55fr_45fr] lg:gap-16">
         <div>
           <div className="mb-8 overflow-hidden rounded-[24px] border border-[#E4DFD1] bg-white shadow-[0_24px_70px_rgba(25,25,23,0.08)]">
-            <Sk className="h-[55vw] max-h-[600px] min-h-[280px] w-full rounded-none" />
+            <Sk className="mx-auto aspect-[9/16] w-full max-w-[440px] rounded-none" />
             <div className="space-y-4 p-5">
               <Sk className="h-8 w-3/4" />
               <div className="flex gap-3">

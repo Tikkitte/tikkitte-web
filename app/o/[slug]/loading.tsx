@@ -21,7 +21,7 @@ export default function OrganizerLoading() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 3 }).map((_, index) => (
               <div key={index} className="overflow-hidden rounded-[20px] border border-[#E4DFD1] bg-white">
-                <Sk className="h-44 w-full rounded-b-none rounded-t-2xl" />
+                <Sk className="aspect-[9/16] w-full rounded-b-none rounded-t-2xl" />
                 <Sk className="mx-5 mt-5 h-5 w-3/4" />
                 <Sk className="mx-5 mt-2 h-4 w-24" />
                 <Sk className="mx-5 mb-5 mt-1 h-4 w-32" />

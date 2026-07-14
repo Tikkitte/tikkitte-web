@@ -115,7 +115,7 @@ export default function ConfirmationContent({ eventId, reference }: Props) {
             <circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" />
           </svg>
         </div>
-        <h1 className="mb-2 font-anton text-3xl uppercase text-[#191917]">Payment issue</h1>
+        <h1 className="mb-2 font-anton font-normal text-3xl uppercase text-[#191917]">Payment issue</h1>
         <p className="mb-6 text-[#5F5D54]">{error}</p>
         <Link
           href={`/e/${eventId}`}
@@ -138,7 +138,7 @@ export default function ConfirmationContent({ eventId, reference }: Props) {
             <circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" />
           </svg>
         </div>
-        <h1 className="mb-1 font-anton text-4xl uppercase tracking-normal text-[#191917]">Tickets confirmed</h1>
+        <h1 className="mb-1 font-anton font-normal text-4xl uppercase tracking-normal text-[#191917]">Tickets confirmed</h1>
         <p className="text-[#5F5D54]">
           Your tickets have been sent to your email
         </p>
@@ -149,10 +149,10 @@ export default function ConfirmationContent({ eventId, reference }: Props) {
         <div className="mb-6 overflow-hidden rounded-[24px] border border-[#E4DFD1] bg-white">
           {data.event.image && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={data.event.image} alt={data.event.name} className="w-full h-48 object-cover" />
+            <img src={data.event.image} alt={data.event.name} className="mx-auto aspect-[9/16] w-full max-w-[320px] object-cover" />
           )}
           <div className="p-5">
-            <h2 className="mb-1 font-anton text-2xl uppercase leading-tight text-[#191917]">{data.event.name}</h2>
+            <h2 className="mb-1 font-anton font-normal text-2xl uppercase leading-tight text-[#191917]">{data.event.name}</h2>
             <div className="flex flex-col gap-1 text-sm text-[#5F5D54]">
               {data.event.date && <span>{formatDate(data.event.date)}</span>}
               {data.event.venue && <span>{data.event.venue}</span>}

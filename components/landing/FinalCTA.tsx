@@ -13,7 +13,7 @@ export default function FinalCTA({ headline, ctaLabel, ctaHref, size = 'xl' }: P
 
   return (
     <section className="px-5 py-[clamp(90px,14vh,160px)] text-center">
-      <h2 className={`mx-auto font-anton uppercase leading-[0.98] text-[#191917] ${headlineSize}`}>
+      <h2 className={`mx-auto font-anton font-normal uppercase leading-[0.98] text-[#191917] ${headlineSize}`}>
         {headline}
       </h2>
       <Link

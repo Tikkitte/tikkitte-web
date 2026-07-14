@@ -17,7 +17,7 @@ export default function ContactPage() {
           <span className="text-[13px] font-bold uppercase tracking-[0.16em] text-[#2565D0]">
             Get in touch
           </span>
-          <h1 className="mt-3 font-anton text-4xl uppercase leading-tight text-[#191917] sm:text-5xl">
+          <h1 className="mt-3 font-anton font-normal text-4xl uppercase leading-tight text-[#191917] sm:text-5xl">
             Contact us
           </h1>
           <p className="mt-4 max-w-lg text-lg text-[#5F5D54]">

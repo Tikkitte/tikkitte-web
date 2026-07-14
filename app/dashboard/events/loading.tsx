@@ -17,7 +17,7 @@ export default function DashboardEventsLoading() {
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, index) => (
           <div key={index} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-            <Sk className="h-44 w-full rounded-b-none" />
+            <Sk className="aspect-[9/16] w-full rounded-b-none" />
             <div className="space-y-3 p-5">
               <Sk className="h-5 w-3/4" />
               <Sk className="h-4 w-32" />

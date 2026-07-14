@@ -112,7 +112,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
             <circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" />
           </svg>
         </div>
-        <h1 className="mb-2 font-anton text-4xl uppercase text-[#191917]">Event cancelled</h1>
+        <h1 className="mb-2 font-anton font-normal text-4xl uppercase text-[#191917]">Event cancelled</h1>
         <p className="mb-8 text-[#5F5D54]">{event.name} has been cancelled.</p>
         <Link href="/events" className="text-sm font-semibold text-[#2565D0] transition-colors hover:text-[#1E56B5]">
           ← Browse other events
@@ -135,7 +135,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
           {/* Event info card */}
           <div className="mb-8 overflow-hidden rounded-[24px] border border-[#E4DFD1] bg-white shadow-[0_24px_70px_rgba(25,25,23,0.08)]">
             {poster ? (
-              <div className="relative w-full bg-black" style={{ minHeight: '280px', maxHeight: '600px', height: '55vw' }}>
+              <div className="relative mx-auto aspect-[9/16] w-full max-w-[640px] overflow-hidden bg-black">
                 {/* Blurred backdrop */}
                 <div
                   className="absolute inset-0 scale-110"
@@ -152,13 +152,13 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                   alt={event.name}
                   fill
                   className="object-contain relative z-10"
-                  sizes="(max-width: 1024px) 100vw, 55vw"
+                  sizes="(max-width: 1024px) 100vw, 640px"
                   quality={90}
                   priority
                 />
               </div>
             ) : (
-              <div className="flex w-full items-center justify-center bg-[#ECE7D8]" style={{ height: '220px' }}>
+              <div className="mx-auto flex aspect-[9/16] w-full max-w-[640px] items-center justify-center bg-[#ECE7D8]">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#C8C3B2]">
                   <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
                 </svg>
@@ -166,7 +166,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
             )}
             <div className="p-5">
               <div className="flex items-center gap-2 mb-2" />
-              <h1 className="mb-1 font-anton text-[clamp(30px,4vw,52px)] uppercase leading-[1.02] text-[#191917]">{event.name}</h1>
+              <h1 className="mb-1 font-anton font-normal text-[clamp(30px,4vw,52px)] uppercase leading-[1.02] text-[#191917]">{event.name}</h1>
               <p className="text-sm font-semibold text-[#2565D0]">{formatEventDateRange(event)}</p>
               {event.venue && (
                 event.maps_link ? (

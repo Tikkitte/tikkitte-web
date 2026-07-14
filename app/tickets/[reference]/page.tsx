@@ -108,11 +108,11 @@ export default async function TicketPage({ params }: Props) {
                 <img
                   src={event.image[0]}
                   alt={event.name}
-                  className="w-full max-h-[300px] object-cover"
+                  className="mx-auto aspect-[9/16] w-full max-w-[320px] object-cover"
                 />
               </div>
             )}
-            <h1 className="mb-2 font-anton text-[clamp(34px,7vw,54px)] uppercase leading-[1.02] text-[#191917]">{event.name}</h1>
+            <h1 className="mb-2 font-anton font-normal text-[clamp(34px,7vw,54px)] uppercase leading-[1.02] text-[#191917]">{event.name}</h1>
             <div className="flex flex-col gap-1 text-sm text-[#5F5D54]">
               <div className="flex items-center gap-2">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

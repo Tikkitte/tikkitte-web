@@ -30,7 +30,7 @@ export default function NotFound() {
       {/* Decorative 404 — outline/watermark style matching the landing page */}
       <p
         aria-hidden="true"
-        className="mb-4 select-none font-anton text-[clamp(5.5rem,20vw,13rem)] leading-none"
+        className="mb-4 select-none font-anton font-normal text-[clamp(5.5rem,20vw,13rem)] leading-none"
         style={{
           color: 'transparent',
           WebkitTextStrokeWidth: '2px',
@@ -40,7 +40,7 @@ export default function NotFound() {
         404
       </p>
 
-      <h1 className="mb-4 font-anton text-4xl uppercase tracking-normal text-[#191917] sm:text-5xl">
+      <h1 className="mb-4 font-anton font-normal text-4xl uppercase tracking-normal text-[#191917] sm:text-5xl">
         Page not found
       </h1>
 

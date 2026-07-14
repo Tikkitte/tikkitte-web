@@ -82,7 +82,7 @@ function EventPreviewCard({
       <div className="sticky top-8">
         <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Preview</p>
         <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="h-44 w-full bg-gray-100">
+          <div className="aspect-[9/16] w-full bg-gray-100">
             {imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={imageUrl} alt="" className="h-full w-full object-cover" />
@@ -547,7 +547,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
         <h2 className="font-semibold text-gray-900">Event image</h2>
         {imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt="Event" className="w-full h-48 object-cover rounded-xl" />
+          <img src={imageUrl} alt="Event" className="aspect-[9/16] w-full max-w-[220px] rounded-xl object-cover" />
         )}
         <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleImageChange} className="hidden" />
         <button
@@ -559,7 +559,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
           {imageUploading ? 'Uploading…' : imageUrl ? 'Change image' : 'Upload image'}
         </button>
         <p className="text-xs text-gray-400">
-          Best size: <strong className="font-medium text-gray-500">1080 × 1080 px</strong> (square) or <strong className="font-medium text-gray-500">1080 × 1350 px</strong> (portrait). Landscape works too. Max 5 MB.
+          Recommended size: <strong className="font-medium text-gray-500">1080 × 1920 px (9:16)</strong> — the same size as an Instagram/TikTok Story, so most flyer templates already fit. Other sizes are accepted but will be cropped to fit on event cards. Max 5 MB.
         </p>
       </div>
 

@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
 
 type Props = {
   listEventHref?: string
@@ -54,27 +53,16 @@ const mobileLinks = [
 
 export default function Nav({ listEventHref = '/organizers' }: Props) {
   const pathname = usePathname()
-  const [scrolled, setScrolled] = useState(false)
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
 
   return (
-    <header
-      className={`sticky top-0 z-50 bg-[#F4F2EC]/95 backdrop-blur-sm transition-shadow duration-300 ${
-        scrolled ? 'shadow-[0_1px_12px_rgba(25,25,23,0.06)]' : ''
-      }`}
-    >
-      <nav className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-4 px-6 font-grotesk lg:px-12">
+    <header className="bg-[#F4F2EC]">
+      <nav className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-4 px-[clamp(20px,4vw,56px)] py-5 font-grotesk">
         <Link href="/" className="flex flex-shrink-0 select-none items-center gap-2.5">
-          <Image src="/images/logo.png" alt="" width={42} height={28} priority unoptimized style={{ width: 'auto', height: '30px' }} />
-          <Image src="/images/text-logo-web.png" alt="Tikkitte" width={120} height={20} priority unoptimized style={{ height: '20px', width: 'auto' }} />
+          <Image src="/images/logo.png" alt="" width={42} height={28} priority unoptimized style={{ width: 'auto', height: '34px' }} />
+          <Image src="/images/text-logo-web.png" alt="Tikkitte" width={120} height={20} priority unoptimized style={{ height: '22px', width: 'auto' }} />
         </Link>
 
-        <div className="hidden items-center gap-8 min-[760px]:flex">
+        <div className="hidden flex-wrap items-center gap-[clamp(14px,2.5vw,32px)] min-[760px]:flex">
           {links.map(({ label, href }) => {
             const active = pathname === href
             return (

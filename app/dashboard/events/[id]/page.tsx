@@ -266,13 +266,13 @@ export default async function EventDetailPage({
                 <Image
                   src={poster}
                   alt={event.name}
-                  width={760}
-                  height={960}
-                  className="w-full max-h-[480px] object-cover"
+                  width={1080}
+                  height={1920}
+                  className="w-full object-cover"
                   priority
                 />
               ) : (
-                <div className="w-full h-48 bg-gradient-to-br from-[#3d3d3d]/10 to-[#3d3d3d]/5 flex items-center justify-center">
+                <div className="flex aspect-[9/16] w-full items-center justify-center bg-gradient-to-br from-[#3d3d3d]/10 to-[#3d3d3d]/5">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#3d3d3d]/30">
                     <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
                   </svg>

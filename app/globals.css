@@ -20,8 +20,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-roboto), system-ui, sans-serif;
   --font-display: var(--font-poppins), system-ui, sans-serif;
-  --font-anton: var(--font-anton), sans-serif;
-  --font-grotesk: var(--font-grotesk), sans-serif;
+  --font-anton: var(--font-anton);
+  --font-grotesk: var(--font-grotesk);
 }
 
 *, *::before, *::after {
@@ -45,6 +45,15 @@ body {
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   color: var(--color-text);
+}
+
+.font-anton {
+  font-family: var(--font-anton) !important;
+  font-weight: 400;
+}
+
+.font-grotesk {
+  font-family: var(--font-grotesk) !important;
 }
 
 /* ─── Scroll-reveal animations ─────────────────────────── */

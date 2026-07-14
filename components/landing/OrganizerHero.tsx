@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import Nav from './Nav'
 
 export default function OrganizerHero() {
@@ -8,7 +9,7 @@ export default function OrganizerHero() {
 
       <div className="mx-auto max-w-[1280px] px-5 pt-[clamp(40px,7vh,80px)] text-center lg:px-14">
         <div className="text-[13px] font-bold uppercase tracking-[0.16em] text-[#2565D0]">For organizers</div>
-        <h1 className="mx-auto mt-4 max-w-[1000px] font-anton text-[clamp(48px,8.5vw,120px)] uppercase leading-[0.98] text-[#191917]">
+        <h1 className="mx-auto mt-4 max-w-[1000px] font-anton font-normal text-[clamp(48px,8.5vw,120px)] uppercase leading-[0.98] text-[#191917]">
           Sell out faster.<br /><span className="text-[#2E6FE6]">Get paid directly.</span>
         </h1>
         <p className="mx-auto mt-5 max-w-[540px] text-[clamp(16px,1.6vw,20px)] leading-relaxed text-[#5F5D54]">
@@ -39,8 +40,8 @@ export default function OrganizerHero() {
                 <span className="rounded-full bg-[#2565D0] px-5 py-2.5 text-sm font-semibold text-white">+ Create event</span>
               </div>
 
-              <div className="grid grid-cols-1 gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(250px,1fr))]">
-                <div className="min-w-0 rounded-2xl border border-[#E4DFD1] bg-white p-5">
+              <div className="grid grid-cols-1 gap-3.5 min-[760px]:grid-cols-[minmax(0,1.35fr)_minmax(220px,0.65fr)]">
+                <div className="min-w-0 rounded-[14px] border border-[#E4DFD1] bg-white p-5">
                   <div className="text-[13px] text-[#8a887c]">Total collected</div>
                   <div className="mt-1 text-[clamp(24px,3vw,34px)] font-bold">GH₵ 48,210.50</div>
                   <div className="text-xs text-[#8a887c]">Across all events</div>
@@ -49,16 +50,16 @@ export default function OrganizerHero() {
                     <path d="M0,100 C60,98 90,92 130,80 C170,68 190,84 230,74 C270,64 310,40 400,12" fill="none" stroke="#2E6FE6" strokeWidth="3" />
                   </svg>
                 </div>
-                <div className="flex min-w-0 flex-col gap-2 rounded-2xl border border-[#E4DFD1] bg-white p-5">
+                <div className="flex min-w-0 flex-col gap-2 rounded-[14px] border border-[#E4DFD1] bg-white p-5">
                   <div className="text-[13px] text-[#8a887c]">Available balance</div>
                   <div className="text-[clamp(20px,2.4vw,28px)] font-bold">GH₵ 45,800.00</div>
                   <span className="mt-auto rounded-full bg-[#191917] px-4 py-2.5 text-center text-[13px] font-bold text-[#F4F2EC]">Request payout</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(130px,1fr))]">
+              <div className="grid grid-cols-1 gap-3.5 min-[760px]:grid-cols-3">
                 {[['Total events', '14'], ['Tickets sold', '1,268'], ['Avg ticket value', 'GH₵ 38']].map(([label, value]) => (
-                  <div key={label} className="rounded-2xl border border-[#E4DFD1] bg-white px-5 py-4">
+                  <div key={label} className="rounded-[14px] border border-[#E4DFD1] bg-white px-5 py-4">
                     <div className="text-[13px] text-[#8a887c]">{label}</div>
                     <div className="mt-1 text-[22px] font-bold">{value}</div>
                   </div>
@@ -66,6 +67,14 @@ export default function OrganizerHero() {
               </div>
             </div>
           </div>
+          <Image
+            src="/images/claude-design-assets/barcode.png"
+            alt=""
+            width={200}
+            height={54}
+            className="absolute bottom-1 right-[clamp(-10px,1vw,30px)] h-auto w-[clamp(130px,16vw,200px)] rotate-[4deg] rounded-[10px] shadow-[0_16px_36px_rgba(25,25,23,0.13)]"
+            style={{ height: 'auto' }}
+          />
         </div>
       </div>
     </section>

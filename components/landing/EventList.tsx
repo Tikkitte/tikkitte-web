@@ -4,12 +4,23 @@ import type { EventWithPrice } from '@/lib/events'
 import { formatEventPrice } from '@/lib/events'
 import { formatDate, formatTime } from '@/lib/format'
 
+const fallbackFlyers = [
+  '/images/claude-design-assets/flyer-1.png',
+  '/images/claude-design-assets/flyer-2.png',
+  '/images/claude-design-assets/flyer-3.png',
+  '/images/claude-design-assets/flyer-4.png',
+  '/images/claude-design-assets/flyer-5.png',
+  '/images/claude-design-assets/flyer-6.png',
+  '/images/claude-design-assets/flyer-7.png',
+  '/images/claude-design-assets/flyer-8.png',
+]
+
 export default function EventList({ events }: { events: EventWithPrice[] }) {
   if (events.length === 0) {
     return (
-      <div className="py-32 text-center">
-        <h2 className="text-lg font-semibold text-[#191917]">No upcoming events right now</h2>
-        <p className="mx-auto mt-2 max-w-xs text-sm text-[#8a887c]">Check back soon — new events are added all the time.</p>
+      <div className="py-32">
+        <h2 className="font-anton font-normal text-2xl uppercase leading-[1.05] text-[#191917]">No upcoming events right now</h2>
+        <p className="mt-2 max-w-xs text-sm text-[#8a887c]">Check back soon — new events are added all the time.</p>
       </div>
     )
   }
@@ -18,6 +29,7 @@ export default function EventList({ events }: { events: EventWithPrice[] }) {
     <div className="flex flex-col">
       {events.map((event, i) => {
         const eventDateTime = [formatDate(event.date), formatTime(event.time)].filter(Boolean).join(' · ')
+        const poster = event.image?.[0] ?? fallbackFlyers[i % fallbackFlyers.length]
 
         return (
           <Link
@@ -27,15 +39,15 @@ export default function EventList({ events }: { events: EventWithPrice[] }) {
               i < events.length - 1 ? 'border-b border-[#E7E2D4]' : ''
             }`}
           >
-            <div className="relative h-[110px] w-[88px] flex-shrink-0 overflow-hidden rounded-xl bg-[#F4F2EC]">
-              {event.image?.[0] && <Image src={event.image[0]} alt={event.name} fill className="object-cover" sizes="88px" />}
+            <div className="relative aspect-[4/5] w-[88px] flex-shrink-0 overflow-hidden rounded-xl bg-[#F4F2EC]">
+              <Image src={poster} alt={event.name} fill className="object-cover" sizes="88px" />
             </div>
 
             <div className="flex min-w-[220px] flex-1 flex-col gap-1">
               <div className="text-[13px] font-bold uppercase tracking-[0.1em] text-[#2565D0]">
                 {eventDateTime}
               </div>
-              <div className="font-anton text-[clamp(22px,2.6vw,30px)] uppercase leading-[1.05] text-[#191917]">{event.name}</div>
+              <div className="font-anton font-normal text-[clamp(22px,2.6vw,30px)] uppercase leading-[1.05] text-[#191917]">{event.name}</div>
               {event.venue && <div className="text-[15px] text-[#5F5D54]">{event.venue}</div>}
             </div>
 

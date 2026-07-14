@@ -53,7 +53,7 @@ export default function RootError({
         <AlertTriangle />
       </div>
 
-      <h1 className="mb-4 font-anton text-4xl uppercase tracking-normal text-[#191917] sm:text-5xl">
+      <h1 className="mb-4 font-anton font-normal text-4xl uppercase tracking-normal text-[#191917] sm:text-5xl">
         Something went wrong
       </h1>
 

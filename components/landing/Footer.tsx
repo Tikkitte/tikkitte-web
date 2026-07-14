@@ -4,7 +4,7 @@ import Image from 'next/image'
 export default function Footer() {
   return (
     <footer className="border-t border-[#E7E2D4] bg-[#F4F2EC] font-grotesk">
-      <div className="mx-auto max-w-[1400px] px-6 py-12 lg:px-12">
+      <div className="mx-auto max-w-[1400px] px-[clamp(20px,4vw,56px)] pb-8 pt-12">
         <div className="flex flex-wrap justify-between gap-8">
           <div className="flex flex-col gap-3">
             <Link href="/" className="flex items-center gap-2.5">
