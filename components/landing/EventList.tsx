@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import type { EventWithPrice } from '@/lib/events'
 import { formatEventPrice } from '@/lib/events'
 import { formatDate, formatTime } from '@/lib/format'
+import PosterFrame from '@/components/PosterFrame'
 
 const fallbackFlyers = [
   '/images/claude-design-assets/flyer-1.png',
@@ -39,9 +39,7 @@ export default function EventList({ events }: { events: EventWithPrice[] }) {
               i < events.length - 1 ? 'border-b border-[#E7E2D4]' : ''
             }`}
           >
-            <div className="relative aspect-[4/5] w-[88px] flex-shrink-0 overflow-hidden rounded-xl bg-[#F4F2EC]">
-              <Image src={poster} alt={event.name} fill className="object-cover" sizes="88px" />
-            </div>
+            <PosterFrame src={poster} alt={event.name} sizes="88px" className="aspect-[4/5] w-[88px] flex-shrink-0 rounded-xl bg-[#F4F2EC]" />
 
             <div className="flex min-w-[220px] flex-1 flex-col gap-1">
               <div className="text-[13px] font-bold uppercase tracking-[0.1em] text-[#2565D0]">

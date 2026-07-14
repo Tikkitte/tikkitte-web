@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import type { Event, Ticket } from '@/lib/types'
+import PosterFrame from '@/components/PosterFrame'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -45,8 +46,7 @@ export default function DashboardEventCard({ event, tickets }: Props) {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
       <div className="relative aspect-[4/5] bg-gray-100">
         {poster ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={poster} alt={event.name} className="w-full h-full object-cover" loading="lazy" />
+          <PosterFrame src={poster} alt={event.name} sizes="(max-width: 1024px) 100vw, 33vw" className="absolute inset-0" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300">

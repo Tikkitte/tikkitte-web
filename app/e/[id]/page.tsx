@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -7,6 +6,7 @@ import type { Event, Ticket } from '@/lib/types'
 import { isValidUUID } from '@/lib/validation'
 import EventCheckout from './EventCheckout'
 import EventPreviewGallery from '@/components/EventPreviewGallery'
+import PosterFrame from '@/components/PosterFrame'
 import { formatDate, formatTime } from '@/lib/format'
 
 type OrganizerSummary = {
@@ -135,28 +135,14 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
           {/* Event info card */}
           <div className="mb-8 overflow-hidden rounded-[24px] border border-[#E4DFD1] bg-white shadow-[0_24px_70px_rgba(25,25,23,0.08)]">
             {poster ? (
-              <div className="relative mx-auto aspect-[9/16] w-full max-w-[640px] overflow-hidden bg-black">
-                {/* Blurred backdrop */}
-                <div
-                  className="absolute inset-0 scale-110"
-                  style={{
-                    backgroundImage: `url(${poster})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    filter: 'blur(28px) brightness(0.45) saturate(1.2)',
-                  }}
-                />
-                {/* Full poster — object-contain so nothing is cropped */}
-                <Image
-                  src={poster}
-                  alt={event.name}
-                  fill
-                  className="object-contain relative z-10"
-                  sizes="(max-width: 1024px) 100vw, 640px"
-                  quality={90}
-                  priority
-                />
-              </div>
+              <PosterFrame
+                src={poster}
+                alt={event.name}
+                sizes="(max-width: 1024px) 100vw, 640px"
+                quality={90}
+                priority
+                className="mx-auto aspect-[9/16] w-full max-w-[640px] bg-black"
+              />
             ) : (
               <div className="mx-auto flex aspect-[9/16] w-full max-w-[640px] items-center justify-center bg-[#ECE7D8]">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#C8C3B2]">

@@ -559,7 +559,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
           {imageUploading ? 'Uploading…' : imageUrl ? 'Change image' : 'Upload image'}
         </button>
         <p className="text-xs text-gray-400">
-          Recommended size: <strong className="font-medium text-gray-500">1080 × 1920 px (9:16)</strong> — the same size as an Instagram/TikTok Story, so most flyer templates already fit. Other sizes are accepted but will be cropped to fit on event cards. Max 5 MB.
+          Recommended size: <strong className="font-medium text-gray-500">1080 × 1920 px (9:16)</strong>. Other sizes are accepted but will be cropped to fit on event cards. Max 5 MB.
         </p>
       </div>
 

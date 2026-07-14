@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import PosterFrame from '@/components/PosterFrame'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -174,13 +174,7 @@ export default async function OrganizerPage({ params }: { params: Promise<{ slug
                   >
                     <div className="relative aspect-[4/5] bg-[#ECE7D8]">
                       {poster ? (
-                        <Image
-                          src={poster}
-                          alt={event.name}
-                          fill
-                          sizes="(max-width: 1024px) 100vw, 33vw"
-                          className="object-cover"
-                        />
+                        <PosterFrame src={poster} alt={event.name} sizes="(max-width: 1024px) 100vw, 33vw" className="absolute inset-0" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
                           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#C8C3B2]" aria-hidden="true">
