@@ -174,7 +174,9 @@ export default async function OrganizerPage({ params }: { params: Promise<{ slug
                   >
                     <div className="relative aspect-[4/5] bg-[#ECE7D8]">
                       {poster ? (
-                        <PosterFrame src={poster} alt={event.name} sizes="(max-width: 1024px) 100vw, 33vw" className="absolute inset-0" />
+                        <div className="absolute inset-0">
+                          <PosterFrame src={poster} alt={event.name} sizes="(max-width: 1024px) 100vw, 33vw" className="h-full w-full" />
+                        </div>
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
                           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#C8C3B2]" aria-hidden="true">

@@ -46,7 +46,9 @@ export default function DashboardEventCard({ event, tickets }: Props) {
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
       <div className="relative aspect-[4/5] bg-gray-100">
         {poster ? (
-          <PosterFrame src={poster} alt={event.name} sizes="(max-width: 1024px) 100vw, 33vw" className="absolute inset-0" />
+          <div className="absolute inset-0">
+            <PosterFrame src={poster} alt={event.name} sizes="(max-width: 1024px) 100vw, 33vw" className="h-full w-full" />
+          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300">
