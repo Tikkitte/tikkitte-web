@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AudienceTabs from './AudienceTabs'
 import FansClient, { type FanRow } from './FansClient'
 
 export default async function AudiencePage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
   if (!user) redirect('/login')
 
   const { data: fans } = await supabase.rpc('get_organizer_fans')

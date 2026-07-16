@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AudienceTabs from '../AudienceTabs'
 import MarketingClient, { type MarketingEvent } from './MarketingClient'
@@ -14,7 +14,7 @@ type FanRow = {
 
 export default async function AudienceMarketingPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
   if (!user) redirect('/login')
 
   const [{ data: events }, { data: organizerProfile }] = await Promise.all([

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Event, Payment } from '@/lib/types'
 import { RevenueAreaChart } from '@/components/dashboard/TicketChart'
@@ -23,7 +23,7 @@ function formatShortDate(dateStr: string) {
 
 export default async function TransactionsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
   if (!user) redirect('/login')
 
   // Get all organizer's events

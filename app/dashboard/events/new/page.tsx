@@ -1,10 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
+import { getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import EventForm from '@/components/dashboard/EventForm'
 
 export default async function NewEventPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
   if (!user) redirect('/login')
 
   return (

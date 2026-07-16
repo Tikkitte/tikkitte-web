@@ -1,11 +1,11 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import RefreshButton from './RefreshButton'
 
 export default async function PendingPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthedUser()
   if (!user) redirect('/login')
 
   // If already approved, send straight to dashboard
