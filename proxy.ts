@@ -1,15 +1,25 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const AUTH_GATED_EXACT_PATHS = ['/login', '/signup']
+
 export async function proxy(request: NextRequest) {
   const host = request.headers.get('host') ?? ''
   const isStudio = host.startsWith('create.')
+  const { pathname } = request.nextUrl
 
   // On create.tikkitte.com, rewrite / → /dashboard (keeps URL as create.tikkitte.com)
-  if (isStudio && request.nextUrl.pathname === '/') {
+  if (isStudio && pathname === '/') {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.rewrite(url)
+  }
+
+  // Only routes that branch on the session should pay for a Supabase auth check.
+  const needsAuth =
+    pathname.startsWith('/dashboard') || AUTH_GATED_EXACT_PATHS.includes(pathname)
+  if (!needsAuth) {
+    return NextResponse.next({ request })
   }
 
   let supabaseResponse = NextResponse.next({ request })
@@ -36,7 +46,7 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Protect /dashboard routes
-  if (request.nextUrl.pathname.startsWith('/dashboard')) {
+  if (pathname.startsWith('/dashboard')) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
@@ -49,14 +59,14 @@ export async function proxy(request: NextRequest) {
       .maybeSingle()
 
     if (!profile?.approved) {
-      if (!request.nextUrl.pathname.startsWith('/dashboard/pending')) {
+      if (!pathname.startsWith('/dashboard/pending')) {
         return NextResponse.redirect(new URL('/dashboard/pending', request.url))
       }
     }
   }
 
   // Redirect approved organizers away from login/signup
-  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
+  if (user && (pathname === '/login' || pathname === '/signup')) {
     const { data: profile } = await supabase
       .from('organizer_profile')
       .select('approved')
