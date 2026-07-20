@@ -10,6 +10,7 @@ type TicketRow = {
   label: string
   price: string
   total_quantity: string
+  purchased_quantity: number
   min_per_order: string
   max_per_order: string
   sale_start_date: string
@@ -30,6 +31,7 @@ const emptyTicketRow: TicketRow = {
   label: '',
   price: '',
   total_quantity: '',
+  purchased_quantity: 0,
   min_per_order: '1',
   max_per_order: '',
   sale_start_date: '',
@@ -37,6 +39,20 @@ const emptyTicketRow: TicketRow = {
   sale_end_date: '',
   sale_end_time: '',
   showAdvanced: false,
+}
+
+function saveErrorMessage(message: string) {
+  if (message.includes('ERR_UNAUTHENTICATED')) return 'Your session has expired. Sign in and try again.'
+  if (message.includes('ERR_ORGANIZER_NOT_APPROVED')) return 'Your organizer account is not approved to manage events.'
+  if (message.includes('ERR_EVENT_NOT_FOUND_OR_FORBIDDEN')) return 'This event was not found or you no longer have permission to edit it.'
+  if (message.includes('ERR_EVENT_CHANGED_REFRESH')) return 'This event changed in another tab. Refresh before saving again.'
+  if (message.includes('ERR_TICKET_NOT_FOUND_OR_FORBIDDEN')) return 'A ticket type changed in another tab. Refresh before saving again.'
+  if (message.includes('ERR_TICKET_REMOVAL_LOCKED')) return 'Saved ticket types cannot be removed after an event has been published. Refresh to restore the missing row.'
+  if (message.includes('ERR_TICKET_HAS_HISTORY')) return 'A ticket type with issued tickets or related records cannot be removed.'
+  if (message.includes('ERR_CAPACITY_BELOW_ISSUED')) return 'Capacity cannot be lower than the number of tickets already issued.'
+  if (message.includes('ERR_INVALID_EVENT') || message.includes('ERR_INVALID_TICKET')) return 'Some event or ticket details are invalid. Review the form and try again.'
+  if (message.includes('ERR_')) return 'The event could not be saved because its data is no longer valid. Refresh and try again.'
+  return message
 }
 
 function formatPreviewDate(dateStr: string) {
@@ -73,9 +89,11 @@ function EventPreviewCard({
     .map((row) => Number(row.price))
     .filter((price) => Number.isFinite(price) && price >= 0)
   const lowestPrice = validPrices.length > 0 ? Math.min(...validPrices) : 0
-  const priceLabel = lowestPrice > 0
-    ? `From GHS ${lowestPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-    : 'Free'
+  const priceLabel = ticketRows.length === 0
+    ? 'No tickets yet'
+    : lowestPrice > 0
+      ? `From GHS ${lowestPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+      : 'Free'
 
   return (
     <div className="hidden lg:block">
@@ -118,7 +136,6 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
   const [time, setTime] = useState(event?.time ? event.time.slice(0, 5) : '')
   const [endDate, setEndDate] = useState(event?.end_date ?? '')
   const [endTime, setEndTime] = useState(event?.end_time ? event.end_time.slice(0, 5) : '')
-  const [published] = useState(event?.published ?? true)
   const [venue, setVenue] = useState(event?.venue ?? '')
   const [mapsLink, setMapsLink] = useState(event?.maps_link ?? '')
   const [description, setDescription] = useState(event?.description ?? '')
@@ -131,6 +148,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
           label: t.label,
           price: String(t.price),
           total_quantity: t.total_quantity != null ? String(t.total_quantity) : '',
+          purchased_quantity: t.purchased_quantity,
           min_per_order: String(t.min_per_order ?? 1),
           max_per_order: t.max_per_order != null ? String(t.max_per_order) : '',
           sale_start_date: t.sale_start_date ?? '',
@@ -139,7 +157,9 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
           sale_end_time: t.sale_end_time ? t.sale_end_time.slice(0, 5) : '',
           showAdvanced: false,
         }))
-      : [{ ...emptyTicketRow }]
+      : isEdit
+        ? []
+        : [{ ...emptyTicketRow }]
   )
   const [previewImages, setPreviewImages] = useState<string[]>(event?.preview_images ?? [])
   const [previewVideos, setPreviewVideos] = useState<string[]>(event?.preview_videos ?? [])
@@ -252,6 +272,8 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
     setTicketRows(r => r.filter((_, idx) => idx !== i))
   }
 
+  const canRemoveTicketRow = (row: TicketRow) => !row.id || event?.ever_published === false
+
   const updateTicketRow = <K extends keyof TicketRow>(i: number, field: K, value: TicketRow[K]) => {
     setTicketRows(r => r.map((row, idx) => idx === i ? { ...row, [field]: value } : row))
   }
@@ -276,11 +298,25 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
   const validateTicketRows = () => {
     for (const row of ticketRows) {
       const label = row.label.trim() || 'Each ticket type'
+      const price = Number(row.price)
+      const totalQuantity = row.total_quantity === '' ? null : Number(row.total_quantity)
       const minPerOrder = parseInt(row.min_per_order || '1')
       const maxPerOrder = row.max_per_order ? parseInt(row.max_per_order) : null
 
       if (!row.label.trim() || !row.price) {
         setError('Each ticket type needs a label and price.')
+        return false
+      }
+      if (!Number.isFinite(price) || price < 0) {
+        setError(`${label} needs a valid price of 0 or more.`)
+        return false
+      }
+      if (totalQuantity !== null && (!Number.isInteger(totalQuantity) || totalQuantity < 0)) {
+        setError(`${label} capacity must be a whole number of 0 or more.`)
+        return false
+      }
+      if (totalQuantity !== null && totalQuantity < row.purchased_quantity) {
+        setError(`${label} capacity cannot be lower than the ${row.purchased_quantity} tickets already issued.`)
         return false
       }
       if (!Number.isFinite(minPerOrder) || minPerOrder < 1) {
@@ -315,127 +351,60 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
     e.preventDefault()
     setError(null)
 
-    if (ticketRows.length === 0) {
-      setError('Add at least one ticket type.')
-      return
-    }
     if (!validateEventDateRange()) return
     if (!validateTicketRows()) return
 
     setLoading(true)
     const supabase = createClient()
 
-    if (isEdit && event) {
-      // Update event
-      const { error: eventError } = await supabase
-        .from('event')
-        .update({
-          name,
-          date,
-          time: time + ':00',
-          end_date: endDate || null,
-          end_time: endTime ? endTime + ':00' : null,
-          venue: venue || null,
-          maps_link: mapsLink || null,
-          description: description || null,
-          image: imageUrl ? [imageUrl] : event.image,
-          preview_images: previewImages.length > 0 ? previewImages : null,
-          preview_videos: previewVideos.filter(v => v.trim()).length > 0 ? previewVideos.filter(v => v.trim()) : null,
-          scanner_pin: scannerPin.trim() || null,
-          published,
-        })
-        .eq('id', event.id)
-
-      if (eventError) { setError(eventError.message); setLoading(false); return }
-
-      // Delete removed tickets, upsert existing
-      const existingIds = ticketRows.filter(r => r.id).map(r => r.id!)
-      const { data: currentTickets } = await supabase
-        .from('ticket')
-        .select('id')
-        .eq('event_id', event.id)
-
-      const toDelete = (currentTickets ?? [])
-        .filter((t: { id: string }) => !existingIds.includes(t.id))
-        .map((t: { id: string }) => t.id)
-
-      if (toDelete.length > 0) {
-        await supabase.from('ticket').delete().in('id', toDelete)
-      }
-
-      for (let i = 0; i < ticketRows.length; i++) {
-        const row = ticketRows[i]
-        const payload = {
-          event_id: event.id,
-          label: row.label,
-          price: parseFloat(row.price),
-          total_quantity: row.total_quantity ? parseInt(row.total_quantity) : null,
-          min_per_order: parseInt(row.min_per_order || '1'),
-          max_per_order: row.max_per_order ? parseInt(row.max_per_order) : null,
-          sale_start_date: row.sale_start_date || null,
-          sale_start_time: row.sale_start_time ? row.sale_start_time + ':00' : null,
-          sale_end_date: row.sale_end_date || null,
-          sale_end_time: row.sale_end_time ? row.sale_end_time + ':00' : null,
-          type: i + 1,
-        }
-        if (row.id) {
-          await supabase.from('ticket').update(payload).eq('id', row.id)
-        } else {
-          await supabase.from('ticket').insert(payload)
-        }
-      }
-
-      router.push(`/dashboard/events/${event.id}`)
-      router.refresh()
-    } else {
-      // Create event
-      const { data: newEvent, error: eventError } = await supabase
-        .from('event')
-        .insert({
-          name,
-          date,
-          time: time + ':00',
-          end_date: endDate || null,
-          end_time: endTime ? endTime + ':00' : null,
-          venue: venue || null,
-          maps_link: mapsLink || null,
-          description: description || null,
-          image: imageUrl ? [imageUrl] : null,
-          preview_images: previewImages.length > 0 ? previewImages : null,
-          preview_videos: previewVideos.filter(v => v.trim()).length > 0 ? previewVideos.filter(v => v.trim()) : null,
-          scanner_pin: scannerPin.trim() || null,
-          organizer_id: organizerId,
-          cancelled: false,
-          published: false,
-        })
-        .select('id')
-        .single()
-
-      if (eventError || !newEvent) { setError(eventError?.message ?? 'Failed to create event'); setLoading(false); return }
-
-      for (let i = 0; i < ticketRows.length; i++) {
-        const row = ticketRows[i]
-        await supabase.from('ticket').insert({
-          event_id: newEvent.id,
-          label: row.label,
-          price: parseFloat(row.price),
-          total_quantity: row.total_quantity ? parseInt(row.total_quantity) : null,
-          min_per_order: parseInt(row.min_per_order || '1'),
-          max_per_order: row.max_per_order ? parseInt(row.max_per_order) : null,
-          sale_start_date: row.sale_start_date || null,
-          sale_start_time: row.sale_start_time ? row.sale_start_time + ':00' : null,
-          sale_end_date: row.sale_end_date || null,
-          sale_end_time: row.sale_end_time ? row.sale_end_time + ':00' : null,
-          type: i + 1,
-          purchased_quantity: 0,
-          available_quantity: row.total_quantity ? parseInt(row.total_quantity) : null,
-        })
-      }
-
-      router.push(`/dashboard/events/${newEvent.id}`)
-      router.refresh()
+    const filteredPreviewVideos = previewVideos.map(v => v.trim()).filter(Boolean)
+    const eventPayload = {
+      name,
+      date,
+      time: time + ':00',
+      end_date: endDate || null,
+      end_time: endTime ? endTime + ':00' : null,
+      venue: venue || null,
+      maps_link: mapsLink || null,
+      description: description || null,
+      image: imageUrl ? [imageUrl] : event?.image ?? null,
+      preview_images: previewImages.length > 0 ? previewImages : null,
+      preview_videos: filteredPreviewVideos.length > 0 ? filteredPreviewVideos : null,
+      scanner_pin: scannerPin.trim() || null,
     }
-    setLoading(false)
+    const ticketPayloads = ticketRows.map(row => ({
+      id: row.id ?? null,
+      label: row.label.trim(),
+      price: Number(row.price),
+      total_quantity: row.total_quantity === '' ? null : Number(row.total_quantity),
+      min_per_order: Number(row.min_per_order || '1'),
+      max_per_order: row.max_per_order === '' ? null : Number(row.max_per_order),
+      sale_start_date: row.sale_start_date || null,
+      sale_start_time: row.sale_start_time ? row.sale_start_time + ':00' : null,
+      sale_end_date: row.sale_end_date || null,
+      sale_end_time: row.sale_end_time ? row.sale_end_time + ':00' : null,
+    }))
+
+    try {
+      const { data: savedEventId, error: saveError } = await supabase.rpc('save_event_with_tickets', {
+        p_event_id: event?.id ?? null,
+        p_event: eventPayload,
+        p_tickets: ticketPayloads,
+        p_original_ticket_ids: (tickets ?? []).map(ticket => ticket.id),
+      })
+
+      if (saveError || typeof savedEventId !== 'string') {
+        setError(saveErrorMessage(saveError?.message ?? 'The event could not be saved.'))
+        return
+      }
+
+      router.push(`/dashboard/events/${savedEventId}`)
+      router.refresh()
+    } catch {
+      setError('The event could not be saved. Check your connection and try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const baseSlug = name.trim()
@@ -463,7 +432,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
         setResolvedSlug(baseSlug)
         setSlugStatus('available')
       } else {
-        // Slug taken — append a short random suffix
+        // Slug taken, so append a short random suffix
         const suffix = Math.random().toString(36).slice(2, 6)
         setResolvedSlug(baseSlug + '-' + suffix)
         setSlugStatus('taken')
@@ -567,7 +536,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
       <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
         <div>
           <h2 className="font-semibold text-gray-900">Preview media</h2>
-          <p className="text-xs text-gray-400 mt-1">Show attendees what to expect — photos from past events and YouTube links.</p>
+          <p className="text-xs text-gray-400 mt-1">Show attendees what to expect: photos from past events and YouTube links.</p>
         </div>
 
         {/* Preview image thumbnails */}
@@ -659,7 +628,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
             maxLength={4}
             readOnly
             value={scannerPin}
-            placeholder="—"
+            placeholder="None"
             className="w-24 text-center font-mono text-xl tracking-[0.3em] border border-gray-200 bg-gray-50 text-gray-900 rounded-lg px-3 py-2.5 outline-none placeholder:tracking-normal placeholder:text-base"
           />
           <button
@@ -683,9 +652,16 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
 
       {/* Ticket types */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
-        <h2 className="font-semibold text-gray-900">Ticket types</h2>
+        <div>
+          <h2 className="font-semibold text-gray-900">Ticket types</h2>
+          {event?.ever_published && (
+            <p className="text-xs text-gray-500 mt-1">
+              Saved ticket types cannot be removed because this event has been published. You can still edit their details and sale windows.
+            </p>
+          )}
+        </div>
         {ticketRows.map((row, i) => (
-          <div key={i} className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+          <div key={row.id ?? i} className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
             <div className="flex gap-3 items-start">
               <div className="flex-1">
                 <input
@@ -711,14 +687,14 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
               <div className="w-28">
                 <input
                   type="number"
-                  min="1"
+                  min="0"
                   value={row.total_quantity}
                   onChange={e => updateTicketRow(i, 'total_quantity', e.target.value)}
                   className={inputClass}
                   placeholder="Qty (∞)"
                 />
               </div>
-              {ticketRows.length > 1 && (
+              {canRemoveTicketRow(row) ? (
                 <button
                   type="button"
                   onClick={() => removeTicketRow(i)}
@@ -727,6 +703,17 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
                 >
                   ×
                 </button>
+              ) : (
+                <span title="Saved ticket types cannot be removed after an event has been published.">
+                  <button
+                    type="button"
+                    disabled
+                    className="text-gray-300 pt-2.5 text-lg leading-none cursor-not-allowed"
+                    aria-label={`${row.label || 'Ticket type'} cannot be removed`}
+                  >
+                    ×
+                  </button>
+                </span>
               )}
             </div>
 
@@ -734,7 +721,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
               <span className="flex-1">Label</span>
               <span className="w-28">Price (GHS)</span>
               <span className="w-28">Capacity (blank = ∞)</span>
-              {ticketRows.length > 1 && <span className="w-4" />}
+              <span className="w-4" />
             </div>
 
             <div className="mt-3">

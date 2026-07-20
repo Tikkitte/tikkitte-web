@@ -30,6 +30,7 @@ export type Event = {
   preview_videos: string[] | null
   scanner_pin: string | null
   published: boolean
+  ever_published: boolean
   end_date: string | null
   end_time: string | null
   last_alert_sent_at: string | null

@@ -7,6 +7,33 @@ import Link from 'next/link'
 
 const RESEND_SECONDS = 30
 
+function slugify(input: string): string {
+  return input
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/[\s-]+/g, '-')
+}
+
+// Matches the slugify pattern used in the one-time DB backfill
+// (20260703_organizer_profile_slug.sql): base slug from display_name,
+// short id suffix if that base is already taken by someone else.
+async function resolveOrganizerSlug(
+  supabase: ReturnType<typeof createClient>,
+  displayName: string,
+  userId: string
+): Promise<string | null> {
+  const base = slugify(displayName)
+  if (!base) return null
+  const { data: existing } = await supabase
+    .from('organizer_profile')
+    .select('id')
+    .eq('slug', base)
+    .maybeSingle()
+  if (!existing || existing.id === userId) return base
+  return `${base}-${userId.slice(0, 6)}`
+}
+
 function VerifyForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -46,11 +73,13 @@ function VerifyForm() {
       }
       // User is already confirmed — continue with profile creation
       const display_name = user.user_metadata?.display_name ?? ''
+      const slug = await resolveOrganizerSlug(supabase, display_name, user.id)
       const { error: profileError } = await supabase.from('organizer_profile').upsert({
         id: user.id,
         display_name,
         email,
         approved: false,
+        slug,
       }, { onConflict: 'id', ignoreDuplicates: true })
       setLoading(false)
       if (profileError) {
@@ -67,11 +96,13 @@ function VerifyForm() {
     // Create organizer profile (pending approval)
     if (data.user) {
       const display_name = data.user.user_metadata?.display_name ?? ''
+      const slug = await resolveOrganizerSlug(supabase, display_name, data.user.id)
       const { error: profileError } = await supabase.from('organizer_profile').upsert({
         id: data.user.id,
         display_name,
         email,
         approved: false,
+        slug,
       }, { onConflict: 'id', ignoreDuplicates: true })
       if (profileError) {
         console.error('[auth/verify] organizer_profile upsert failed', profileError)
