@@ -23,15 +23,15 @@ function eventStatus(event: Event): { label: string; color: string } {
 type Props = {
   event: Event
   tickets: Ticket[]
+  grossCollected: number
 }
 
-export default function DashboardEventCard({ event, tickets }: Props) {
+export default function DashboardEventCard({ event, tickets, grossCollected }: Props) {
   const [copied, setCopied] = useState(false)
   const sold = tickets.reduce((s, t) => s + t.purchased_quantity, 0)
   const capacity = tickets.some((t) => t.total_quantity === null)
     ? null
     : tickets.reduce((s, t) => s + (t.total_quantity ?? 0), 0)
-  const revenue = tickets.reduce((s, t) => s + t.purchased_quantity * t.price, 0)
   const status = eventStatus(event)
   const poster = event.image?.[0]
   const eventUrl = `https://tikkitte.com/e/${event.slug ?? event.id}`
@@ -91,8 +91,8 @@ export default function DashboardEventCard({ event, tickets }: Props) {
             <p className="text-xs text-gray-500">Sold</p>
           </div>
           <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2.5 text-center">
-            <p className="text-lg font-bold text-gray-900 leading-tight">GHS {revenue.toLocaleString()}</p>
-            <p className="text-xs text-gray-500">Revenue</p>
+            <p className="text-lg font-bold text-gray-900 leading-tight">GHS {grossCollected.toLocaleString()}</p>
+            <p className="text-xs text-gray-500">Gross collected</p>
           </div>
         </div>
 

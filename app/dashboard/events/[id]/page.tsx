@@ -2,7 +2,7 @@ import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment, Payout } from '@/lib/types'
+import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment, Payout, TablePackage } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/LazyTicketChart'
 import CancelButton from './CancelButton'
 import PublishButton from './PublishButton'
@@ -14,6 +14,7 @@ import EventDetailTabs from './EventDetailTabs'
 import CheckinStats from '@/components/dashboard/CheckinStats'
 import MessageAttendeesButton from './MessageAttendeesButton'
 import PayoutSummary from './PayoutSummary'
+import TablePackageManager from './TablePackageManager'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -81,6 +82,7 @@ export default async function EventDetailPage({
     { data: freePayments },
     { data: payouts },
     { data: attendeeProfiles },
+    { data: tablePackages },
   ] = await Promise.all([
     supabase
       .from('ticket')
@@ -119,7 +121,16 @@ export default async function EventDetailPage({
       .eq('event_id', id)
       .order('created_at', { ascending: false }),
     supabase.rpc('get_event_attendee_profiles', { p_event_id: id }),
+    event.floor_plan_venue === 'aria'
+      ? supabase
+          .from('table_package')
+          .select('id, event_id, ticket_type_id, table_code, table_kind, tier_name, guest_capacity, min_spend, deposit, bottles, enabled, reservation_status, created_at, updated_at')
+          .eq('event_id', id)
+          .order('table_code')
+      : Promise.resolve({ data: [] }),
   ])
+
+  const ordinaryTickets = ((tickets ?? []) as Ticket[]).filter((ticket) => !ticket.is_table_ticket)
 
   const profileMap = ((attendeeProfiles ?? []) as Array<{ user_id: string; email: string | null; name: string | null }>).reduce(
     (acc: Record<string, { email: string | null; name: string | null }>, profile) => {
@@ -141,7 +152,7 @@ export default async function EventDetailPage({
     return acc
   }, {})
 
-  const totalRevenue = (tickets ?? []).reduce(
+  const totalRevenue = ordinaryTickets.reduce(
     (s: number, t: Ticket) => s + t.purchased_quantity * t.price, 0
   )
   const grossCollected = allPayments.reduce((s: number, p: Payment) => s + (p.amount ?? 0), 0) / 100
@@ -154,21 +165,44 @@ export default async function EventDetailPage({
     acc[p.ticket_type_id] = (acc[p.ticket_type_id] ?? 0) + (p.amount ?? 0) / 100
     return acc
   }, {})
-  const totalSold = (tickets ?? []).reduce(
+  const totalSold = ordinaryTickets.reduce(
     (s: number, t: Ticket) => s + t.purchased_quantity, 0
   )
-  const totalCheckedIn = (userTickets ?? []).filter((ut: UserTicket) => ut.used).length
-  const totalCapacity = (tickets ?? []).some((t: Ticket) => t.total_quantity === null)
+  const totalCheckedIn = (userTickets ?? [])
+    .filter((ut: UserTicket) => ut.used)
+    .reduce((sum: number, ut: UserTicket) => sum + Number(ut.quantity ?? 0), 0)
+  const bookedTableGuests = ((tablePackages ?? []) as TablePackage[])
+    .filter((table) => table.reservation_status === 'booked')
+    .reduce((sum, table) => sum + Number(table.guest_capacity), 0)
+  const totalAdmissionsIssued = totalSold + bookedTableGuests
+  const totalCapacity = ordinaryTickets.some((t: Ticket) => t.total_quantity === null)
     ? null
-    : (tickets ?? []).reduce((s: number, t: Ticket) => s + (t.total_quantity ?? 0), 0)
+    : ordinaryTickets.reduce((s: number, t: Ticket) => s + (t.total_quantity ?? 0), 0)
 
-  const chartData = (tickets ?? []).map((t: Ticket) => ({
-    label: t.label,
-    sold: t.purchased_quantity,
-    remaining: t.total_quantity !== null ? t.total_quantity - t.purchased_quantity : null,
-    revenue: t.purchased_quantity * t.price,
-    price: t.price,
-  }))
+  const bookedTables = ((tablePackages ?? []) as TablePackage[]).filter((table) => table.reservation_status === 'booked')
+  const bookedTableDeposits = bookedTables.reduce((sum, table) => sum + Number(table.deposit), 0)
+
+  const chartData = [
+    ...ordinaryTickets.map((t: Ticket) => ({
+      label: t.label,
+      sold: t.purchased_quantity,
+      remaining: t.total_quantity !== null ? t.total_quantity - t.purchased_quantity : null,
+      revenue: t.purchased_quantity * t.price,
+      price: t.price,
+    })),
+    // Table Reservations: "sold" is total guests admitted across booked tables
+    // (not table count), so this reads consistently with ordinary ticket bars —
+    // every bar answers "how many people came in through this ticket type."
+    ...((tablePackages ?? []).length > 0
+      ? [{
+          label: 'Table Reservations',
+          sold: bookedTableGuests,
+          remaining: null,
+          revenue: bookedTableDeposits,
+          price: 0,
+        }]
+      : []),
+  ]
 
   const poster = event.image?.[0]
   const eventUrl = `https://tikkitte.com/e/${event.slug ?? event.id}`
@@ -227,15 +261,17 @@ export default async function EventDetailPage({
       {shared === '1' && <ShareLiveModal eventUrl={eventUrl} />}
 
       {/* Back + actions */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+      <div className="flex flex-row items-center justify-between gap-3 mb-6">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-          All events
+          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm transition-colors hover:bg-gray-50">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          </span>
+          <span className="hidden sm:inline">All events</span>
         </Link>
-        <div className="flex flex-wrap items-start gap-2">
+        <div className="flex flex-wrap items-start justify-end gap-2">
           {!event.cancelled && (
             <>
               <MessageAttendeesButton
@@ -243,73 +279,67 @@ export default async function EventDetailPage({
                 lastAlertSentAt={event.last_alert_sent_at}
                 attendeeCount={formattedAttendees.length}
               />
-              <PublishButton
-                eventId={id}
-                published={event.published}
-                everPublished={event.ever_published}
-              />
               <Link
                 href={`/dashboard/events/${id}/edit`}
-                className="bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
+                className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
               >
-                Edit event
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                </svg>
+                <span className="hidden sm:inline">Edit event</span>
               </Link>
-              <CancelButton eventId={id} />
             </>
           )}
         </div>
       </div>
 
-      {/* Two-column layout: poster left, content right */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left column — sticky poster */}
-        <div className="lg:w-[380px] lg:flex-shrink-0">
-          <div className="lg:sticky lg:top-20">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              {poster ? (
-                <Image
-                  src={poster}
-                  alt={event.name}
-                  width={1080}
-                  height={1920}
-                  className="w-full object-cover"
-                  priority
-                />
-              ) : (
-                <div className="flex aspect-[9/16] w-full items-center justify-center bg-gradient-to-br from-[#3d3d3d]/10 to-[#3d3d3d]/5">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#3d3d3d]/30">
-                    <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
-                  </svg>
-                </div>
-              )}
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  {!event.published && (
-                    <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full">
-                      Draft
-                    </span>
-                  )}
-                  {event.cancelled && (
-                    <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-full">
-                      Cancelled
-                    </span>
-                  )}
-                </div>
-                <h1 className="text-xl font-bold text-gray-900 mb-1">{event.name}</h1>
-                <p className="text-sm text-gray-500">
-                  {formatEventDateRange(event)}
-                </p>
-                <p className="text-sm text-gray-500">{event.venue ?? 'No venue'}</p>
-                {event.description && (
-                  <p className="text-sm text-gray-400 mt-3 leading-relaxed line-clamp-4">{event.description}</p>
-                )}
+      {/* Event summary card — natural flow at the top, no longer sticky/side-column */}
+      <div className="mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex flex-col sm:flex-row">
+          <div className="sm:w-[220px] sm:flex-shrink-0">
+            {poster ? (
+              <Image
+                src={poster}
+                alt={event.name}
+                width={1080}
+                height={1920}
+                className="aspect-[9/16] w-full object-cover"
+                priority
+              />
+            ) : (
+              <div className="flex aspect-[9/16] w-full items-center justify-center bg-gradient-to-br from-[#3d3d3d]/10 to-[#3d3d3d]/5">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#3d3d3d]/30">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
+                </svg>
               </div>
+            )}
+          </div>
+          <div className="p-5">
+            <div className="flex items-center gap-2 mb-2">
+              {!event.published && (
+                <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full">
+                  Draft
+                </span>
+              )}
+              {event.cancelled && (
+                <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-full">
+                  Cancelled
+                </span>
+              )}
             </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-1">{event.name}</h1>
+            <p className="text-sm text-gray-500">
+              {formatEventDateRange(event)}
+            </p>
+            <p className="text-sm text-gray-500">{event.venue ?? 'No venue'}</p>
+            {event.description && (
+              <p className="text-sm text-gray-400 mt-3 leading-relaxed line-clamp-4">{event.description}</p>
+            )}
           </div>
         </div>
+      </div>
 
-        {/* Right column — scrollable content */}
-        <div className="flex-1 min-w-0 space-y-5">
+      <div className="space-y-5">
           {/* Stats row */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -337,7 +367,7 @@ export default async function EventDetailPage({
           {/* Check-in stats (live via Realtime) */}
           <CheckinStats
             eventId={id}
-            totalSold={totalSold}
+            totalSold={totalAdmissionsIssued}
             initialCheckedIn={totalCheckedIn}
             scannerPin={event.scanner_pin ?? null}
           />
@@ -350,8 +380,15 @@ export default async function EventDetailPage({
             payouts={(payouts ?? []) as Payout[]}
           />
 
+          {event.floor_plan_venue === 'aria' && (
+            <TablePackageManager
+              eventId={id}
+              initialPackages={(tablePackages ?? []) as TablePackage[]}
+            />
+          )}
+
           {/* Charts */}
-          {(tickets ?? []).length > 0 && (
+          {ordinaryTickets.length > 0 && (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <h2 className="font-semibold text-gray-900 mb-4 text-sm">Sales by ticket type</h2>
@@ -367,7 +404,7 @@ export default async function EventDetailPage({
           {/* Ticket breakdown table */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h2 className="font-semibold text-gray-900 mb-4 text-sm">Ticket types</h2>
-            {(tickets ?? []).length === 0 ? (
+            {ordinaryTickets.length === 0 ? (
               <p className="text-sm text-gray-400">No ticket types.</p>
             ) : (
               <div className="overflow-x-auto">
@@ -382,7 +419,7 @@ export default async function EventDetailPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {(tickets ?? []).map((t: Ticket) => (
+                    {ordinaryTickets.map((t: Ticket) => (
                       <tr key={t.id} className="border-b border-gray-50 last:border-0">
                         <td className="py-3 pr-4 font-medium text-gray-900">{t.label}</td>
                         <td className="py-3 px-4 text-right text-gray-600">GHS {t.price}</td>
@@ -404,11 +441,11 @@ export default async function EventDetailPage({
             )}
           </div>
 
-          <PromoCodeManager eventId={id} tickets={(tickets ?? []) as Ticket[]} />
+          <PromoCodeManager eventId={id} tickets={ordinaryTickets} />
 
           <CompTicketManager
             eventId={id}
-            tickets={(tickets ?? []) as Ticket[]}
+            tickets={ordinaryTickets}
             initialCompTickets={(compTickets ?? []) as ComplimentaryTicket[]}
           />
 
@@ -423,7 +460,21 @@ export default async function EventDetailPage({
             payments={formattedPayments}
             attendees={formattedAttendees}
           />
-        </div>
+
+          {!event.cancelled && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <h2 className="font-semibold text-gray-900 mb-1 text-sm">Event status</h2>
+              <p className="text-xs text-gray-400 mb-4">Unpublishing or cancelling affects the public event page. Already-issued tickets and bookings are not affected.</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <PublishButton
+                  eventId={id}
+                  published={event.published}
+                  everPublished={event.ever_published}
+                />
+                <CancelButton eventId={id} />
+              </div>
+            </div>
+          )}
       </div>
     </div>
   )

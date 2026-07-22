@@ -71,6 +71,18 @@ export default async function TicketPage({ params }: Props) {
 
   const { payment, userTickets, event } = data
   const totalAmount = payment.amount ? Number(payment.amount) / 100 : 0
+  const metadata = payment.metadata && typeof payment.metadata === 'object'
+    ? payment.metadata as Record<string, unknown>
+    : {}
+  const tableDetails = typeof metadata.table_package_id === 'string'
+    ? {
+        tableCode: String(metadata.table_code ?? ''),
+        tierName: String(metadata.tier_name ?? ''),
+        guestCapacity: Number(metadata.guest_capacity ?? 0),
+        deposit: Number(metadata.deposit ?? totalAmount),
+        minSpend: Number(metadata.min_spend ?? 0),
+      }
+    : null
 
   return (
     <div className="min-h-screen bg-[#F4F2EC] font-grotesk text-[#191917]">
@@ -152,14 +164,21 @@ export default async function TicketPage({ params }: Props) {
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <p className="font-semibold text-[#191917]">
-                    {ut.ticket?.label ?? 'Ticket'}
+                    {tableDetails ? `Table ${tableDetails.tableCode}` : (ut.ticket?.label ?? 'Ticket')}
                   </p>
                   <p className="text-sm text-[#5F5D54]">
-                    Qty: {ut.quantity}
-                    {ut.ticket?.price != null && (
+                    {tableDetails ? `One QR · admits ${tableDetails.guestCapacity} guests` : `Qty: ${ut.quantity}`}
+                    {!tableDetails && ut.ticket?.price != null && (
                       <span> &middot; {ut.ticket.price === 0 ? 'Free' : `GH₵ ${ut.ticket.price}`}</span>
                     )}
                   </p>
+                  {tableDetails && (
+                    <div className="mt-3 rounded-xl bg-[#EFFBFE] p-3 text-sm text-[#164E63]">
+                      <p className="font-semibold">{tableDetails.tierName}</p>
+                      <p>Deposit paid: GHS {tableDetails.deposit.toLocaleString('en-GH')}</p>
+                      <p>Minimum spend: GHS {tableDetails.minSpend.toLocaleString('en-GH')}</p>
+                    </div>
+                  )}
                 </div>
                 <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                   Confirmed

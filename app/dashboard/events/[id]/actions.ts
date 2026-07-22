@@ -87,6 +87,7 @@ export async function sendCompTicket(input: SendCompTicketInput): Promise<SendCo
     .select('id')
     .eq('id', ticketTypeId)
     .eq('event_id', eventId)
+    .eq('is_table_ticket', false)
     .maybeSingle()
 
   if (ticketError || !ticket) {

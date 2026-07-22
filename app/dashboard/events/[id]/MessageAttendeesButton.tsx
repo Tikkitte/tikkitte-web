@@ -70,9 +70,12 @@ export default function MessageAttendeesButton({ eventId, lastAlertSentAt, atten
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="border border-[#3d3d3d] text-[#3d3d3d] text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
+        className="inline-flex items-center gap-2 border border-[#3d3d3d] text-[#3d3d3d] text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
       >
-        Message attendees
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+        <span className="hidden sm:inline">Message attendees</span>
       </button>
 
       {open && (

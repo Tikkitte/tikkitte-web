@@ -30,10 +30,11 @@ function parseFilter(value: string | null | undefined): EventFilter {
 type Props = {
   events: Event[]
   tickets: Ticket[]
+  grossCollectedByEvent: Record<string, number>
   initialFilter: EventFilter
 }
 
-export default function DashboardEventsClient({ events: allEvents, tickets, initialFilter }: Props) {
+export default function DashboardEventsClient({ events: allEvents, tickets, grossCollectedByEvent, initialFilter }: Props) {
   const [filter, setFilter] = useState<EventFilter>(initialFilter)
 
   useEffect(() => {
@@ -82,7 +83,10 @@ export default function DashboardEventsClient({ events: allEvents, tickets, init
   }, {})
   const totalEvents = visibleEvents.length
   const totalSold = visibleTickets.reduce((s, ticket) => s + ticket.purchased_quantity, 0)
-  const totalRevenue = visibleTickets.reduce((s, ticket) => s + ticket.purchased_quantity * ticket.price, 0)
+  const totalCollected = visibleEvents.reduce(
+    (sum, event) => sum + (grossCollectedByEvent[event.id] ?? 0),
+    0,
+  )
 
   const selectFilter = (nextFilter: EventFilter) => {
     setFilter(nextFilter)
@@ -130,8 +134,8 @@ export default function DashboardEventsClient({ events: allEvents, tickets, init
             <p className="text-2xl font-extrabold text-gray-900">{totalSold}</p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <p className="text-sm text-gray-500 mb-1">Total revenue</p>
-            <p className="text-2xl font-extrabold text-gray-900">GHS {totalRevenue.toLocaleString()}</p>
+            <p className="text-sm text-gray-500 mb-1">Gross collected</p>
+            <p className="text-2xl font-extrabold text-gray-900">GHS {totalCollected.toLocaleString()}</p>
           </div>
         </div>
       )}
@@ -162,6 +166,7 @@ export default function DashboardEventsClient({ events: allEvents, tickets, init
               key={event.id}
               event={event}
               tickets={ticketsByEvent[event.id] ?? []}
+              grossCollected={grossCollectedByEvent[event.id] ?? 0}
             />
           ))}
         </div>

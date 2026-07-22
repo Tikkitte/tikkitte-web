@@ -34,6 +34,7 @@ export async function getUpcomingEvents(limit: number): Promise<EventWithPrice[]
     .from('ticket')
     .select('event_id, price')
     .in('event_id', list.map((e) => e.id))
+    .eq('is_table_ticket', false)
 
   if (ticketsError) {
     console.error('[getUpcomingEvents] failed to load ticket prices:', ticketsError.message)

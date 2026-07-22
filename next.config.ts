@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const supabaseHost = 'eqlewbjeyfkhnlrkvjjx.supabase.co';
+const isDev = process.env.NODE_ENV !== 'production';
 
 const securityHeaders = [
   {
@@ -38,7 +39,9 @@ const securityHeaders = [
       // Supabase storage images, data: URIs (QR codes), blob: (camera preview)
       `img-src 'self' data: blob: https://${supabaseHost}`,
       // API calls: Supabase REST + realtime WS, Vercel analytics, Paystack API
-      `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://vitals.vercel-insights.com https://va.vercel-scripts.com https://api.paystack.co`,
+      // Local dev also needs the local Supabase stack (localhost + LAN IP, for
+      // testing from a phone on the same network) — never added in production.
+      `connect-src 'self' https://${supabaseHost} wss://${supabaseHost} https://vitals.vercel-insights.com https://va.vercel-scripts.com https://api.paystack.co${isDev ? ' http://localhost:54321 ws://localhost:54321 http://172.20.10.12:54321 ws://172.20.10.12:54321' : ''}`,
       // Turnstile renders inside an iframe from Cloudflare
       `frame-src https://challenges.cloudflare.com`,
       // Block Flash/plugins
@@ -52,6 +55,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Lets the dev server's own resources (HMR websocket, RSC chunks) load when
+  // testing from another device on the LAN, e.g. a phone. Dev-only; has no
+  // effect in production builds.
+  ...(isDev ? { allowedDevOrigins: ['172.20.10.12'] } : {}),
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
   },

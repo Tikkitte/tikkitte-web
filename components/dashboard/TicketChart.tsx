@@ -10,7 +10,7 @@ type TicketData = {
   price: number
 }
 
-const COLORS = ['#3d3d3d', '#555555', '#777777', '#999999', '#2a2a2a', '#1a1a1a']
+const COLORS = ['#1596B7', '#F59E0B', '#8B5CF6', '#10B981', '#EC4899', '#3B82F6']
 
 export function TicketBarChart({ data }: { data: TicketData[] }) {
   return (
@@ -42,6 +42,7 @@ export function TicketBarChart({ data }: { data: TicketData[] }) {
             }}
             formatter={(value) => [String(value), 'Sold']}
             labelStyle={{ color: '#9ca3af', marginBottom: 4 }}
+            itemStyle={{ color: '#fff' }}
             cursor={{ fill: 'rgba(29, 103, 186, 0.06)' }}
           />
           <Bar dataKey="sold" radius={[8, 8, 0, 0]}>
@@ -167,6 +168,7 @@ export function RevenueAreaChart({ data, hideHeader }: { data: DailyData[]; hide
               }}
               formatter={(value) => [`GHS ${Number(value).toLocaleString()}`, 'Revenue']}
               labelStyle={{ color: '#9ca3af', marginBottom: 4 }}
+              itemStyle={{ color: '#fff' }}
             />
             <Area
               type="monotone"

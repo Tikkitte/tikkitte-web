@@ -21,6 +21,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
     .from('ticket')
     .select('*')
     .eq('event_id', id)
+    .eq('is_table_ticket', false)
     .order('type')
 
   return (

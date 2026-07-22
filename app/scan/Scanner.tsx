@@ -12,6 +12,7 @@ type CachedTicket = {
   used: boolean
   ticket_type: string
   quantity: number
+  table_code: string | null
 }
 
 type SessionInfo = {
@@ -21,7 +22,7 @@ type SessionInfo = {
 }
 
 type TicketScanResult =
-  | { status: 'success'; ticketType: string; quantity: number }
+  | { status: 'success'; ticketType: string; quantity: number; tableCode: string | null }
   | { status: 'already_used'; scannedAt: string | null }
   | { status: 'ticket_not_found' }
   | { status: 'event_not_found' }
@@ -319,12 +320,13 @@ export default function Scanner() {
         error?: string
         ticket_type?: string
         quantity?: number
+        table_code?: string | null
         scanned_at?: string
       }
 
       if (res.ok) {
         markCacheUsed(currentSession.eventId, ticketId)
-        showResult({ status: 'success', ticketType: res.ticket_type!, quantity: res.quantity! })
+        showResult({ status: 'success', ticketType: res.ticket_type!, quantity: res.quantity!, tableCode: res.table_code ?? null })
       } else if (res.error === 'already_used') {
         showResult({ status: 'already_used', scannedAt: res.scanned_at ?? null })
       } else if (res.error === 'ticket_not_found') {
@@ -354,7 +356,7 @@ export default function Scanner() {
 
     markCacheUsed(currentSession.eventId, ticketId)
     enqueue({ ticketId, eventId: currentSession.eventId, pin: currentSession.pin, ts: Date.now() })
-    showResult({ status: 'success', ticketType: ticket.ticket_type, quantity: ticket.quantity })
+    showResult({ status: 'success', ticketType: ticket.ticket_type, quantity: ticket.quantity, tableCode: ticket.table_code ?? null })
   }
 
   function showResult(r: TicketScanResult) {
@@ -521,7 +523,9 @@ export default function Scanner() {
               <p className="text-[10px] font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(236,237,238,0.5)' }}>Last scan</p>
               {lastResult.status === 'success' && (
                 <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
-                  {lastResult.ticketType} &times;{lastResult.quantity}
+                  {lastResult.tableCode
+                    ? `Table ${lastResult.tableCode} · Admit ${lastResult.quantity} guests`
+                    : `${lastResult.ticketType} ×${lastResult.quantity}`}
                 </p>
               )}
               {lastResult.status === 'already_used' && (
@@ -561,9 +565,13 @@ export default function Scanner() {
                 </svg>
               </div>
               <p className="text-3xl font-bold mb-1" style={{ color: '#ECEDEE' }}>Valid</p>
-              <p className="text-lg font-medium mb-1" style={{ color: 'rgba(236,237,238,0.8)' }}>{result.ticketType}</p>
+              <p className="text-lg font-medium mb-1" style={{ color: 'rgba(236,237,238,0.8)' }}>
+                {result.tableCode ? `Table ${result.tableCode}` : result.ticketType}
+              </p>
               <p className="text-sm" style={{ color: 'rgba(236,237,238,0.5)' }}>
-                {result.quantity > 1 ? `×${result.quantity} tickets` : '×1 ticket'}
+                {result.tableCode
+                  ? `Admit ${result.quantity} guests`
+                  : result.quantity > 1 ? `×${result.quantity} tickets` : '×1 ticket'}
               </p>
             </>
           )}

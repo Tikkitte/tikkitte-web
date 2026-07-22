@@ -27,6 +27,13 @@ type Props = {
   showPreview?: boolean
 }
 
+const ARIA_PRESET = {
+  value: 'aria',
+  label: 'Aria',
+  venue: 'Aria',
+  mapsLink: 'https://maps.app.goo.gl/vUpGGgAAwqAgAEkP9?g_st=ipc',
+} as const
+
 const emptyTicketRow: TicketRow = {
   label: '',
   price: '',
@@ -50,6 +57,7 @@ function saveErrorMessage(message: string) {
   if (message.includes('ERR_TICKET_REMOVAL_LOCKED')) return 'Saved ticket types cannot be removed after an event has been published. Refresh to restore the missing row.'
   if (message.includes('ERR_TICKET_HAS_HISTORY')) return 'A ticket type with issued tickets or related records cannot be removed.'
   if (message.includes('ERR_CAPACITY_BELOW_ISSUED')) return 'Capacity cannot be lower than the number of tickets already issued.'
+  if (message.includes('ERR_INVALID_FLOOR_PLAN_VENUE')) return 'Choose a valid venue preset and try again.'
   if (message.includes('ERR_INVALID_EVENT') || message.includes('ERR_INVALID_TICKET')) return 'Some event or ticket details are invalid. Review the form and try again.'
   if (message.includes('ERR_')) return 'The event could not be saved because its data is no longer valid. Refresh and try again.'
   return message
@@ -136,8 +144,9 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
   const [time, setTime] = useState(event?.time ? event.time.slice(0, 5) : '')
   const [endDate, setEndDate] = useState(event?.end_date ?? '')
   const [endTime, setEndTime] = useState(event?.end_time ? event.end_time.slice(0, 5) : '')
-  const [venue, setVenue] = useState(event?.venue ?? '')
-  const [mapsLink, setMapsLink] = useState(event?.maps_link ?? '')
+  const [floorPlanVenue, setFloorPlanVenue] = useState<Event['floor_plan_venue']>(event?.floor_plan_venue ?? null)
+  const [venue, setVenue] = useState(event?.floor_plan_venue === ARIA_PRESET.value ? ARIA_PRESET.venue : event?.venue ?? '')
+  const [mapsLink, setMapsLink] = useState(event?.floor_plan_venue === ARIA_PRESET.value ? ARIA_PRESET.mapsLink : event?.maps_link ?? '')
   const [description, setDescription] = useState(event?.description ?? '')
   const [imageUrl, setImageUrl] = useState<string | null>(event?.image?.[0] ?? null)
   const [imageUploading, setImageUploading] = useState(false)
@@ -366,6 +375,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
       end_time: endTime ? endTime + ':00' : null,
       venue: venue || null,
       maps_link: mapsLink || null,
+      floor_plan_venue: floorPlanVenue,
       description: description || null,
       image: imageUrl ? [imageUrl] : event?.image ?? null,
       preview_images: previewImages.length > 0 ? previewImages : null,
@@ -444,7 +454,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
 
   const slugPreview = resolvedSlug ? 'tikkitte.com/e/' + resolvedSlug : ''
 
-  const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400'
+  const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500'
 
   const form = (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto w-full flex flex-col gap-6">
@@ -492,13 +502,39 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Venue</label>
-          <input value={venue} onChange={e => setVenue(e.target.value)} className={inputClass} placeholder="e.g. Club Aria, Accra" />
+          <label htmlFor="floor-plan-venue" className="block text-sm font-medium text-gray-700 mb-1">Venue type</label>
+          <select
+            id="floor-plan-venue"
+            value={floorPlanVenue ?? 'other'}
+            onChange={(e) => {
+              if (e.target.value === ARIA_PRESET.value) {
+                setFloorPlanVenue(ARIA_PRESET.value)
+                setVenue(ARIA_PRESET.venue)
+                setMapsLink(ARIA_PRESET.mapsLink)
+              } else {
+                setFloorPlanVenue(null)
+                if (venue === ARIA_PRESET.venue) setVenue('')
+                if (mapsLink === ARIA_PRESET.mapsLink) setMapsLink('')
+              }
+            }}
+            className={inputClass}
+          >
+            <option value={ARIA_PRESET.value}>{ARIA_PRESET.label}</option>
+            <option value="other">Other</option>
+          </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Google Maps Link <span className="font-normal text-gray-400">(optional)</span></label>
-          <input value={mapsLink} onChange={e => setMapsLink(e.target.value)} className={inputClass} placeholder="https://maps.google.com/..." />
-          <p className="text-xs text-gray-400 mt-1">Without a link, attendees will see the venue name but won&apos;t get exact directions.</p>
+          <label htmlFor="venue-name" className="block text-sm font-medium text-gray-700 mb-1">Venue name</label>
+          <input id="venue-name" value={venue} onChange={e => setVenue(e.target.value)} disabled={floorPlanVenue === ARIA_PRESET.value} className={inputClass} placeholder="e.g. Club Aria, Accra" />
+        </div>
+        <div>
+          <label htmlFor="maps-link" className="block text-sm font-medium text-gray-700 mb-1">Google Maps Link <span className="font-normal text-gray-400">(optional)</span></label>
+          <input id="maps-link" type="url" value={mapsLink} onChange={e => setMapsLink(e.target.value)} disabled={floorPlanVenue === ARIA_PRESET.value} className={inputClass} placeholder="https://maps.google.com/..." />
+          <p className="text-xs text-gray-400 mt-1">
+            {floorPlanVenue === ARIA_PRESET.value
+              ? 'ARIA’s verified venue details are used for this event.'
+              : 'Without a link, attendees will see the venue name but won’t get exact directions.'}
+          </p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>

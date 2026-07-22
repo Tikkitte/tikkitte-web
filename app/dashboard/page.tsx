@@ -63,7 +63,7 @@ export default async function DashboardHomePage() {
 
   const [{ data: rawTickets }, { data: rawPayments }] = eventIds.length
     ? await Promise.all([
-        supabase.from('ticket').select('*').in('event_id', eventIds),
+        supabase.from('ticket').select('*').in('event_id', eventIds).eq('is_table_ticket', false),
         supabase
           .from('payments')
           .select('amount, paid_at')
@@ -198,13 +198,13 @@ export default async function DashboardHomePage() {
         </div>
         <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
           <div className="mb-1 flex items-center gap-1.5">
-            <p className="text-sm text-gray-500">Gross revenue</p>
+            <p className="text-sm text-gray-500">Gross collected</p>
             <InfoTip
-              text="Ticket price × tickets sold across all events. This is what you charged — not necessarily what was collected. Free tickets count as GHS 0."
+              text="Successful and free payment records across all events, including table deposits."
               width="w-60"
             />
           </div>
-          <p className="text-2xl font-extrabold text-gray-900">{formatMoney(totalRevenue)}</p>
+          <p className="text-2xl font-extrabold text-gray-900">{formatMoney(totalCollected)}</p>
         </div>
         <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
           <div className="mb-1 flex items-center gap-1.5">

@@ -28,9 +28,25 @@ export default async function EventsPage({
   const events = (rawEvents ?? []) as Event[]
   const eventIds = events.map((event) => event.id)
 
-  const { data: rawTickets } = eventIds.length
-    ? await supabase.from('ticket').select('*').in('event_id', eventIds)
-    : { data: [] }
+  const [{ data: rawTickets }, { data: rawPayments }] = eventIds.length
+    ? await Promise.all([
+        supabase
+          .from('ticket')
+          .select('*')
+          .in('event_id', eventIds)
+          .eq('is_table_ticket', false),
+        supabase
+          .from('payments')
+          .select('event_id, amount')
+          .in('event_id', eventIds)
+          .in('status', ['success', 'free']),
+      ])
+    : [{ data: [] }, { data: [] }]
+
+  const grossCollectedByEvent = (rawPayments ?? []).reduce((totals: Record<string, number>, payment) => {
+    totals[payment.event_id] = (totals[payment.event_id] ?? 0) + (payment.amount ?? 0) / 100
+    return totals
+  }, {})
 
   return (
     <div>
@@ -51,6 +67,7 @@ export default async function EventsPage({
       <DashboardEventsClient
         events={events}
         tickets={(rawTickets ?? []) as Ticket[]}
+        grossCollectedByEvent={grossCollectedByEvent}
         initialFilter={parseFilter(filter)}
       />
     </div>

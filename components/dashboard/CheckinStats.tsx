@@ -28,7 +28,7 @@ export default function CheckinStats({ eventId, totalSold, initialCheckedIn, sca
         },
         (payload) => {
           if (payload.new.used && !payload.old.used) {
-            setCheckedIn(n => n + 1)
+            setCheckedIn(n => n + Number(payload.new.quantity ?? 1))
           }
         }
       )

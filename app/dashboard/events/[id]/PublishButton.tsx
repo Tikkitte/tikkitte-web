@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import ConfirmDialog from '@/components/dashboard/ConfirmDialog'
 
 export default function PublishButton({
   eventId,
@@ -15,6 +16,7 @@ export default function PublishButton({
 }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState(false)
   const router = useRouter()
 
   const toggle = async () => {
@@ -37,6 +39,7 @@ export default function PublishButton({
       if (!published) {
         router.push(`/dashboard/events/${eventId}?shared=1`)
       } else {
+        setConfirming(false)
         router.refresh()
       }
     } catch {
@@ -46,10 +49,19 @@ export default function PublishButton({
     }
   }
 
+  const handleClick = () => {
+    setError(null)
+    if (published) {
+      setConfirming(true)
+    } else {
+      toggle()
+    }
+  }
+
   return (
     <div className="flex flex-col items-end gap-2">
       <button
-        onClick={toggle}
+        onClick={handleClick}
         disabled={loading}
         className={`text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors shadow-sm disabled:opacity-60 ${
           published
@@ -64,11 +76,25 @@ export default function PublishButton({
           After publishing, saved ticket types cannot be removed, even if you unpublish later. You can still edit their details and sale windows.
         </p>
       )}
-      {error && (
+      {error && !confirming && (
         <p className="text-xs text-red-600 max-w-[280px] text-right" role="alert">
           {error}
         </p>
       )}
+
+      <ConfirmDialog
+        open={confirming}
+        title="Unpublish this event?"
+        description="The public event page and any live ticket or table reservation checkout will stop working until you publish again. Already-sold tickets, QR codes, and bookings are not affected."
+        confirmLabel="Unpublish"
+        confirmingLabel="Unpublishing…"
+        cancelLabel="Keep published"
+        danger
+        loading={loading}
+        error={error}
+        onConfirm={toggle}
+        onCancel={() => { setConfirming(false); setError(null) }}
+      />
     </div>
   )
 }

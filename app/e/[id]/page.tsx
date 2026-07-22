@@ -39,11 +39,12 @@ async function getEventData(idOrSlug: string) {
     .maybeSingle()
   if (!event) return null
 
-  const [{ data: tickets }, { data: organizer }] = await Promise.all([
+  const [{ data: tickets }, { data: organizer }, { data: tablePackages }] = await Promise.all([
     supabase
       .from('ticket')
-      .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity, min_per_order, max_per_order, sale_start_date, sale_start_time, sale_end_date, sale_end_time')
+      .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity, min_per_order, max_per_order, sale_start_date, sale_start_time, sale_end_date, sale_end_time, is_table_ticket')
       .eq('event_id', event.id)
+      .eq('is_table_ticket', false)
       .order('price', { ascending: true }),
     event.organizer_id
       ? supabase
@@ -53,12 +54,14 @@ async function getEventData(idOrSlug: string) {
           .eq('approved', true)
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    supabase.rpc('get_public_event_tables', { p_event_id: event.id }),
   ])
 
   return {
     event: event as Event,
     tickets: (tickets ?? []) as Ticket[],
     organizer: organizer as OrganizerSummary | null,
+    hasTableReservations: (tablePackages?.length ?? 0) > 0,
   }
 }
 
@@ -94,7 +97,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
   const data = await getEventData(id)
   if (!data) notFound()
 
-  const { event, tickets, organizer } = data
+  const { event, tickets, organizer, hasTableReservations } = data
   const ref = (await searchParams)?.ref?.trim().toLowerCase()
   if (ref) {
     const supabase = await createClient()
@@ -217,6 +220,20 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
 
           {/* Ticket checkout */}
           <div className="rounded-[24px] border border-[#E4DFD1] bg-white p-5 shadow-[0_24px_70px_rgba(25,25,23,0.08)]">
+            {hasTableReservations && (
+              <div className="mb-5 border-b border-[#E7E2D4] pb-5">
+                <Link
+                  href={`/e/${event.slug ?? event.id}/tables`}
+                  className="flex w-full items-center justify-between rounded-2xl bg-[#191917] px-5 py-4 text-white transition-colors hover:bg-black"
+                >
+                  <span>
+                    <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-white/55">ARIA tables</span>
+                    <span className="mt-1 block text-base font-semibold">Reserve a table</span>
+                  </span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            )}
             <EventCheckout eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} />
           </div>
 

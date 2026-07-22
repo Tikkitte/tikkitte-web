@@ -8,7 +8,10 @@ export default function MobileTabBar() {
   const pathname = usePathname()
 
   return (
-    <nav className="md:hidden flex shrink-0 border-t border-gray-100 bg-white">
+    <nav
+      className="md:hidden flex shrink-0 border-t border-gray-100 bg-white"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       {navItems.map((item) => {
         const active = item.match(pathname)
         return (

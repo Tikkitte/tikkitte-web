@@ -23,6 +23,7 @@ export type Event = {
   description: string | null
   venue: string | null
   maps_link: string | null
+  floor_plan_venue: 'aria' | null
   image: string[] | null
   cancelled: boolean
   organizer_id: string | null
@@ -51,6 +52,24 @@ export type Ticket = {
   sale_start_time: string | null
   sale_end_date: string | null
   sale_end_time: string | null
+  is_table_ticket: boolean
+}
+
+export type TablePackage = {
+  id: string
+  event_id: string
+  ticket_type_id?: string
+  table_code: string
+  table_kind: 'section' | 'floor' | 'round'
+  tier_name: string
+  guest_capacity: number
+  min_spend: number
+  deposit: number
+  bottles: string[]
+  enabled: boolean
+  reservation_status: 'available' | 'awaiting_payment' | 'booked'
+  created_at?: string
+  updated_at?: string
 }
 
 export type UserTicket = {
