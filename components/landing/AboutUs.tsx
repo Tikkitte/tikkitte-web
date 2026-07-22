@@ -7,7 +7,7 @@ const founders = [
     photo: null, // replace with '/images/david-bh.jpg' when ready
   },
   {
-    name: 'David Poku',
+    name: 'Sadique Wumbei',
     role: 'Co-Founder',
     photo: null, // replace with '/images/david-poku.jpg' when ready
   },
