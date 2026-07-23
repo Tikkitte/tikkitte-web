@@ -45,6 +45,7 @@ export const ARIA_TABLES: AriaTableGeometry[] = [
   { table_code: 'T3B', table_kind: 'section', x: 421, y: 102, width: 128, height: 77 },
   { table_code: 'FM1', table_kind: 'floor', x: 106, y: 530, width: 107, height: 58 },
   { table_code: 'FM2', table_kind: 'floor', x: 217, y: 530, width: 107, height: 58 },
+  { table_code: 'STAGE', table_kind: 'section', x: 241, y: 22, width: 142, height: 100 },
 ]
 
 export function formatGhs(value: number) {
