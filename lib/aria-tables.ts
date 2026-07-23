@@ -34,6 +34,17 @@ export const ARIA_TABLES: AriaTableGeometry[] = [
   { table_code: 'R5', table_kind: 'round', x: 632, y: 676, width: 40, height: 40 },
   { table_code: 'R6', table_kind: 'round', x: 590, y: 576, width: 48, height: 48 },
   { table_code: 'SQ', table_kind: 'floor', x: 690, y: 636, width: 82, height: 82 },
+
+  // Event-specific variants — only ever rendered when an event's own
+  // table_package rows actually use these codes (see the one-off
+  // "A GR8 NIGHT WITH D.H" layout migration). The default preset above is
+  // untouched and remains what every other ARIA event uses.
+  { table_code: 'C1A', table_kind: 'section', x: 90, y: 142, width: 142, height: 60 },
+  { table_code: 'C1B', table_kind: 'section', x: 90, y: 205, width: 142, height: 60 },
+  { table_code: 'T3A', table_kind: 'section', x: 421, y: 22, width: 128, height: 77 },
+  { table_code: 'T3B', table_kind: 'section', x: 421, y: 102, width: 128, height: 77 },
+  { table_code: 'FM1', table_kind: 'floor', x: 106, y: 530, width: 107, height: 58 },
+  { table_code: 'FM2', table_kind: 'floor', x: 217, y: 530, width: 107, height: 58 },
 ]
 
 export function formatGhs(value: number) {

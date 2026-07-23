@@ -98,6 +98,11 @@ export default function AriaFloorPlanSvg({
 
       {ARIA_TABLES.map((geometry) => {
         const table = packageByCode.get(geometry.table_code)
+        // Geometry entries only render when this event actually has a
+        // matching package — lets different events use different subsets
+        // of the shared geometry catalog (e.g. a one-off custom layout)
+        // without phantom/overlapping shapes for codes they don't use.
+        if (!table) return null
         const isSelected = geometry.table_code === selectedCode
         const selectable = onSelect ? (isSelectable ? isSelectable(table) : true) : false
         const isRound = geometry.table_kind === 'round'

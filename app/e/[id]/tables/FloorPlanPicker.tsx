@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatGhs } from '@/lib/aria-tables'
 import AriaFloorPlanSvg, { type TableStyle } from '@/components/AriaFloorPlanSvg'
 import type { TablePackage } from '@/lib/types'
-import TableCheckout from './TableCheckout'
+import TableContact from './TableContact'
 
 // "Gallery" palette — warm paper background, ink hairlines, teal accent —
 // matching tikkitte-web/design/GuestPageGallery.tsx so the guest booking
@@ -39,7 +39,6 @@ export default function FloorPlanPicker({ eventId, eventSlug, eventName, initial
     () => new Map(packages.map((table) => [table.table_code, table])),
     [packages],
   )
-  const heldTables = packages.filter((table) => table.reservation_status === 'awaiting_payment')
   const selected = packages.find((table) => table.id === selectedId) ?? null
 
   const refresh = useCallback(async () => {
@@ -84,7 +83,7 @@ export default function FloorPlanPicker({ eventId, eventSlug, eventName, initial
         <div className="mb-6 text-center">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#1596B7]">ARIA table reservations</p>
           <h1 className="mt-2 font-anton text-3xl uppercase text-[#17110E] sm:text-5xl">{eventName}</h1>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-[rgba(23,17,14,0.62)]">Choose an available table, review its package, and pay the deposit securely through Paystack.</p>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-[rgba(23,17,14,0.62)]">Choose an available table, review its package, and message us on WhatsApp to reserve.</p>
         </div>
 
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -112,11 +111,6 @@ export default function FloorPlanPicker({ eventId, eventSlug, eventName, initial
               <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm bg-[#1596B7]" />Selected</span>
               <span className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-[rgba(23,17,14,0.2)] bg-[rgba(23,17,14,0.04)]" />Unavailable</span>
             </div>
-            {heldTables.length > 0 && (
-              <p className="border-t border-[rgba(23,17,14,0.12)] px-4 py-3 text-center text-xs text-amber-700">
-                Payment in progress: {heldTables.map((table) => table.table_code).join(', ')}
-              </p>
-            )}
           </div>
 
           <aside className="rounded-3xl border border-[rgba(23,17,14,0.14)] bg-[#FDFCFA] p-5 lg:sticky lg:top-24">
@@ -130,10 +124,8 @@ export default function FloorPlanPicker({ eventId, eventSlug, eventName, initial
                   <button type="button" onClick={() => setSelectedId(null)} className="text-sm text-[rgba(23,17,14,0.45)] hover:text-[#17110E]" aria-label="Clear table selection">×</button>
                 </div>
                 <div className="mt-5 space-y-3 text-sm">
-                  <div className="flex justify-between gap-3"><span className="text-[rgba(23,17,14,0.48)]">Admission</span><span className="font-semibold text-[#17110E]">One QR admits {selected.guest_capacity}</span></div>
+                  <div className="flex justify-between gap-3"><span className="text-[rgba(23,17,14,0.48)]">Seats</span><span className="font-semibold text-[#17110E]">Up to {selected.guest_capacity} guests</span></div>
                   <div className="flex justify-between gap-3"><span className="text-[rgba(23,17,14,0.48)]">Minimum spend</span><span className="font-semibold text-[#17110E]">{formatGhs(selected.min_spend)}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-[rgba(23,17,14,0.48)]">Deposit due now</span><span className="font-semibold text-[#1596B7]">{formatGhs(selected.deposit)}</span></div>
-                  <div className="flex justify-between gap-3"><span className="text-[rgba(23,17,14,0.48)]">At the venue</span><span className="font-semibold text-[#17110E]">{formatGhs(Math.max(0, selected.min_spend - selected.deposit))}</span></div>
                 </div>
                 {selected.bottles.length > 0 && (
                   <div className="mt-5 rounded-2xl border border-[rgba(23,17,14,0.14)] bg-[rgba(23,17,14,0.03)] p-4">
@@ -141,13 +133,13 @@ export default function FloorPlanPicker({ eventId, eventSlug, eventName, initial
                     <ul className="mt-2 space-y-1 text-sm text-[rgba(23,17,14,0.75)]">{selected.bottles.map((bottle, index) => <li key={`${bottle}-${index}`}>• {bottle}</li>)}</ul>
                   </div>
                 )}
-                <TableCheckout eventId={eventId} eventSlug={eventSlug} table={selected} onUnavailable={refresh} />
+                <TableContact table={selected} />
               </>
             ) : (
               <div className="py-12 text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-[#1596B7]/30 text-[#1596B7]">⌁</div>
                 <h2 className="mt-4 text-lg font-semibold text-[#17110E]">Choose a table</h2>
-                <p className="mt-2 text-sm leading-6 text-[rgba(23,17,14,0.48)]">Tap any available table on the floor plan to see its package and deposit.</p>
+                <p className="mt-2 text-sm leading-6 text-[rgba(23,17,14,0.48)]">Tap any available table on the floor plan to see its details and reserve.</p>
                 {refreshError && <p className="mt-4 text-xs text-amber-700">Live availability could not refresh. Please try again shortly.</p>}
               </div>
             )}
