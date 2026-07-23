@@ -9,6 +9,7 @@ import type { TablePackage } from '@/lib/types'
 type Props = {
   eventId: string
   initialPackages: TablePackage[]
+  initialLive: boolean
 }
 
 function normalizePackage(value: TablePackage): TablePackage {
@@ -155,10 +156,12 @@ function PackageEditor({
   )
 }
 
-export default function TablePackageManager({ eventId, initialPackages }: Props) {
+export default function TablePackageManager({ eventId, initialPackages, initialLive }: Props) {
   const [packages, setPackages] = useState(initialPackages.map(normalizePackage))
   const [selectedCode, setSelectedCode] = useState<string | null>(initialPackages[0]?.table_code ?? null)
   const [settingUp, setSettingUp] = useState(false)
+  const [live, setLive] = useState(initialLive)
+  const [togglingLive, setTogglingLive] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const booked = packages.filter((table) => table.reservation_status === 'booked')
@@ -185,6 +188,23 @@ export default function TablePackageManager({ eventId, initialPackages }: Props)
     setSettingUp(false)
   }
 
+  const toggleLive = async (nextLive: boolean) => {
+    setTogglingLive(true)
+    setError(null)
+    const supabase = createClient()
+    const { data, error: liveError } = await supabase.rpc('set_aria_tables_live', {
+      p_event_id: eventId,
+      p_live: nextLive,
+    })
+    if (liveError || data === null) {
+      setError(nextLive ? 'Could not go live.' : 'Could not take tables offline.')
+      setTogglingLive(false)
+      return
+    }
+    setLive(Boolean(data))
+    setTogglingLive(false)
+  }
+
   const updatePackage = (saved: TablePackage) => {
     setPackages((current) => current.map((item) => item.id === saved.id ? saved : item))
   }
@@ -196,14 +216,31 @@ export default function TablePackageManager({ eventId, initialPackages }: Props)
           <h2 className="text-sm font-semibold text-gray-900">ARIA table reservations</h2>
           <p className="mt-1 text-xs text-gray-400">Fixed 22-table floor plan. Available tables can be edited individually.</p>
         </div>
-        {packages.length === 0 && (
+        {packages.length === 0 ? (
           <button type="button" onClick={setup} disabled={settingUp} className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
             {settingUp ? 'Setting up…' : 'Set up ARIA tables'}
           </button>
+        ) : live ? (
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600"><span className="h-2 w-2 rounded-full bg-emerald-500" />Live — visible to guests</span>
+            <button type="button" onClick={() => toggleLive(false)} disabled={togglingLive} className="rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 disabled:opacity-50">
+              {togglingLive ? 'Working…' : 'Take offline'}
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-600"><span className="h-2 w-2 rounded-full bg-amber-500" />Not visible to guests yet</span>
+            <button type="button" onClick={() => toggleLive(true)} disabled={togglingLive} className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+              {togglingLive ? 'Working…' : 'Go live'}
+            </button>
+          </div>
         )}
       </div>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {packages.length > 0 && !live && (
+        <p className="mt-3 text-xs text-gray-500">Edit prices, tiers, and bottles below, then click Go live when you&apos;re ready for guests to see and reserve these tables.</p>
+      )}
 
       {packages.length > 0 && (
         <>

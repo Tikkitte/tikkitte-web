@@ -24,6 +24,7 @@ export type Event = {
   venue: string | null
   maps_link: string | null
   floor_plan_venue: 'aria' | null
+  aria_tables_live: boolean
   image: string[] | null
   cancelled: boolean
   organizer_id: string | null

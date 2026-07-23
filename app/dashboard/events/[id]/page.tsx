@@ -384,6 +384,7 @@ export default async function EventDetailPage({
             <TablePackageManager
               eventId={id}
               initialPackages={(tablePackages ?? []) as TablePackage[]}
+              initialLive={event.aria_tables_live}
             />
           )}
 
