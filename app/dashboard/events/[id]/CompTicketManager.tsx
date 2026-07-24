@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import type { ComplimentaryTicket, Ticket } from '@/lib/types'
+import { suggestEmailDomain } from '@/lib/validation'
 import { sendCompTicket } from './actions'
 
 type Props = {
@@ -30,6 +31,7 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
   const [search, setSearch] = useState('')
   const [recipientName, setRecipientName] = useState('')
   const [recipientEmail, setRecipientEmail] = useState('')
+  const [recipientEmailSuggestion, setRecipientEmailSuggestion] = useState<string | null>(null)
   const [ticketTypeId, setTicketTypeId] = useState(tickets[0]?.id ?? '')
   const [quantity, setQuantity] = useState('1')
   const [note, setNote] = useState('')
@@ -58,6 +60,7 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
   const resetForm = () => {
     setRecipientName('')
     setRecipientEmail('')
+    setRecipientEmailSuggestion(null)
     setTicketTypeId(tickets[0]?.id ?? '')
     setQuantity('1')
     setNote('')
@@ -167,10 +170,30 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
                   <input
                     type="email"
                     value={recipientEmail}
-                    onChange={(e) => setRecipientEmail(e.target.value)}
+                    onChange={(e) => {
+                      setRecipientEmail(e.target.value)
+                      setRecipientEmailSuggestion(null)
+                    }}
+                    onBlur={() => setRecipientEmailSuggestion(suggestEmailDomain(recipientEmail))}
                     className={inputClass}
                     placeholder="ama@example.com"
                   />
+                  {recipientEmailSuggestion && (
+                    <p className="mt-1 text-xs text-blue-600">
+                      Did you mean{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRecipientEmail(recipientEmailSuggestion)
+                          setRecipientEmailSuggestion(null)
+                        }}
+                        className="font-semibold underline underline-offset-2"
+                      >
+                        {recipientEmailSuggestion}
+                      </button>
+                      ?
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ticket type</label>

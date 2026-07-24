@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { validateEmail, sanitizeName } from '@/lib/validation'
+import { validateEmail, sanitizeName, suggestEmailDomain } from '@/lib/validation'
 import type { PromoCode, Ticket } from '@/lib/types'
 
 const SUPABASE_FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/functions/v1'
@@ -52,6 +52,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
     Object.fromEntries(tickets.map((t) => [t.id, 0]))
   )
   const [email, setEmail] = useState('')
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -411,12 +412,33 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
               maxLength={254}
               placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value)
+                setEmailSuggestion(null)
+              }}
+              onBlur={() => setEmailSuggestion(suggestEmailDomain(email))}
               className="w-full rounded-lg border border-[#E4DFD1] bg-white px-4 py-2.5 text-sm text-[#191917] placeholder:text-[#8a887c] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#2565D0]"
             />
-            <p className="mt-1 text-xs text-[#8a887c]">
-              Your tickets and QR code will be sent here
-            </p>
+            {emailSuggestion ? (
+              <p className="mt-1 text-xs text-[#2565D0]">
+                Did you mean{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail(emailSuggestion)
+                    setEmailSuggestion(null)
+                  }}
+                  className="font-semibold underline underline-offset-2"
+                >
+                  {emailSuggestion}
+                </button>
+                ?
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-[#8a887c]">
+                Your tickets and QR code will be sent here
+              </p>
+            )}
           </div>
           <div>
             <label htmlFor="name" className="mb-1 block text-sm font-semibold text-[#191917]">
