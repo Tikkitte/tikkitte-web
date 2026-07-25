@@ -51,3 +51,4 @@ verify_phase1.sql
 
 # supabase CLI local state (project ref, pooler URL, org ID)
 supabase/.temp/
+.certs/

@@ -13,6 +13,8 @@ type CachedTicket = {
   ticket_type: string
   quantity: number
   table_code: string | null
+  buyer_name: string | null
+  buyer_email: string | null
 }
 
 type SessionInfo = {
@@ -22,13 +24,22 @@ type SessionInfo = {
 }
 
 type TicketScanResult =
-  | { status: 'success'; ticketType: string; quantity: number; tableCode: string | null }
-  | { status: 'already_used'; scannedAt: string | null }
+  | { status: 'success'; ticketType: string; quantity: number; tableCode: string | null; buyerDisplay: string | null }
+  | { status: 'already_used'; scannedAt: string | null; buyerDisplay: string | null }
   | { status: 'ticket_not_found' }
+  | { status: 'wrong_event' }
   | { status: 'event_not_found' }
   | { status: 'error'; message: string }
 
 type QueueItem = { ticketId: string; eventId: string; pin: string; ts: number }
+
+type ScanLogEntry = {
+  id: string
+  ts: number
+  status: TicketScanResult['status']
+  buyerDisplay: string | null
+  detail: string
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -78,12 +89,77 @@ function clearQueue() {
   localStorage.removeItem('scan_queue')
 }
 
+// Two-tone feedback so door staff can tell a scan's outcome without staring
+// at the screen — a loud, dark venue where they're watching the crowd, not
+// the phone. iOS Safari has never implemented the Vibration API, so audio
+// is the primary channel here; navigator.vibrate is best-effort for Android.
+function playFeedbackTone(kind: 'success' | 'reject', ctx: AudioContext) {
+  const notes = kind === 'success' ? [880, 1318.5] : [329.6, 233.1]
+  const noteDuration = 0.09
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = kind === 'success' ? 'sine' : 'square'
+    osc.frequency.value = freq
+    const start = ctx.currentTime + i * noteDuration
+    gain.gain.setValueAtTime(0.0001, start)
+    gain.gain.exponentialRampToValueAtTime(0.2, start + 0.01)
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + noteDuration)
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start(start)
+    osc.stop(start + noteDuration)
+  })
+}
+
+function buyerDisplayName(name: string | null | undefined, email: string | null | undefined) {
+  const trimmedName = name?.trim()
+  if (trimmedName) return trimmedName
+  return email?.trim() || null
+}
+
 function formatScannedAt(iso: string | null) {
   if (!iso) return 'earlier'
   try {
     return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   } catch {
     return 'earlier'
+  }
+}
+
+function formatLogTime(ts: number) {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+const SCAN_LOG_LIMIT = 50
+
+function logEntryFromResult(r: TicketScanResult): ScanLogEntry {
+  const base = { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, ts: Date.now() }
+  switch (r.status) {
+    case 'success':
+      return {
+        ...base,
+        status: r.status,
+        buyerDisplay: r.buyerDisplay,
+        detail: r.tableCode
+          ? `Table ${r.tableCode} · Admit ${r.quantity} guests`
+          : `${r.ticketType} ×${r.quantity}`,
+      }
+    case 'already_used':
+      return {
+        ...base,
+        status: r.status,
+        buyerDisplay: r.buyerDisplay,
+        detail: `Already used${r.scannedAt ? ` · ${formatScannedAt(r.scannedAt)}` : ''}`,
+      }
+    case 'ticket_not_found':
+      return { ...base, status: r.status, buyerDisplay: null, detail: 'Ticket not found' }
+    case 'wrong_event':
+      return { ...base, status: r.status, buyerDisplay: null, detail: 'Wrong event' }
+    case 'event_not_found':
+      return { ...base, status: r.status, buyerDisplay: null, detail: 'Event not found' }
+    case 'error':
+      return { ...base, status: r.status, buyerDisplay: null, detail: r.message }
   }
 }
 
@@ -99,6 +175,8 @@ export default function Scanner() {
   const [lastResult, setLastResult] = useState<TicketScanResult | null>(null)
   const [isOnline, setIsOnline] = useState(true)
   const [cameraError, setCameraError] = useState('')
+  const [scanLog, setScanLog] = useState<ScanLogEntry[]>([])
+  const [showLog, setShowLog] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -109,6 +187,7 @@ export default function Scanner() {
   // Keep a stable ref to session so doScan can read it without stale closure
   const sessionRef = useRef<SessionInfo | null>(null)
   const isOnlineRef = useRef(true)
+  const audioCtxRef = useRef<AudioContext | null>(null)
 
   const supabase = createClient()
 
@@ -173,6 +252,16 @@ export default function Scanner() {
   async function handlePinSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (pinInput.length !== 4) return
+
+    // Created synchronously inside this user-gesture handler (before any
+    // await) so it's unlocked for autoplay — Safari requires that, and
+    // creating it lazily later inside an async result callback would be
+    // silently blocked.
+    if (!audioCtxRef.current) {
+      const AudioCtx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+      audioCtxRef.current = new AudioCtx()
+    }
+
     setPinLoading(true)
     setPinError('')
 
@@ -321,16 +410,30 @@ export default function Scanner() {
         ticket_type?: string
         quantity?: number
         table_code?: string | null
-        scanned_at?: string
+        buyer_name?: string | null
+        buyer_email?: string | null
+        scanned_at?: string | null
       }
 
       if (res.ok) {
         markCacheUsed(currentSession.eventId, ticketId)
-        showResult({ status: 'success', ticketType: res.ticket_type!, quantity: res.quantity!, tableCode: res.table_code ?? null })
+        showResult({
+          status: 'success',
+          ticketType: res.ticket_type!,
+          quantity: res.quantity!,
+          tableCode: res.table_code ?? null,
+          buyerDisplay: buyerDisplayName(res.buyer_name, res.buyer_email),
+        })
       } else if (res.error === 'already_used') {
-        showResult({ status: 'already_used', scannedAt: res.scanned_at ?? null })
+        showResult({
+          status: 'already_used',
+          scannedAt: res.scanned_at ?? null,
+          buyerDisplay: buyerDisplayName(res.buyer_name, res.buyer_email),
+        })
       } else if (res.error === 'ticket_not_found') {
         showResult({ status: 'ticket_not_found' })
+      } else if (res.error === 'wrong_event') {
+        showResult({ status: 'wrong_event' })
       } else if (res.error === 'event_not_found') {
         showResult({ status: 'event_not_found' })
       } else {
@@ -350,18 +453,36 @@ export default function Scanner() {
       return
     }
     if (ticket.used) {
-      showResult({ status: 'already_used', scannedAt: null })
+      showResult({
+        status: 'already_used',
+        scannedAt: null,
+        buyerDisplay: buyerDisplayName(ticket.buyer_name, ticket.buyer_email),
+      })
       return
     }
 
     markCacheUsed(currentSession.eventId, ticketId)
     enqueue({ ticketId, eventId: currentSession.eventId, pin: currentSession.pin, ts: Date.now() })
-    showResult({ status: 'success', ticketType: ticket.ticket_type, quantity: ticket.quantity, tableCode: ticket.table_code ?? null })
+    showResult({
+      status: 'success',
+      ticketType: ticket.ticket_type,
+      quantity: ticket.quantity,
+      tableCode: ticket.table_code ?? null,
+      buyerDisplay: buyerDisplayName(ticket.buyer_name, ticket.buyer_email),
+    })
   }
 
   function showResult(r: TicketScanResult) {
+    const kind = r.status === 'success' ? 'success' : 'reject'
+    if (navigator.vibrate) navigator.vibrate(kind === 'success' ? 60 : [80, 60, 80])
+    if (audioCtxRef.current) {
+      if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume()
+      playFeedbackTone(kind, audioCtxRef.current)
+    }
+
     setResult(r)
     setLastResult(r)
+    setScanLog(prev => [logEntryFromResult(r), ...prev].slice(0, SCAN_LOG_LIMIT))
     if (resultTimerRef.current) clearTimeout(resultTimerRef.current)
     resultTimerRef.current = setTimeout(() => {
       setResult(null)
@@ -454,20 +575,42 @@ export default function Scanner() {
             </span>
           )}
         </div>
-        <button
-          onClick={() => {
-            stopCamera()
-            setSession(null)
-            setPinInput('')
-            setResult(null)
-            setLastResult(null)
-            setPhase('pin')
-          }}
-          className="text-xs font-medium transition-colors px-3 py-1.5 rounded-full"
-          style={{ backgroundColor: '#2a2a2a', color: '#9BA1A6' }}
-        >
-          Change event
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowLog(true)}
+            className="relative flex items-center justify-center w-8 h-8 rounded-full transition-colors"
+            style={{ backgroundColor: '#2a2a2a', color: '#9BA1A6' }}
+            aria-label="Scan history"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 3v5h5" /><path d="M3.05 13a9 9 0 1 0 .5-4.5L3 8" /><path d="M12 7v5l4 2" />
+            </svg>
+            {scanLog.length > 0 && (
+              <span
+                className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
+                style={{ backgroundColor: '#3569bd', color: '#fff' }}
+              >
+                {scanLog.length > 99 ? '99+' : scanLog.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              stopCamera()
+              setSession(null)
+              setPinInput('')
+              setResult(null)
+              setLastResult(null)
+              setScanLog([])
+              setShowLog(false)
+              setPhase('pin')
+            }}
+            className="text-xs font-medium transition-colors px-3 py-1.5 rounded-full"
+            style={{ backgroundColor: '#2a2a2a', color: '#9BA1A6' }}
+          >
+            Change event
+          </button>
+        </div>
       </div>
 
       {/* Camera feed — fills remaining vertical space */}
@@ -522,19 +665,32 @@ export default function Scanner() {
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(236,237,238,0.5)' }}>Last scan</p>
               {lastResult.status === 'success' && (
-                <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
-                  {lastResult.tableCode
-                    ? `Table ${lastResult.tableCode} · Admit ${lastResult.quantity} guests`
-                    : `${lastResult.ticketType} ×${lastResult.quantity}`}
-                </p>
+                <>
+                  <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
+                    {lastResult.buyerDisplay ?? 'Guest'}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: 'rgba(236,237,238,0.65)' }}>
+                    {lastResult.tableCode
+                      ? `Table ${lastResult.tableCode} · Admit ${lastResult.quantity} guests`
+                      : `${lastResult.ticketType} ×${lastResult.quantity}`}
+                  </p>
+                </>
               )}
               {lastResult.status === 'already_used' && (
-                <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>
-                  Already used{lastResult.scannedAt ? ` · ${formatScannedAt(lastResult.scannedAt)}` : ''}
-                </p>
+                <>
+                  <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
+                    {lastResult.buyerDisplay ?? 'Guest'}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: 'rgba(236,237,238,0.65)' }}>
+                    Already used{lastResult.scannedAt ? ` · ${formatScannedAt(lastResult.scannedAt)}` : ''}
+                  </p>
+                </>
               )}
               {lastResult.status === 'ticket_not_found' && (
                 <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Not found</p>
+              )}
+              {lastResult.status === 'wrong_event' && (
+                <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Wrong event</p>
               )}
               {(lastResult.status === 'event_not_found' || lastResult.status === 'error') && (
                 <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Error</p>
@@ -565,6 +721,9 @@ export default function Scanner() {
                 </svg>
               </div>
               <p className="text-3xl font-bold mb-1" style={{ color: '#ECEDEE' }}>Valid</p>
+              <p className="text-xl font-semibold mb-1 truncate max-w-full" style={{ color: '#ECEDEE' }}>
+                {result.buyerDisplay ?? 'Guest'}
+              </p>
               <p className="text-lg font-medium mb-1" style={{ color: 'rgba(236,237,238,0.8)' }}>
                 {result.tableCode ? `Table ${result.tableCode}` : result.ticketType}
               </p>
@@ -583,7 +742,10 @@ export default function Scanner() {
                   <path d="M18 6 6 18M6 6l12 12" />
                 </svg>
               </div>
-              <p className="text-3xl font-bold mb-2" style={{ color: '#ECEDEE' }}>Already scanned</p>
+              <p className="text-3xl font-bold mb-1" style={{ color: '#ECEDEE' }}>Already scanned</p>
+              <p className="text-xl font-semibold mb-1 truncate max-w-full" style={{ color: '#ECEDEE' }}>
+                {result.buyerDisplay ?? 'Guest'}
+              </p>
               {result.scannedAt && (
                 <p className="text-base" style={{ color: 'rgba(236,237,238,0.65)' }}>
                   Used at {formatScannedAt(result.scannedAt)}
@@ -604,6 +766,18 @@ export default function Scanner() {
             </>
           )}
 
+          {result.status === 'wrong_event' && (
+            <>
+              <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ECEDEE" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" />
+                </svg>
+              </div>
+              <p className="text-3xl font-bold mb-2" style={{ color: '#ECEDEE' }}>Wrong event</p>
+              <p className="text-base" style={{ color: 'rgba(236,237,238,0.65)' }}>This ticket is for a different event</p>
+            </>
+          )}
+
           {(result.status === 'event_not_found' || result.status === 'error') && (
             <>
               <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }}>
@@ -617,6 +791,72 @@ export default function Scanner() {
               </p>
             </>
           )}
+        </div>
+      )}
+
+      {/* Scan history panel */}
+      {showLog && (
+        <div className="absolute inset-0 z-40 flex flex-col justify-end">
+          <div
+            className="absolute inset-0"
+            style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+            onClick={() => setShowLog(false)}
+          />
+          <div
+            className="relative rounded-t-3xl flex flex-col"
+            style={{ backgroundColor: '#1c1e1f', maxHeight: '75vh' }}
+          >
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
+              <h2 className="text-base font-bold" style={{ color: '#ECEDEE' }}>Scan history</h2>
+              <button
+                onClick={() => setShowLog(false)}
+                className="text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
+                style={{ backgroundColor: '#2a2a2a', color: '#9BA1A6' }}
+              >
+                Close
+              </button>
+            </div>
+            <div
+              className="overflow-y-auto px-5 pb-5"
+              style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
+            >
+              {scanLog.length === 0 ? (
+                <p className="text-sm text-center py-8" style={{ color: '#9BA1A6' }}>
+                  No scans yet this session
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {scanLog.map(entry => (
+                    <div
+                      key={entry.id}
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5"
+                      style={{ backgroundColor: '#2a2a2a' }}
+                    >
+                      <div
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: entry.status === 'success' ? '#4ade80' : '#f87171' }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
+                          {entry.status === 'success' || entry.status === 'already_used'
+                            ? entry.buyerDisplay ?? 'Guest'
+                            : entry.detail}
+                        </p>
+                        {(entry.status === 'success' || entry.status === 'already_used') && (
+                          <p className="text-xs truncate" style={{ color: 'rgba(236,237,238,0.55)' }}>
+                            {entry.detail}
+                          </p>
+                        )}
+                      </div>
+                      <span className="text-xs flex-shrink-0" style={{ color: 'rgba(236,237,238,0.4)' }}>
+                        {formatLogTime(entry.ts)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

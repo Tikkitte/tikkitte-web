@@ -73,13 +73,24 @@ export async function sendCompTicket(input: SendCompTicketInput): Promise<SendCo
 
   const { data: event, error: eventError } = await supabase
     .from('event')
-    .select('id')
+    .select('id, organizer_id')
     .eq('id', eventId)
-    .eq('organizer_id', user.id)
     .maybeSingle()
 
   if (eventError || !event) {
     return { ok: false, message: 'Event not found.' }
+  }
+
+  if (event.organizer_id !== user.id) {
+    const { data: adminRow, error: adminError } = await supabase
+      .from('admin_user')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (adminError || !adminRow) {
+      return { ok: false, message: 'Event not found.' }
+    }
   }
 
   const { data: ticket, error: ticketError } = await supabase
@@ -121,6 +132,7 @@ export async function sendCompTicket(input: SendCompTicketInput): Promise<SendCo
   }
 
   revalidatePath(`/dashboard/events/${eventId}`)
+  revalidatePath('/admin/comp-tickets')
 
   return { ok: true, compTicket: result.comp_ticket }
 }
