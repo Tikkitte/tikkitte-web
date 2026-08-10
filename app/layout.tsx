@@ -3,6 +3,7 @@ import { Roboto, Poppins, Anton, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "@/lib/env";
+import "tikkitte-ui/styles.css";
 import "./globals.css";
 
 const roboto = Roboto({

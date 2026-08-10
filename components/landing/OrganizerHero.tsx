@@ -5,7 +5,7 @@ import Nav from './Nav'
 export default function OrganizerHero() {
   return (
     <section className="bg-[#F4F2EC]">
-      <Nav listEventHref="https://create.tikkitte.com/signup" />
+      <Nav listEventHref="/signup" />
 
       <div className="mx-auto max-w-[1280px] px-5 pt-[clamp(40px,7vh,80px)] text-center lg:px-14">
         <div className="text-[13px] font-bold uppercase tracking-[0.16em] text-[#2565D0]">For organizers</div>
@@ -16,10 +16,10 @@ export default function OrganizerHero() {
           List your event in minutes and reach thousands of people actively looking for something to do. No spreadsheets, no stress.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3.5">
-          <Link href="https://create.tikkitte.com/signup" className="rounded-full bg-[#2565D0] px-[34px] py-4 text-[17px] font-bold text-white hover:bg-[#1E56B5]">
+          <Link href="/signup" className="rounded-full bg-[#2565D0] px-[34px] py-4 text-[17px] font-bold text-white hover:bg-[#1E56B5]">
             List your event for free
           </Link>
-          <Link href="https://create.tikkitte.com/login" className="rounded-full border-[1.5px] border-[#C8C3B2] px-[34px] py-4 text-[17px] font-bold text-[#191917] hover:border-[#191917]">
+          <Link href="/login" className="rounded-full border-[1.5px] border-[#C8C3B2] px-[34px] py-4 text-[17px] font-bold text-[#191917] hover:border-[#191917]">
             Organizer sign in
           </Link>
         </div>

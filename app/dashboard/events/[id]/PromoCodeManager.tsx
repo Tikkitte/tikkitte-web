@@ -9,7 +9,7 @@ type Props = {
   tickets: Ticket[]
 }
 
-const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400'
+const inputClass = 'create-input min-h-11 text-sm placeholder:text-[var(--tikkitte-ink-faint)]'
 
 export default function PromoCodeManager({ eventId, tickets }: Props) {
   const [codes, setCodes] = useState<PromoCode[]>([])
@@ -132,23 +132,23 @@ export default function PromoCodeManager({ eventId, tickets }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="create-card p-5">
       <div className="flex items-center justify-between gap-4 mb-4">
         <div>
-          <h2 className="font-semibold text-gray-900 text-sm">Promo codes</h2>
-          <p className="text-xs text-gray-400 mt-1">Create discounts attendees can apply at checkout.</p>
+          <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Promo codes</h2>
+          <p className="mt-1 text-xs text-[var(--tikkitte-ink-faint)]">Create discounts attendees can apply at checkout.</p>
         </div>
         <button
           type="button"
           onClick={() => setShowForm((value) => !value)}
-          className="text-sm font-semibold text-[#3d3d3d] border border-[#3d3d3d] rounded-lg px-4 py-2 hover:bg-gray-100 transition-colors"
+          className="create-focus min-h-10 rounded-full border border-[var(--tikkitte-cream-border)] px-5 text-sm font-semibold text-[#2565d0] hover:bg-[#f4f7fd]"
         >
           {showForm ? 'Cancel' : '+ Add promo code'}
         </button>
       </div>
 
       {showForm && (
-        <div className="mb-5 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+        <div className="mb-5 rounded-[18px] border border-[var(--tikkitte-cream-border)] bg-[var(--tikkitte-cream)] p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
@@ -221,7 +221,7 @@ export default function PromoCodeManager({ eventId, tickets }: Props) {
             type="button"
             onClick={saveCode}
             disabled={loading}
-            className="mt-4 bg-[#3d3d3d] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#2a2a2a] transition-colors disabled:opacity-60"
+            className="create-focus mt-4 min-h-11 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60"
           >
             {loading ? 'Saving...' : 'Save code'}
           </button>

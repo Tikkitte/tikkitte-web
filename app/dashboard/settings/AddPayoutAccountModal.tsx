@@ -50,11 +50,11 @@ export default function AddPayoutAccountModal({ hasAccounts, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" role="dialog" aria-modal="true" aria-labelledby="add-payout-title">
+      <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-xl">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Add payout account</h2>
+            <h2 id="add-payout-title" className="create-display text-2xl">Add payout account</h2>
             <p className="mt-1 text-sm text-gray-500">Add where Tikkitte should send your payouts.</p>
           </div>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
@@ -136,7 +136,7 @@ export default function AddPayoutAccountModal({ hasAccounts, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+            className="create-focus min-h-11 rounded-full border border-[var(--tikkitte-cream-border)] px-5 text-sm font-semibold"
           >
             Cancel
           </button>
@@ -144,7 +144,7 @@ export default function AddPayoutAccountModal({ hasAccounts, onClose }: Props) {
             type="button"
             onClick={save}
             disabled={isPending}
-            className="rounded-lg bg-[#3d3d3d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a] disabled:opacity-60"
+            className="create-focus min-h-11 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60"
           >
             {isPending ? 'Saving...' : 'Save'}
           </button>

@@ -21,23 +21,24 @@ export default function DashboardSidebar({ displayName, logoUrl, signOutAction }
   const pathname = usePathname()
 
   return (
-    <aside className="hidden md:flex md:flex-col w-56 shrink-0 border-r border-gray-100 bg-white overflow-y-auto">
-      <Link href="/dashboard" className="flex items-center gap-2 px-5 pb-4 pt-6 shrink-0">
-        <Image src="/images/logo-create.png" alt="" width={42} height={28} className="h-6 w-auto shrink-0" />
-        <Image src="/images/text-logo-create.png" alt="Tikkitte Create" width={160} height={35} className="h-7 w-auto" />
+    <aside className="hidden md:flex md:w-[232px] md:flex-col md:shrink-0 overflow-y-auto bg-[#191917] text-white">
+      <Link href="/dashboard" className="create-focus flex shrink-0 items-center gap-2.5 px-7 pb-9 pt-8" aria-label="Tikkitte Create dashboard">
+        <Image src="/images/logo.png" alt="" width={44} height={30} className="h-[27px] w-auto shrink-0" />
+        <span className="create-display text-[21px] tracking-[0.02em] text-white">Tikkitte</span>
+        <span className="rounded-full bg-[#2e6fe6] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-white">Create</span>
       </Link>
 
-      <nav className="flex-1 space-y-1 px-3">
+      <nav className="flex-1 space-y-2 px-4" aria-label="Organizer dashboard">
         {navItems.map((item) => {
           const active = item.match(pathname)
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+              className={`create-focus flex min-h-11 items-center gap-3 rounded-full px-4 py-2.5 text-[13.5px] font-medium transition-colors ${
                 active
-                  ? 'bg-[#3d3d3d]/10 text-[#3d3d3d]'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                  ? 'bg-[#2e6fe6] text-white'
+                  : 'text-[#a7a59a] hover:bg-white/5 hover:text-white'
               }`}
             >
               <item.Icon className="shrink-0" />
@@ -47,23 +48,27 @@ export default function DashboardSidebar({ displayName, logoUrl, signOutAction }
         })}
       </nav>
 
-      <div className="border-t border-gray-100 px-4 pb-6 pt-4 shrink-0">
-        <div className="mb-3 flex items-center gap-2.5">
+      <div className="shrink-0 px-4 pb-6">
+        <div className="border-t border-white/10 pt-4">
+        <div className="flex items-center gap-2.5">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover" />
           ) : (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#3d3d3d]/10 text-xs font-bold text-[#3d3d3d]">
+            <div className="create-display flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2e6fe6] text-xs text-white">
               {initialsFor(displayName)}
             </div>
           )}
-          <span className="truncate text-sm font-medium text-gray-700">{displayName}</span>
+          <div className="min-w-0">
+            <span className="block truncate text-[13px] font-medium text-white">{displayName}</span>
+            <form action={signOutAction}>
+              <button type="submit" className="create-focus text-[11px] text-[#8a887c] transition-colors hover:text-white">
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
-        <form action={signOutAction}>
-          <button type="submit" className="text-xs text-gray-400 transition-colors hover:text-gray-600">
-            Sign out
-          </button>
-        </form>
+        </div>
       </div>
     </aside>
   )

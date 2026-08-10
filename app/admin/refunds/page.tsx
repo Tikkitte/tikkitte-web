@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import RefundsClient, { type RefundAdminRow, type RefundPayment } from './RefundsClient'
+import AdminPageHeader from '../AdminPageHeader'
 
 export default async function AdminRefundsPage() {
   const supabase = await createClient()
@@ -27,13 +28,7 @@ export default async function AdminRefundsPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Refunds needing attention</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Payments where a Paystack refund is pending or failed. Failed refunds need manual
-          follow-up in the Paystack dashboard, or retry below.
-        </p>
-      </div>
+      <AdminPageHeader title="Refunds" description="Monitor pending Paystack refunds and retry failed event cancellations after verifying their status." />
       <RefundsClient rows={rows} />
     </div>
   )

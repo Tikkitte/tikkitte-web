@@ -1,15 +1,12 @@
 import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import AudienceTabs from '../AudienceTabs'
+import AudienceHeader from '../AudienceHeader'
 import MarketingClient, { type MarketingEvent } from './MarketingClient'
 
 type TicketRecipientRow = {
   event_id: string
   user_id: string
-}
-
-type FanRow = {
-  user_id: string
+  payment_reference: string | null
 }
 
 export default async function AudienceMarketingPage() {
@@ -42,21 +39,32 @@ export default async function AudienceMarketingPage() {
   const { data: ticketCounts } = eventIds.length
     ? await supabase
         .from('user_ticket')
-        .select('event_id, user_id')
+        .select('event_id, user_id, payment_reference')
         .in('event_id', eventIds)
     : { data: [] }
 
-  const recipientSets = ((ticketCounts ?? []) as TicketRecipientRow[]).reduce(
-    (acc: Record<string, Set<string>>, row) => {
-      if (!acc[row.event_id]) acc[row.event_id] = new Set<string>()
-      acc[row.event_id].add(row.user_id)
-      return acc
-    },
-    {}
-  )
+  // Complimentary tickets (payment_reference starting "COMP-") are excluded:
+  // this count feeds the messaging "Recipients" column, and comp recipients
+  // (who may be high-profile guests) should never be reachable through
+  // organizer messaging.
+  const recipientSets = ((ticketCounts ?? []) as TicketRecipientRow[])
+    .filter((row) => !row.payment_reference?.startsWith('COMP-'))
+    .reduce(
+      (acc: Record<string, Set<string>>, row) => {
+        if (!acc[row.event_id]) acc[row.event_id] = new Set<string>()
+        acc[row.event_id].add(row.user_id)
+        return acc
+      },
+      {}
+    )
 
-  const { data: fans } = await supabase.rpc('get_organizer_fans')
-  const totalFans = ((fans ?? []) as FanRow[]).length
+  const { data: audience } = await supabase.rpc('get_organizer_audience', {
+    p_page: 1,
+    p_page_size: 1,
+    p_filter: 'all',
+    p_search: '',
+  })
+  const totalFans = Number((audience as { total_count?: number } | null)?.total_count ?? 0)
 
   const marketingEvents: MarketingEvent[] = eventRows.map((event) => ({
     id: event.id,
@@ -68,12 +76,7 @@ export default async function AudienceMarketingPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Audience</h1>
-        <p className="mt-1 text-sm text-gray-500">View and message the people who buy tickets to your events.</p>
-      </div>
-
-      <AudienceTabs />
+      <AudienceHeader />
       <MarketingClient
         events={marketingEvents}
         totalFans={totalFans}

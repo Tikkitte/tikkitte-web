@@ -83,56 +83,72 @@ export default function PayoutsClient({ rows }: Props) {
     { id: 'all', label: 'All', count: counts.all },
   ]
 
+  const pendingValue = rows
+    .filter((row) => row.payout.status === 'pending')
+    .reduce((sum, row) => sum + Number(row.payout.amount), 0)
+
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-      <div className="mb-5 inline-flex w-fit items-center gap-1 rounded-xl bg-gray-100 p-1">
+    <div className="space-y-5">
+      <section className="grid gap-3 sm:grid-cols-3" aria-label="Payout totals">
+        {[
+          ['Pending requests', counts.pending.toLocaleString()],
+          ['Pending value', formatMoney(pendingValue)],
+          ['Completed', counts.paid.toLocaleString()],
+        ].map(([label, value]) => <div key={label} className="create-card p-5"><p className="text-[13px] text-[var(--tikkitte-ink-faint)]">{label}</p><p className="create-display mt-1 text-[30px]">{value}</p></div>)}
+      </section>
+
+      <section className="create-card overflow-hidden">
+      <div className="border-b border-[var(--tikkitte-cream-border)] p-4">
+      <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-full bg-[var(--tikkitte-cream)] p-1">
         {tabs.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setTab(item.id)}
-            className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              tab === item.id ? 'bg-[#3d3d3d]/10 text-[#3d3d3d]' : 'text-gray-500 hover:bg-white'
+            aria-pressed={tab === item.id}
+            className={`create-focus min-h-10 whitespace-nowrap rounded-full px-5 text-sm font-semibold transition-colors ${
+              tab === item.id ? 'bg-[#191917] text-white' : 'text-[var(--tikkitte-ink-soft)] hover:bg-white'
             }`}
           >
             {item.label} ({item.count})
           </button>
         ))}
       </div>
+      </div>
 
-      {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
+      {error && <p role="alert" className="m-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
       {visibleRows.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-200 px-5 py-8 text-center">
-          <p className="text-sm font-medium text-gray-700">No payouts in this view</p>
-          <p className="mt-1 text-sm text-gray-400">Payout requests will appear here.</p>
+        <div className="m-5 rounded-[16px] border border-dashed border-[var(--tikkitte-cream-border)] px-5 py-10 text-center">
+          <p className="text-sm font-semibold">No payouts in this view</p>
+          <p className="mt-1 text-sm text-[var(--tikkitte-ink-faint)]">Payout requests will appear here.</p>
         </div>
       ) : (
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-[var(--tikkitte-cream-border)]">
           {visibleRows.map(({ payout, organizer, account }) => (
-            <div key={payout.id} className="py-4 first:pt-0 last:pb-0">
+            <div key={payout.id} className="px-5 py-5 transition-colors hover:bg-[var(--tikkitte-cream)]">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-gray-900">{organizer?.display_name ?? 'Unknown organizer'}</p>
+                    <p className="font-semibold">{organizer?.display_name ?? 'Unknown organizer'}</p>
                     {payout.status === 'paid' && (
                       <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
                         PAID
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600">{organizer?.email ?? 'No email available'}</p>
+                  <p className="text-sm text-[var(--tikkitte-ink-soft)]">{organizer?.email ?? 'No email available'}</p>
 
-                  <div className="grid gap-3 text-sm text-gray-600 sm:grid-cols-3">
+                  <div className="grid gap-4 text-sm text-[var(--tikkitte-ink-soft)] sm:grid-cols-3">
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Amount</p>
-                      <p className="mt-1 font-semibold text-gray-900">{formatMoney(Number(payout.amount), 2)}</p>
+                      <p className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[var(--tikkitte-ink-faint)]">Amount</p>
+                      <p className="create-display mt-1 text-xl text-[var(--tikkitte-ink)]">{formatMoney(Number(payout.amount), 2)}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Destination</p>
+                      <p className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[var(--tikkitte-ink-faint)]">Destination</p>
                       {account ? (
                         <div className="mt-1">
-                          <p className="font-semibold text-gray-900">{account.provider}</p>
+                          <p className="font-semibold text-[var(--tikkitte-ink)]">{account.provider}</p>
                           <p>{account.account_number}</p>
                           <p className="text-gray-400">{account.account_name}</p>
                           <p className="text-xs text-gray-400">{methodLabel(account.method)}</p>
@@ -142,7 +158,7 @@ export default function PayoutsClient({ rows }: Props) {
                       )}
                     </div>
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Dates</p>
+                      <p className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[var(--tikkitte-ink-faint)]">Dates</p>
                       <p className="mt-1">Requested {formatDate(payout.created_at)}</p>
                       {payout.status === 'paid' && <p className="text-gray-400">Paid {formatDate(payout.paid_at)}</p>}
                     </div>
@@ -154,7 +170,7 @@ export default function PayoutsClient({ rows }: Props) {
                     type="button"
                     onClick={() => runMarkPaid(payout.id)}
                     disabled={isPending && activeId === payout.id}
-                    className="shrink-0 rounded-lg bg-[#3d3d3d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a] disabled:opacity-60"
+                    className="create-focus min-h-11 shrink-0 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60"
                   >
                     {isPending && activeId === payout.id ? 'Marking...' : 'Mark as paid'}
                   </button>
@@ -164,6 +180,7 @@ export default function PayoutsClient({ rows }: Props) {
           ))}
         </div>
       )}
-    </section>
+      </section>
+    </div>
   )
 }

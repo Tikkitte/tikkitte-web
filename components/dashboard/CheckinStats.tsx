@@ -8,11 +8,12 @@ type Props = {
   totalSold: number
   initialCheckedIn: number
   scannerPin: string | null
+  doorsAt?: string
 }
 
-export default function CheckinStats({ eventId, totalSold, initialCheckedIn, scannerPin }: Props) {
+export default function CheckinStats({ eventId, totalSold, initialCheckedIn, scannerPin, doorsAt }: Props) {
   const [checkedIn, setCheckedIn] = useState(initialCheckedIn)
-  const [copied, setCopied] = useState(false)
+  const [copyStatus, setCopyStatus] = useState('')
 
   useEffect(() => {
     const supabase = createClient()
@@ -39,65 +40,58 @@ export default function CheckinStats({ eventId, totalSold, initialCheckedIn, sca
 
   const pct = totalSold > 0 ? Math.round((checkedIn / totalSold) * 100) : 0
 
-  function copyPin() {
+  async function copyPin() {
     if (!scannerPin) return
-    navigator.clipboard.writeText(scannerPin)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      await navigator.clipboard.writeText(scannerPin)
+      setCopyStatus('Scanner PIN copied.')
+    } catch {
+      setCopyStatus('Could not copy the scanner PIN.')
+    }
+    window.setTimeout(() => setCopyStatus(''), 2000)
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <p className="text-xs text-gray-500 mb-0.5">Checked in</p>
-          <p className="text-2xl font-extrabold text-gray-900">
-            {checkedIn}
-            <span className="text-gray-400 text-sm font-normal">/{totalSold}</span>
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">{pct}% of attendees</p>
+    <section className="create-card flex flex-col gap-5 p-5 sm:p-[22px] lg:flex-row lg:items-center lg:gap-7" aria-label="Event check-in">
+      <div className="min-w-0 flex-1">
+        <p className="mb-2.5 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">
+          Check-in{doorsAt ? ` · doors at ${doorsAt}` : ''}
+        </p>
+        <div className="h-1.5 overflow-hidden rounded-full bg-[var(--tikkitte-cream)]">
+          <div className="h-full rounded-full bg-[#2e6fe6] transition-[width] duration-500" style={{ width: `${Math.min(pct, 100)}%` }} />
         </div>
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-green-50">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
-        </div>
+        <p className="mt-2 text-xs text-[var(--tikkitte-ink-faint)]">{checkedIn.toLocaleString()} of {totalSold.toLocaleString()} attendees checked in</p>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-1.5 rounded-full bg-gray-100 mb-4 overflow-hidden">
-        <div
-          className="h-full rounded-full bg-green-500 transition-all duration-500"
-          style={{ width: `${Math.min(pct, 100)}%` }}
-        />
-      </div>
-
-      {/* PIN */}
       {scannerPin ? (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400">Scanner PIN:</span>
-          <span className="font-mono font-bold text-sm text-gray-900 tracking-[0.2em]">{scannerPin}</span>
+        <div className="flex flex-wrap items-center gap-3 rounded-[14px] border-[1.5px] border-dashed border-[#b9cff5] bg-[#eaf1fc] px-[18px] py-3 sm:flex-nowrap">
+          <div className="mr-auto min-w-[102px]">
+            <p className="text-[10.5px] font-bold uppercase tracking-[0.1em] text-[#2565d0]">Scanner PIN</p>
+            <p className="create-display mt-1 text-[26px] tracking-[0.28em] text-[#191917]">{scannerPin}</p>
+          </div>
           <button
+            type="button"
             onClick={copyPin}
-            className="text-xs text-[#3d3d3d] hover:text-[#2a2a2a] font-medium transition-colors"
+            className="create-focus min-h-9 rounded-full border border-[#b9cff5] bg-white px-4 text-xs font-semibold text-[#2565d0] transition-colors hover:bg-[#f7faff]"
           >
-            {copied ? 'Copied!' : 'Copy'}
+            {copyStatus.startsWith('Scanner') ? 'Copied' : 'Copy'}
           </button>
           <a
             href="/scan"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors ml-auto"
+            className="create-focus flex min-h-9 items-center rounded-full bg-[#191917] px-5 text-xs font-semibold text-white transition-colors hover:bg-[#30302b]"
           >
             Open scanner ↗
           </a>
+          <p className="sr-only" aria-live="polite">{copyStatus}</p>
         </div>
       ) : (
-        <p className="text-xs text-gray-400">
+        <p className="rounded-[14px] border border-dashed border-[var(--tikkitte-cream-border)] px-5 py-4 text-xs text-[var(--tikkitte-ink-faint)]">
           No scanner PIN set.{' '}
-          <a href={`/dashboard/events/${eventId}/edit`} className="text-[#3d3d3d] hover:underline">Edit event</a> to generate one.
+          <a href={`/dashboard/events/${eventId}/edit`} className="create-focus font-semibold text-[#2565d0] hover:underline">Edit event</a> to generate one.
         </p>
       )}
-    </div>
+    </section>
   )
 }

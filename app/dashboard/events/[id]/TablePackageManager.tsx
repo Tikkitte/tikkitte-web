@@ -22,13 +22,24 @@ function normalizePackage(value: TablePackage): TablePackage {
   }
 }
 
+function editablePackageSnapshot(value: TablePackage) {
+  return JSON.stringify({
+    tier_name: value.tier_name.trim(),
+    guest_capacity: Number(value.guest_capacity),
+    min_spend: Number(value.min_spend),
+    deposit: Number(value.deposit),
+    bottles: value.bottles.map((bottle) => bottle.trim()).filter(Boolean),
+    enabled: value.enabled,
+  })
+}
+
 function statusLabel(status: TablePackage['reservation_status']) {
   if (status === 'awaiting_payment') return 'Payment in progress'
   if (status === 'booked') return 'Booked'
   return 'Available'
 }
 
-const MAP_ACCENT = '#1596B7'
+const MAP_ACCENT = '#2e6fe6'
 
 function getMapTableStyle(table: TablePackage | undefined, isSelected: boolean): TableStyle {
   if (isSelected) {
@@ -38,7 +49,7 @@ function getMapTableStyle(table: TablePackage | undefined, isSelected: boolean):
     return { fill: 'url(#aria-unavailable)', fillOpacity: 1, stroke: 'rgba(23,17,14,0.4)', strokeOpacity: 0.3 }
   }
   if (table.reservation_status === 'booked') {
-    return { fill: '#4B5563', fillOpacity: 0.5, stroke: '#6B7280', strokeOpacity: 0.6 }
+    return { fill: '#191917', fillOpacity: 1, stroke: '#191917', strokeOpacity: 1 }
   }
   if (table.reservation_status === 'awaiting_payment') {
     return { fill: '#F59E0B', fillOpacity: 0.3, stroke: '#D97706', strokeOpacity: 0.7 }
@@ -57,7 +68,13 @@ function PackageEditor({
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const editable = value.reservation_status === 'available'
-  const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 disabled:bg-gray-50 disabled:text-gray-400'
+  const isDirty = editablePackageSnapshot(draft) !== editablePackageSnapshot(value)
+  const inputClass = 'create-input mt-1 min-h-11 text-sm disabled:bg-[var(--tikkitte-cream)] disabled:text-[var(--tikkitte-ink-faint)]'
+
+  const updateDraft = (update: (current: TablePackage) => TablePackage) => {
+    setDraft(update)
+    setMessage(null)
+  }
 
   // The editor is keyed by table id in the parent, so this only remounts (resetting
   // draft/message state) when the selected table actually changes.
@@ -90,12 +107,12 @@ function PackageEditor({
   }
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+    <div className="mt-4 border-t border-[var(--tikkitte-cream-border)] pt-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <p className="font-bold text-gray-900">{value.table_code}</p>
-            <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-gray-500">{value.table_kind}</span>
+            <p className="create-display text-[28px]">{value.table_code}</p>
+            <span className="rounded-full bg-[var(--tikkitte-cream)] px-3 py-1 text-[10px] font-bold uppercase text-[var(--tikkitte-ink-soft)]">{value.table_kind}</span>
           </div>
           <p className={`mt-1 text-xs font-semibold ${value.reservation_status === 'available' ? 'text-emerald-600' : value.reservation_status === 'booked' ? 'text-gray-500' : 'text-amber-600'}`}>
             {statusLabel(value.reservation_status)}
@@ -106,7 +123,7 @@ function PackageEditor({
             type="checkbox"
             checked={draft.enabled}
             disabled={!editable}
-            onChange={(event) => setDraft((current) => ({ ...current, enabled: event.target.checked }))}
+            onChange={(event) => updateDraft((current) => ({ ...current, enabled: event.target.checked }))}
             className="h-4 w-4 rounded border-gray-300"
           />
           Enabled
@@ -117,20 +134,20 @@ function PackageEditor({
         <div className="grid grid-cols-2 gap-3">
           <label className="text-xs font-medium text-gray-500">
             Tier name
-            <input className={`${inputClass} mt-1`} value={draft.tier_name} disabled={!editable} onChange={(event) => setDraft((current) => ({ ...current, tier_name: event.target.value }))} />
+            <input className={`${inputClass} mt-1`} value={draft.tier_name} disabled={!editable} onChange={(event) => updateDraft((current) => ({ ...current, tier_name: event.target.value }))} />
           </label>
           <label className="text-xs font-medium text-gray-500">
             Guest capacity
-            <input className={`${inputClass} mt-1`} type="number" min={1} max={50} value={draft.guest_capacity} disabled={!editable} onChange={(event) => setDraft((current) => ({ ...current, guest_capacity: Number(event.target.value) }))} />
+            <input className={`${inputClass} mt-1`} type="number" min={1} max={50} value={draft.guest_capacity} disabled={!editable} onChange={(event) => updateDraft((current) => ({ ...current, guest_capacity: Number(event.target.value) }))} />
           </label>
         </div>
         <label className="text-xs font-medium text-gray-500">
           Minimum spend (GHS)
-          <input className={`${inputClass} mt-1`} type="number" min={0} value={draft.min_spend} disabled={!editable} onChange={(event) => setDraft((current) => ({ ...current, min_spend: Number(event.target.value) }))} />
+          <input className={`${inputClass} mt-1`} type="number" min={0} value={draft.min_spend} disabled={!editable} onChange={(event) => updateDraft((current) => ({ ...current, min_spend: Number(event.target.value) }))} />
         </label>
         <label className="text-xs font-medium text-gray-500">
           Deposit (GHS)
-          <input className={`${inputClass} mt-1`} type="number" min={1} value={draft.deposit} disabled={!editable} onChange={(event) => setDraft((current) => ({ ...current, deposit: Number(event.target.value) }))} />
+          <input className={`${inputClass} mt-1`} type="number" min={1} value={draft.deposit} disabled={!editable} onChange={(event) => updateDraft((current) => ({ ...current, deposit: Number(event.target.value) }))} />
         </label>
       </div>
 
@@ -140,15 +157,20 @@ function PackageEditor({
           className={`${inputClass} mt-1 min-h-24 resize-y`}
           value={draft.bottles.join('\n')}
           disabled={!editable}
-          onChange={(event) => setDraft((current) => ({ ...current, bottles: event.target.value.split('\n') }))}
+          onChange={(event) => updateDraft((current) => ({ ...current, bottles: event.target.value.split('\n') }))}
         />
       </label>
 
       {editable && (
-        <div className="mt-3 flex items-center gap-3">
-          <button type="button" onClick={save} disabled={saving} className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button type="button" onClick={save} disabled={saving || !isDirty} className="create-focus min-h-11 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white disabled:opacity-50">
             {saving ? 'Saving…' : 'Save table'}
           </button>
+          {isDirty && (
+            <p role="status" className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+              Save this table to apply your changes.
+            </p>
+          )}
           {message && <p className="text-xs text-gray-500">{message}</p>}
         </div>
       )}
@@ -210,27 +232,27 @@ export default function TablePackageManager({ eventId, initialPackages, initialL
   }
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+    <section className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-gray-900">ARIA table reservations</h2>
-          <p className="mt-1 text-xs text-gray-400">Fixed 22-table floor plan. Available tables can be edited individually.</p>
+          <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">ARIA floor plan</h2>
+          <p className="mt-1 text-sm text-[var(--tikkitte-ink-faint)]">Fixed 22-table plan · select an available table to edit.</p>
         </div>
         {packages.length === 0 ? (
-          <button type="button" onClick={setup} disabled={settingUp} className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+          <button type="button" onClick={setup} disabled={settingUp} className="create-focus min-h-11 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white disabled:opacity-50">
             {settingUp ? 'Setting up…' : 'Set up ARIA tables'}
           </button>
         ) : live ? (
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600"><span className="h-2 w-2 rounded-full bg-emerald-500" />Live — visible to guests</span>
-            <button type="button" onClick={() => toggleLive(false)} disabled={togglingLive} className="rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 disabled:opacity-50">
+            <span className="flex min-h-11 items-center gap-2 rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-5 text-sm font-semibold"><span className="h-2 w-2 rounded-full bg-[#2e6fe6]" />Live · visible to guests</span>
+            <button type="button" onClick={() => toggleLive(false)} disabled={togglingLive} className="create-focus min-h-11 rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-5 text-sm font-semibold disabled:opacity-50">
               {togglingLive ? 'Working…' : 'Take offline'}
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-600"><span className="h-2 w-2 rounded-full bg-amber-500" />Not visible to guests yet</span>
-            <button type="button" onClick={() => toggleLive(true)} disabled={togglingLive} className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+            <span className="flex min-h-11 items-center gap-2 rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-5 text-sm font-semibold"><span className="h-2 w-2 rounded-full bg-amber-500" />Not visible to guests</span>
+            <button type="button" onClick={() => toggleLive(true)} disabled={togglingLive} className="create-focus min-h-11 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white disabled:opacity-50">
               {togglingLive ? 'Working…' : 'Go live'}
             </button>
           </div>
@@ -244,14 +266,14 @@ export default function TablePackageManager({ eventId, initialPackages, initialL
 
       {packages.length > 0 && (
         <>
-          <div className="my-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl bg-gray-50 p-4"><p className="text-xs text-gray-500">Tables booked</p><p className="mt-1 text-xl font-bold text-gray-900">{booked.length}</p></div>
-            <div className="rounded-xl bg-gray-50 p-4"><p className="text-xs text-gray-500">Expected table guests</p><p className="mt-1 text-xl font-bold text-gray-900">{expectedGuests}</p></div>
-            <div className="rounded-xl bg-gray-50 p-4"><p className="text-xs text-gray-500">Table deposits collected</p><p className="mt-1 text-xl font-bold text-gray-900">{formatGhs(deposits)}</p></div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="create-card p-5"><p className="text-sm text-[var(--tikkitte-ink-faint)]">Tables booked</p><p className="create-display mt-1 text-[30px]">{booked.length}<span className="ml-1 text-lg text-[var(--tikkitte-ink-faint)]">/{packages.length}</span></p></div>
+            <div className="create-card p-5"><p className="text-sm text-[var(--tikkitte-ink-faint)]">Expected table guests</p><p className="create-display mt-1 text-[30px]">{expectedGuests}</p></div>
+            <div className="create-card p-5"><p className="text-sm text-[var(--tikkitte-ink-faint)]">Deposits collected</p><p className="create-display mt-1 text-[30px]">{formatGhs(deposits)}</p></div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="overflow-hidden rounded-xl border border-[rgba(23,17,14,0.14)] bg-[#FDFCFA]">
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div className="create-card overflow-hidden p-4">
               <div className="p-2">
                 <AriaFloorPlanSvg
                   packages={packages}
@@ -262,19 +284,19 @@ export default function TablePackageManager({ eventId, initialPackages, initialL
                   accentColor={MAP_ACCENT}
                 />
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[rgba(23,17,14,0.12)] px-2 py-3 text-[11px] text-[rgba(23,17,14,0.55)]">
-                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm border border-[#1596B7]" />Available</span>
+              <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[var(--tikkitte-cream-border)] px-2 py-3 text-[11px] text-[var(--tikkitte-ink-faint)]">
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm border border-[#2e6fe6]" />Available</span>
                 <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-amber-500" />In progress</span>
                 <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-gray-500" />Booked</span>
                 <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm border border-[rgba(23,17,14,0.2)] bg-[rgba(23,17,14,0.04)]" />Disabled</span>
               </div>
             </div>
 
-            <div>
+            <div className="create-card p-5">
               <label className="block text-xs font-medium text-gray-500">
                 Table
                 <select
-                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900"
+                  className="create-input mt-1 min-h-11 text-sm"
                   value={selectedCode ?? ''}
                   onChange={(event) => setSelectedCode(event.target.value)}
                 >

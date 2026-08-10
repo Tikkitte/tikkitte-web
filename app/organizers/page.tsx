@@ -16,7 +16,7 @@ export default function OrganizersPage() {
       <Hero />
       <Features />
       <HowItWorks />
-      <FinalCTA headline={<>Your crowd is<br />already here</>} ctaLabel="List your event" ctaHref="https://create.tikkitte.com/signup" size="lg" />
+      <FinalCTA headline={<>Your crowd is<br />already here</>} ctaLabel="List your event" ctaHref="/signup" size="lg" />
       <Footer />
     </main>
   )

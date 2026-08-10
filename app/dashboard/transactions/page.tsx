@@ -1,7 +1,7 @@
 import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Event, Payment } from '@/lib/types'
-import { RevenueAreaChart } from '@/components/dashboard/TicketChart'
+import DashboardRevenueChart from '@/components/dashboard/LazyDashboardRevenueChart'
 
 function formatDateTime(dateStr: string) {
   const d = new Date(dateStr)
@@ -14,11 +14,6 @@ function formatDateTime(dateStr: string) {
     minute: '2-digit',
     hour12: true,
   })
-}
-
-function formatShortDate(dateStr: string) {
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 export default async function TransactionsPage() {
@@ -63,28 +58,8 @@ export default async function TransactionsPage() {
       })
   }
 
-  // Build daily revenue chart data (last 30 days)
-  const dailyMap: Record<string, number> = {}
-  const now = new Date()
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(now)
-    d.setDate(d.getDate() - i)
-    dailyMap[d.toISOString().slice(0, 10)] = 0
-  }
-  for (const p of allPayments) {
-    if (p.paid_at && p.status === 'success') {
-      const day = new Date(p.paid_at).toISOString().slice(0, 10)
-      if (dailyMap[day] !== undefined) {
-        dailyMap[day] += p.amount / 100
-      }
-    }
-  }
-  const chartData = Object.entries(dailyMap).map(([date, revenue]) => ({
-    date: formatShortDate(date),
-    revenue,
-  }))
-
-  const totalRevenue = allPayments
+  const eligiblePayments = allPayments.filter((payment) => payment.refund_status !== 'success')
+  const totalRevenue = eligiblePayments
     .filter(p => p.status === 'success')
     .reduce((s, p) => s + p.amount / 100, 0)
 
@@ -93,79 +68,79 @@ export default async function TransactionsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
-        <p className="text-sm text-gray-500 mt-1">All payments across your events</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Organizer dashboard</p>
+        <h1 className="create-display mt-1 text-[34px]">Transactions</h1>
+        <p className="mt-2 text-sm text-[var(--tikkitte-ink-soft)]">All payments across your events.</p>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <p className="text-sm text-gray-500 mb-1">Total revenue</p>
-          <p className="text-2xl font-extrabold text-gray-900">GHS {totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+      <div className="mb-5 grid gap-4 sm:grid-cols-2">
+        <div className="create-card p-5">
+          <p className="text-[13px] text-[var(--tikkitte-ink-faint)]">Gross collected</p>
+          <p className="create-display mt-1 text-[30px]">GHS {totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <p className="text-sm text-gray-500 mb-1">Total transactions</p>
-          <p className="text-2xl font-extrabold text-gray-900">{totalTransactions}</p>
+        <div className="create-card p-5">
+          <p className="text-[13px] text-[var(--tikkitte-ink-faint)]">Total transactions</p>
+          <p className="create-display mt-1 text-[30px]">{totalTransactions.toLocaleString()}</p>
         </div>
       </div>
 
-      {/* Revenue chart */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-        <h2 className="font-semibold text-gray-900 mb-4">Revenue · Last 30 days</h2>
-        <RevenueAreaChart data={chartData} />
+      <div className="create-card mb-5 p-5">
+        <h2 className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Revenue</h2>
+        <DashboardRevenueChart payments={eligiblePayments.map(({ amount, paid_at }) => ({ amount, paid_at }))} />
       </div>
 
-      {/* Transactions table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900">All transactions ({totalTransactions})</h2>
+      <div className="create-card overflow-hidden">
+        <div className="border-b border-[var(--tikkitte-cream-border)] px-5 py-4">
+          <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">All transactions <span className="ml-1 text-[var(--tikkitte-ink-faint)]">{totalTransactions}</span></h2>
         </div>
 
         {allPayments.length === 0 ? (
           <div className="p-6">
-            <p className="text-sm text-gray-400 text-center py-8">No transactions yet. Revenue will appear here once tickets are sold.</p>
+            <p className="py-8 text-center text-sm text-[var(--tikkitte-ink-faint)]">No transactions yet. Revenue will appear here once tickets are sold.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="text-left py-3 pl-6 pr-4 font-medium text-gray-500">Amount</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Event</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Reference</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
-                  <th className="text-right py-3 pr-6 pl-4 font-medium text-gray-500">Paid on</th>
+                <tr className="border-b border-[var(--tikkitte-cream-border)] text-[10.5px] uppercase tracking-[0.09em] text-[var(--tikkitte-ink-faint)]">
+                  <th className="py-3 pl-6 pr-4 text-left font-bold">Amount</th>
+                  <th className="px-4 py-3 text-left font-bold">Event</th>
+                  <th className="px-4 py-3 text-left font-bold">Reference</th>
+                  <th className="px-4 py-3 text-left font-bold">Status</th>
+                  <th className="py-3 pl-4 pr-6 text-right font-bold">Paid on</th>
                 </tr>
               </thead>
               <tbody>
                 {allPayments.map((p: Payment) => (
-                  <tr key={p.reference} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                  <tr key={p.reference} className="border-b border-[var(--tikkitte-cream-border)] transition-colors last:border-0 hover:bg-[var(--tikkitte-cream)]">
                     <td className="py-3.5 pl-6 pr-4">
                       <div className="flex items-center gap-2.5">
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                          p.status === 'success' ? 'bg-green-500' : p.status === 'free' ? 'bg-blue-400' : 'bg-gray-400'
+                          p.refund_status === 'success' ? 'bg-red-400' : p.status === 'success' ? 'bg-green-500' : p.status === 'free' ? 'bg-blue-400' : 'bg-gray-400'
                         }`} />
-                        <span className="font-semibold text-gray-900">
+                        <span className="font-semibold text-[var(--tikkitte-ink)]">
                           {p.status === 'free' ? 'Free' : `GHS ${(p.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-gray-600 max-w-[200px] truncate">
+                    <td className="max-w-[200px] truncate px-4 py-3.5 text-[var(--tikkitte-ink-soft)]">
                       {eventMap[p.event_id] ?? '—'}
                     </td>
-                    <td className="py-3.5 px-4 text-gray-500 font-mono text-xs">{p.reference}</td>
+                    <td className="px-4 py-3.5 font-mono text-xs text-[var(--tikkitte-ink-faint)]">{p.reference}</td>
                     <td className="py-3.5 px-4">
                       <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-                        p.status === 'success'
+                        p.refund_status === 'success'
+                          ? 'bg-red-50 text-red-700'
+                          : p.status === 'success'
                           ? 'bg-green-50 text-green-700'
                           : p.status === 'free'
                             ? 'bg-blue-50 text-blue-700'
                             : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {p.status === 'success' ? 'Success' : p.status === 'free' ? 'Free' : p.status}
+                        {p.refund_status === 'success' ? 'Refunded' : p.status === 'success' ? 'Success' : p.status === 'free' ? 'Free' : p.status}
                       </span>
                     </td>
-                    <td className="py-3.5 pr-6 pl-4 text-right text-gray-500 text-xs whitespace-nowrap">
+                    <td className="whitespace-nowrap py-3.5 pl-4 pr-6 text-right text-xs text-[var(--tikkitte-ink-faint)]">
                       {p.paid_at ? formatDateTime(p.paid_at) : '—'}
                     </td>
                   </tr>

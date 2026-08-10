@@ -3,16 +3,16 @@ import { Sk } from '@/components/ui/Skeleton'
 export default function AudienceMarketingLoading() {
   return (
     <div>
-      <div className="mb-8">
-        <Sk className="h-8 w-24" />
-        <Sk className="mt-2 h-4 w-48" />
+      <div className="mb-6">
+        <Sk className="h-9 w-36" />
+        <Sk className="mt-2 h-4 w-80 max-w-full" />
+        <Sk className="mt-4 h-12 w-52 rounded-full" />
       </div>
-      <Sk className="mb-6 h-10 w-64 rounded-xl" />
 
-      <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <Sk className="h-10 rounded-none bg-gray-50" />
+      <div className="create-card overflow-hidden">
+        <Sk className="h-16 rounded-none" />
         {Array.from({ length: 3 }).map((_, index) => (
-          <Sk key={index} className="h-14 rounded-none border-t border-gray-50" />
+          <Sk key={index} className="h-14 rounded-none border-t border-[var(--tikkitte-cream-border)]" />
         ))}
       </div>
     </div>

@@ -42,6 +42,67 @@ body {
   line-height: 1.6;
 }
 
+/* Organizer product surface. Kept behind a class so the buyer-facing site
+   retains its existing Roboto/Poppins foundation. */
+.create-shell,
+.create-auth {
+  font-family: var(--tikkitte-font-body), var(--font-grotesk), sans-serif;
+  color: var(--tikkitte-ink);
+}
+
+.create-shell h1,
+.create-shell h2,
+.create-shell h3,
+.create-auth h1,
+.create-auth h2,
+.create-auth h3 {
+  color: inherit;
+}
+
+.create-display {
+  font-family: var(--tikkitte-font-display), var(--font-anton), sans-serif;
+  font-weight: 400;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.create-card {
+  border: 1px solid var(--tikkitte-cream-border);
+  border-radius: var(--tikkitte-radius-card);
+  background: var(--tikkitte-white);
+}
+
+.create-input {
+  width: 100%;
+  border: 1px solid var(--tikkitte-cream-border);
+  border-radius: 10px;
+  background: var(--tikkitte-white);
+  color: var(--tikkitte-ink);
+  padding: 11px 14px;
+  outline: none;
+}
+
+.create-input:focus-visible,
+.create-input:focus-within {
+  border-color: var(--tikkitte-blue-bright);
+  box-shadow: 0 0 0 3px var(--tikkitte-blue-tint-soft);
+}
+
+.create-focus:focus-visible {
+  outline: 2px solid var(--tikkitte-blue-bright);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .create-shell *,
+  .create-auth * {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   color: var(--color-text);

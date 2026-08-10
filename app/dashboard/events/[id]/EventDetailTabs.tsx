@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type PaymentRow = {
   reference: string
@@ -22,6 +22,7 @@ type AttendeeRow = {
 type Props = {
   payments: PaymentRow[]
   attendees: AttendeeRow[]
+  fixedTab?: 'transactions' | 'attendees'
 }
 
 function exportCSV(filename: string, headers: string[], rows: string[][]) {
@@ -36,13 +37,37 @@ function exportCSV(filename: string, headers: string[], rows: string[][]) {
   URL.revokeObjectURL(url)
 }
 
-const exportButtonClass = 'text-sm font-semibold text-[#3d3d3d] border border-[#3d3d3d] rounded-lg px-4 py-2 hover:bg-gray-100 transition-colors'
-const inputClass = 'w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d]'
+const exportButtonClass = 'create-focus min-h-10 rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-5 text-sm font-semibold text-[#2565d0] transition-colors hover:border-[#b9cff5] hover:bg-[#f4f7fd]'
+const inputClass = 'create-input min-h-11 rounded-full pl-5 text-sm'
+const pagerButtonClass = 'create-focus min-h-10 rounded-full border border-[var(--tikkitte-cream-border)] px-4 text-sm font-semibold text-[var(--tikkitte-ink-soft)] transition-colors hover:bg-[var(--tikkitte-cream)] disabled:cursor-not-allowed disabled:opacity-40'
 
-export default function EventDetailTabs({ payments, attendees }: Props) {
-  const [tab, setTab] = useState<'transactions' | 'attendees'>('transactions')
+const TRANSACTIONS_PAGE_SIZE = 25
+
+export default function EventDetailTabs({ payments, attendees, fixedTab }: Props) {
+  const [tab, setTab] = useState<'transactions' | 'attendees'>(fixedTab ?? 'transactions')
   const [search, setSearch] = useState('')
+  const [transactionsPage, setTransactionsPage] = useState(1)
+  const [expandedReference, setExpandedReference] = useState<string | null>(null)
+  const referenceElRef = useRef<HTMLSpanElement | null>(null)
   const normalizedSearch = search.trim().toLowerCase()
+
+  // Select the full reference text once it's rendered unclipped, so a
+  // double click both reveals and highlights it for easy copying.
+  useEffect(() => {
+    if (!expandedReference || !referenceElRef.current) return
+    const range = document.createRange()
+    range.selectNodeContents(referenceElRef.current)
+    const selection = window.getSelection()
+    selection?.removeAllRanges()
+    selection?.addRange(range)
+  }, [expandedReference])
+
+  const totalTransactionPages = Math.max(1, Math.ceil(payments.length / TRANSACTIONS_PAGE_SIZE))
+  const currentTransactionsPage = Math.min(transactionsPage, totalTransactionPages)
+  const pagedPayments = payments.slice(
+    (currentTransactionsPage - 1) * TRANSACTIONS_PAGE_SIZE,
+    currentTransactionsPage * TRANSACTIONS_PAGE_SIZE
+  )
   const filteredAttendees = attendees.filter((attendee) => (
     !normalizedSearch ||
     attendee.name.toLowerCase().includes(normalizedSearch) ||
@@ -78,83 +103,135 @@ export default function EventDetailTabs({ payments, attendees }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <div className="create-card overflow-hidden">
       {/* Tab headers */}
-      <div className="flex border-b border-gray-100">
+      {!fixedTab && <div className="flex gap-1 border-b border-[var(--tikkitte-cream-border)] p-2">
         <button
           onClick={() => setTab('transactions')}
-          className={`flex-1 text-sm font-semibold py-3.5 text-center transition-colors relative ${
+          className={`create-focus relative min-h-11 flex-1 rounded-full px-4 text-center text-sm font-semibold transition-colors ${
             tab === 'transactions'
-              ? 'text-[#3d3d3d]'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-[#2e6fe6] text-white'
+              : 'text-[var(--tikkitte-ink-soft)] hover:bg-[var(--tikkitte-cream)]'
           }`}
         >
           Transactions ({payments.length})
-          {tab === 'transactions' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3d3d3d]" />
-          )}
         </button>
         <button
           onClick={() => setTab('attendees')}
-          className={`flex-1 text-sm font-semibold py-3.5 text-center transition-colors relative ${
+          className={`create-focus relative min-h-11 flex-1 rounded-full px-4 text-center text-sm font-semibold transition-colors ${
             tab === 'attendees'
-              ? 'text-[#3d3d3d]'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-[#2e6fe6] text-white'
+              : 'text-[var(--tikkitte-ink-soft)] hover:bg-[var(--tikkitte-cream)]'
           }`}
         >
           Attendees ({attendees.length})
-          {tab === 'attendees' && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3d3d3d]" />
-          )}
         </button>
-      </div>
+      </div>}
 
       {/* Tab content */}
-      <div className="p-6">
+      <div className="p-5">
         {tab === 'transactions' && (
           <>
             {payments.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">No transactions yet.</p>
+              <p className="py-10 text-center text-sm text-[var(--tikkitte-ink-faint)]">No transactions yet.</p>
             ) : (
               <div className="space-y-4">
-                <div className="flex justify-end">
+                <div className="flex flex-col gap-3 border-b border-[var(--tikkitte-cream-border)] pb-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Payment history</p>
+                    <h2 className="create-display mt-1 text-[22px]">Transactions</h2>
+                  </div>
                   <button type="button" onClick={exportTransactions} className={exportButtonClass}>
                     Export CSV
                   </button>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-[760px] table-fixed text-sm">
+                    <colgroup>
+                      <col className="w-[16%]" />
+                      <col className="w-[16%]" />
+                      <col className="w-[25%]" />
+                      <col className="w-[7%]" />
+                      <col className="w-[36%]" />
+                    </colgroup>
                     <thead>
-                      <tr className="border-b border-gray-100">
-                        <th className="text-left py-3 pr-4 font-medium text-gray-500">Amount</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Reference</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Ticket</th>
-                        <th className="text-right py-3 px-4 font-medium text-gray-500">Qty</th>
-                        <th className="text-right py-3 pl-4 font-medium text-gray-500">Paid on</th>
+                      <tr className="border-b border-[var(--tikkitte-cream-border)] text-[10.5px] uppercase tracking-[0.09em] text-[var(--tikkitte-ink-faint)]">
+                        <th className="py-3 pr-4 text-left font-bold">Amount</th>
+                        <th className="px-4 py-3 text-left font-bold">Reference</th>
+                        <th className="px-4 py-3 text-left font-bold">Ticket</th>
+                        <th className="px-4 py-3 text-right font-bold">Qty</th>
+                        <th className="py-3 pl-4 text-right font-bold">Paid on</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {payments.map((p) => (
-                        <tr key={p.reference} className="border-b border-gray-50 last:border-0">
+                      {pagedPayments.map((p) => (
+                        <tr key={p.reference} className="border-b border-[var(--tikkitte-cream-border)] transition-colors last:border-0 hover:bg-[var(--tikkitte-cream)]">
                           <td className="py-3 pr-4">
                             <div className="flex items-center gap-2">
                               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                p.status === 'success' ? 'bg-green-500' : p.status === 'free' ? 'bg-blue-400' : 'bg-gray-400'
+                                p.status === 'refunded' ? 'bg-red-400' : p.status === 'success' ? 'bg-green-500' : p.status === 'free' ? 'bg-blue-400' : 'bg-gray-400'
                               }`} />
-                              <span className="font-semibold text-gray-900">
-                                {p.status === 'free' ? 'Free' : `GHS ${(p.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                              <span className="truncate font-semibold text-[var(--tikkitte-ink)]">
+                                {p.status === 'free' ? 'Free' : `${p.status === 'refunded' ? 'Refunded · ' : ''}GHS ${(p.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
                               </span>
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-gray-500 font-mono text-xs">{p.reference}</td>
-                          <td className="py-3 px-4 text-gray-600">{p.ticketLabel}</td>
-                          <td className="py-3 px-4 text-right text-gray-900 font-semibold">{p.quantity}</td>
-                          <td className="py-3 pl-4 text-right text-gray-500 text-xs whitespace-nowrap">{p.paidAt}</td>
+                          <td className="px-4 py-3 font-mono text-xs text-[var(--tikkitte-ink-faint)]">
+                            <span
+                              ref={expandedReference === p.reference ? referenceElRef : undefined}
+                              onDoubleClick={() => setExpandedReference((prev) => (prev === p.reference ? null : p.reference))}
+                              title={p.reference}
+                              className={
+                                expandedReference === p.reference
+                                  ? 'block cursor-pointer break-all'
+                                  : 'block truncate cursor-pointer'
+                              }
+                            >
+                              {expandedReference === p.reference || p.reference.length <= 10
+                                ? p.reference
+                                : `${p.reference.slice(0, 10)}…`}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-[var(--tikkitte-ink-soft)]">
+                            <span className="block truncate" title={p.ticketLabel}>{p.ticketLabel}</span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold">{p.quantity}</td>
+                          <td className="whitespace-nowrap py-3 pl-4 text-right text-xs text-[var(--tikkitte-ink-faint)]">{p.paidAt}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+
+                {totalTransactionPages > 1 && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                    <p className="text-xs text-[var(--tikkitte-ink-faint)]">
+                      Showing {(currentTransactionsPage - 1) * TRANSACTIONS_PAGE_SIZE + 1}
+                      –{Math.min(currentTransactionsPage * TRANSACTIONS_PAGE_SIZE, payments.length)} of {payments.length}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setTransactionsPage((p) => Math.max(1, p - 1))}
+                        disabled={currentTransactionsPage === 1}
+                        className={pagerButtonClass}
+                      >
+                        Previous
+                      </button>
+                      <span className="text-xs text-[var(--tikkitte-ink-faint)]">
+                        Page {currentTransactionsPage} of {totalTransactionPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setTransactionsPage((p) => Math.min(totalTransactionPages, p + 1))}
+                        disabled={currentTransactionsPage === totalTransactionPages}
+                        className={pagerButtonClass}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>
@@ -163,7 +240,7 @@ export default function EventDetailTabs({ payments, attendees }: Props) {
         {tab === 'attendees' && (
           <>
             {attendees.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">No tickets sold yet.</p>
+              <p className="py-10 text-center text-sm text-[var(--tikkitte-ink-faint)]">No tickets sold yet.</p>
             ) : (
               <div className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -175,7 +252,7 @@ export default function EventDetailTabs({ payments, attendees }: Props) {
                       placeholder="Search by name or email…"
                     />
                     {normalizedSearch && (
-                      <p className="mt-2 text-xs text-gray-400">
+                      <p className="mt-2 text-xs text-[var(--tikkitte-ink-faint)]">
                         {filteredAttendees.length} of {attendees.length} attendees
                       </p>
                     )}
@@ -188,20 +265,20 @@ export default function EventDetailTabs({ payments, attendees }: Props) {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-100">
-                        <th className="text-left py-3 pr-4 font-medium text-gray-500">Name</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Email</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-500">Ticket</th>
-                        <th className="text-right py-3 pl-4 font-medium text-gray-500">Qty</th>
+                      <tr className="border-b border-[var(--tikkitte-cream-border)] text-[10.5px] uppercase tracking-[0.09em] text-[var(--tikkitte-ink-faint)]">
+                        <th className="py-3 pr-4 text-left font-bold">Name</th>
+                        <th className="px-4 py-3 text-left font-bold">Email</th>
+                        <th className="px-4 py-3 text-left font-bold">Ticket</th>
+                        <th className="py-3 pl-4 text-right font-bold">Qty</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredAttendees.map((a) => (
-                        <tr key={a.id} className="border-b border-gray-50 last:border-0">
-                          <td className="py-3 pr-4 font-medium text-gray-900">{a.name}</td>
-                          <td className="py-3 px-4 text-gray-500">{a.email}</td>
-                          <td className="py-3 px-4 text-gray-600">{a.ticketLabel}</td>
-                          <td className="py-3 pl-4 text-right text-gray-900 font-semibold">{a.quantity}</td>
+                        <tr key={a.id} className="border-b border-[var(--tikkitte-cream-border)] transition-colors last:border-0 hover:bg-[var(--tikkitte-cream)]">
+                          <td className="py-3 pr-4 font-semibold">{a.name}</td>
+                          <td className="px-4 py-3 text-[var(--tikkitte-ink-soft)]">{a.email}</td>
+                          <td className="px-4 py-3 text-[var(--tikkitte-ink-soft)]">{a.ticketLabel}</td>
+                          <td className="py-3 pl-4 text-right font-semibold">{a.quantity}</td>
                         </tr>
                       ))}
                     </tbody>

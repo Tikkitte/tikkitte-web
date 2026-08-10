@@ -8,11 +8,9 @@ import ConfirmDialog from '@/components/dashboard/ConfirmDialog'
 export default function PublishButton({
   eventId,
   published,
-  everPublished,
 }: {
   eventId: string
   published: boolean
-  everPublished: boolean
 }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -59,25 +57,21 @@ export default function PublishButton({
   }
 
   return (
-    <div className="flex flex-col items-end gap-2">
+    <div className="shrink-0">
       <button
+        type="button"
         onClick={handleClick}
         disabled={loading}
-        className={`text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors shadow-sm disabled:opacity-60 ${
+        className={`create-focus min-h-11 rounded-full px-6 text-sm font-semibold transition-colors disabled:opacity-60 ${
           published
-            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            : 'bg-green-600 text-white hover:bg-green-700'
+            ? 'border border-[var(--tikkitte-cream-border)] bg-white text-[#4d4b44] hover:bg-[#f5f1e7]'
+            : 'bg-[#2766d2] text-white hover:bg-[#1f56b5]'
         }`}
       >
         {loading ? '…' : published ? 'Unpublish' : 'Publish event'}
       </button>
-      {!everPublished && (
-        <p className="text-xs text-gray-500 max-w-[280px] text-right">
-          After publishing, saved ticket types cannot be removed, even if you unpublish later. You can still edit their details and sale windows.
-        </p>
-      )}
       {error && !confirming && (
-        <p className="text-xs text-red-600 max-w-[280px] text-right" role="alert">
+        <p className="mt-2 max-w-[280px] text-xs text-red-600" role="alert">
           {error}
         </p>
       )}

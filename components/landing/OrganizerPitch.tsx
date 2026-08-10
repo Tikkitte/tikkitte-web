@@ -20,7 +20,7 @@ export default function OrganizerPitch() {
             Go live in minutes, scan QR codes at the door, and watch sales roll in live. Paid in cedis, straight to you. No spreadsheets.
           </p>
           <div className="mt-7 flex flex-wrap gap-3.5">
-            <Link href="https://create.tikkitte.com/signup" className="rounded-full bg-[#191917] px-[30px] py-[15px] text-base font-bold !text-white hover:bg-black">
+            <Link href="/signup" className="rounded-full bg-[#191917] px-[30px] py-[15px] text-base font-bold !text-white hover:bg-black">
               List your event
             </Link>
             <Link href="/organizers" className="rounded-full border-[1.5px] border-white/50 px-[30px] py-[15px] text-base font-bold !text-white hover:border-white">

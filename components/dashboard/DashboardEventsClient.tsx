@@ -102,7 +102,7 @@ export default function DashboardEventsClient({ events: allEvents, tickets, gros
   return (
     <>
       <div className="mb-6 overflow-x-auto">
-        <div className="inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+        <div className="inline-flex items-center gap-1 rounded-full bg-white p-1 ring-1 ring-[var(--tikkitte-cream-border)]">
           {filters.map((tab) => {
             const active = filter === tab
             return (
@@ -110,10 +110,11 @@ export default function DashboardEventsClient({ events: allEvents, tickets, gros
                 key={tab}
                 type="button"
                 onClick={() => selectFilter(tab)}
-                className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                aria-pressed={active}
+                className={`create-focus whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   active
-                    ? 'bg-[#3d3d3d]/10 text-[#3d3d3d]'
-                    : 'text-gray-500 hover:bg-white'
+                    ? 'bg-[#191917] text-white'
+                    : 'text-[#8a887c] hover:text-[#191917]'
                 }`}
               >
                 {filterLabels[tab]} ({tabCounts[tab]})
@@ -124,16 +125,16 @@ export default function DashboardEventsClient({ events: allEvents, tickets, gros
       </div>
 
       {totalEvents > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div className="mb-8 hidden grid-cols-1 gap-4 sm:grid sm:grid-cols-3">
+          <div className="create-card p-5">
             <p className="text-sm text-gray-500 mb-1">Total events</p>
             <p className="text-2xl font-extrabold text-gray-900">{totalEvents}</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="create-card p-5">
             <p className="text-sm text-gray-500 mb-1">Tickets sold</p>
             <p className="text-2xl font-extrabold text-gray-900">{totalSold}</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="create-card p-5">
             <p className="text-sm text-gray-500 mb-1">Gross collected</p>
             <p className="text-2xl font-extrabold text-gray-900">GHS {totalCollected.toLocaleString()}</p>
           </div>
@@ -142,8 +143,8 @@ export default function DashboardEventsClient({ events: allEvents, tickets, gros
 
       {visibleEvents.length === 0 ? (
         <div className="text-center py-24">
-          <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#dce7fa] ring-1 ring-[#c5d7f5]">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-[#245dbc]" aria-hidden="true">
               <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
             </svg>
           </div>
@@ -160,7 +161,7 @@ export default function DashboardEventsClient({ events: allEvents, tickets, gros
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visibleEvents.map((event) => (
             <DashboardEventCard
               key={event.id}

@@ -4,8 +4,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment, Payout, TablePackage } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/LazyTicketChart'
-import CancelButton from './CancelButton'
-import PublishButton from './PublishButton'
 import ShareLiveModal from './ShareLiveModal'
 import PromoCodeManager from './PromoCodeManager'
 import CompTicketManager from './CompTicketManager'
@@ -15,6 +13,7 @@ import CheckinStats from '@/components/dashboard/CheckinStats'
 import MessageAttendeesButton from './MessageAttendeesButton'
 import PayoutSummary from './PayoutSummary'
 import TablePackageManager from './TablePackageManager'
+import EventWorkspace from './EventWorkspace'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -51,6 +50,35 @@ function formatDateTime(dateStr: string) {
   })
 }
 
+function paymentRevenueAllocations(payment: Payment) {
+  const rawLines = payment.metadata && Array.isArray(payment.metadata.tickets)
+    ? payment.metadata.tickets
+    : []
+  const lines = rawLines.flatMap((line) => {
+    if (!line || typeof line !== 'object') return []
+    const ticketTypeId = 'ticket_type_id' in line && typeof line.ticket_type_id === 'string'
+      ? line.ticket_type_id
+      : null
+    const quantity = 'quantity' in line ? Number(line.quantity) : Number.NaN
+    const unitPrice = 'unit_price' in line ? Number(line.unit_price) : Number.NaN
+    if (!ticketTypeId || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice) || unitPrice < 0) return []
+    return [{ ticketTypeId, weight: quantity * unitPrice }]
+  })
+  const totalWeight = lines.reduce((sum, line) => sum + line.weight, 0)
+  const collected = Number(payment.amount ?? 0) / 100
+
+  if (lines.length > 0 && totalWeight > 0) {
+    return lines.map((line) => ({
+      ticketTypeId: line.ticketTypeId,
+      amount: collected * line.weight / totalWeight,
+    }))
+  }
+
+  return payment.ticket_type_id
+    ? [{ ticketTypeId: payment.ticket_type_id, amount: collected }]
+    : []
+}
+
 export default async function EventDetailPage({
   params,
   searchParams,
@@ -83,6 +111,7 @@ export default async function EventDetailPage({
     { data: payouts },
     { data: attendeeProfiles },
     { data: tablePackages },
+    { count: activePromoCount },
   ] = await Promise.all([
     supabase
       .from('ticket')
@@ -128,9 +157,16 @@ export default async function EventDetailPage({
           .eq('event_id', id)
           .order('table_code')
       : Promise.resolve({ data: [] }),
+    supabase
+      .from('promo_code')
+      .select('id', { count: 'exact', head: true })
+      .eq('event_id', id)
+      .eq('active', true),
   ])
 
-  const ordinaryTickets = ((tickets ?? []) as Ticket[]).filter((ticket) => !ticket.is_table_ticket)
+  const allTickets = (tickets ?? []) as Ticket[]
+  const ordinaryTickets = allTickets.filter((ticket) => !ticket.is_table_ticket)
+  const tableTickets = allTickets.filter((ticket) => ticket.is_table_ticket)
 
   const profileMap = ((attendeeProfiles ?? []) as Array<{ user_id: string; email: string | null; name: string | null }>).reduce(
     (acc: Record<string, { email: string | null; name: string | null }>, profile) => {
@@ -140,29 +176,27 @@ export default async function EventDetailPage({
     {}
   )
 
-  const allPayments = [...(payments ?? []), ...(freePayments ?? [])]
-    .sort((a, b) => {
+  const allPayments = [...(payments ?? []), ...(freePayments ?? [])].sort((a, b) => {
       const da = a.paid_at ? new Date(a.paid_at).getTime() : 0
       const db = b.paid_at ? new Date(b.paid_at).getTime() : 0
       return db - da
     })
+  const eligiblePayments = allPayments.filter((payment) => payment.refund_status !== 'success')
 
   const ticketMap = (tickets ?? []).reduce((acc: Record<string, Ticket>, t: Ticket) => {
     acc[t.id] = t
     return acc
   }, {})
 
-  const totalRevenue = ordinaryTickets.reduce(
-    (s: number, t: Ticket) => s + t.purchased_quantity * t.price, 0
-  )
-  const grossCollected = allPayments.reduce((s: number, p: Payment) => s + (p.amount ?? 0), 0) / 100
+  const grossCollected = eligiblePayments.reduce((s: number, p: Payment) => s + (p.amount ?? 0), 0) / 100
   const configuredPlatformFeePercent = Number(process.env.PLATFORM_FEE_PERCENT ?? '5')
   const platformFeePercent = Number.isFinite(configuredPlatformFeePercent) ? configuredPlatformFeePercent : 5
   const platformFeeAmount = grossCollected * platformFeePercent / 100
   const estimatedPayout = grossCollected - platformFeeAmount
-  const collectedByTicketType = allPayments.reduce((acc: Record<string, number>, p: Payment) => {
-    if (!p.ticket_type_id) return acc
-    acc[p.ticket_type_id] = (acc[p.ticket_type_id] ?? 0) + (p.amount ?? 0) / 100
+  const collectedByTicketType = eligiblePayments.reduce((acc: Record<string, number>, payment: Payment) => {
+    for (const allocation of paymentRevenueAllocations(payment)) {
+      acc[allocation.ticketTypeId] = (acc[allocation.ticketTypeId] ?? 0) + allocation.amount
+    }
     return acc
   }, {})
   const totalSold = ordinaryTickets.reduce(
@@ -179,15 +213,14 @@ export default async function EventDetailPage({
     ? null
     : ordinaryTickets.reduce((s: number, t: Ticket) => s + (t.total_quantity ?? 0), 0)
 
-  const bookedTables = ((tablePackages ?? []) as TablePackage[]).filter((table) => table.reservation_status === 'booked')
-  const bookedTableDeposits = bookedTables.reduce((sum, table) => sum + Number(table.deposit), 0)
+  const collectedTableRevenue = tableTickets.reduce((sum, ticket) => sum + (collectedByTicketType[ticket.id] ?? 0), 0)
 
   const chartData = [
     ...ordinaryTickets.map((t: Ticket) => ({
       label: t.label,
       sold: t.purchased_quantity,
       remaining: t.total_quantity !== null ? t.total_quantity - t.purchased_quantity : null,
-      revenue: t.purchased_quantity * t.price,
+      revenue: collectedByTicketType[t.id] ?? 0,
       price: t.price,
     })),
     // Table Reservations: "sold" is total guests admitted across booked tables
@@ -198,7 +231,7 @@ export default async function EventDetailPage({
           label: 'Table Reservations',
           sold: bookedTableGuests,
           remaining: null,
-          revenue: bookedTableDeposits,
+          revenue: collectedTableRevenue,
           price: 0,
         }]
       : []),
@@ -230,7 +263,7 @@ export default async function EventDetailPage({
     return {
       reference: p.reference,
       amount: p.amount,
-      status: p.status,
+      status: p.refund_status === 'success' ? 'refunded' : p.status,
       paidAt: p.paid_at ? formatDateTime(p.paid_at) : '—',
       ticketLabel,
       quantity,
@@ -256,227 +289,89 @@ export default async function EventDetailPage({
   }))
   const formattedAttendees = [...paidAttendees, ...compAttendees]
 
+  const ticketTable = (
+    <div className="create-card overflow-hidden">
+      <div className="px-5 py-4 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Sales by ticket type</div>
+      {ordinaryTickets.length === 0 ? <p className="px-5 pb-8 text-sm text-[var(--tikkitte-ink-faint)]">No ticket types.</p> : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[620px] text-sm">
+            <thead><tr className="border-y border-[var(--tikkitte-cream-border)] text-[10.5px] uppercase tracking-[0.09em] text-[var(--tikkitte-ink-faint)]"><th className="px-5 py-3 text-left">Ticket</th><th className="px-4 py-3 text-right">Price</th><th className="px-4 py-3 text-right">Sold</th><th className="px-5 py-3 text-right">Gross</th></tr></thead>
+            <tbody>
+              {ordinaryTickets.map((ticket, index) => <tr key={ticket.id} className={`border-b border-[var(--tikkitte-cream-border)] ${index % 2 ? 'bg-[#faf9f5]' : ''}`}><td className="px-5 py-3 font-semibold">{ticket.label}{ticket.total_quantity !== null && ticket.purchased_quantity >= ticket.total_quantity && <span className="ml-2 rounded-full bg-[#d9e4fa] px-2 py-1 text-[10px] font-bold uppercase text-[#2565d0]">Sold out</span>}</td><td className="px-4 py-3 text-right text-[var(--tikkitte-ink-soft)]">GHS {ticket.price.toLocaleString()}</td><td className="px-4 py-3 text-right">{ticket.purchased_quantity}{ticket.total_quantity !== null ? `/${ticket.total_quantity}` : ''}</td><td className="px-5 py-3 text-right font-semibold">GHS {(collectedByTicketType[ticket.id] ?? 0).toLocaleString()}</td></tr>)}
+              <tr className="border-t-2 border-[var(--tikkitte-ink)] bg-[var(--tikkitte-cream)] font-bold"><td className="px-5 py-4">Total</td><td /><td className="px-4 py-4 text-right">{totalSold}{totalCapacity !== null ? `/${totalCapacity}` : ''}</td><td className="create-display px-5 py-4 text-right">GHS {grossCollected.toLocaleString()}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+
+  const payoutPanel = <PayoutSummary grossCollected={grossCollected} platformFeePercent={platformFeePercent} platformFeeAmount={platformFeeAmount} estimatedPayout={estimatedPayout} payouts={(payouts ?? []) as Payout[]} />
+
   return (
     <div>
       {shared === '1' && <ShareLiveModal eventUrl={eventUrl} />}
+      <Link href="/dashboard/events" className="create-focus mb-5 inline-flex min-h-11 items-center text-sm font-medium text-[var(--tikkitte-ink-soft)] hover:text-[var(--tikkitte-ink)]">← All events</Link>
 
-      {/* Back + actions */}
-      <div className="flex flex-row items-center justify-between gap-3 mb-6">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white shadow-sm transition-colors hover:bg-gray-50">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-          </span>
-          <span className="hidden sm:inline">All events</span>
-        </Link>
-        <div className="flex flex-wrap items-start justify-end gap-2">
-          {!event.cancelled && (
-            <>
-              <MessageAttendeesButton
-                eventId={id}
-                lastAlertSentAt={event.last_alert_sent_at}
-                attendeeCount={formattedAttendees.length}
-              />
-              <Link
-                href={`/dashboard/events/${id}/edit`}
-                className="inline-flex items-center gap-2 bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-800 transition-colors shadow-sm"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                </svg>
-                <span className="hidden sm:inline">Edit event</span>
-              </Link>
-            </>
-          )}
+      <header className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="h-[108px] w-[86px] shrink-0 overflow-hidden rounded-xl bg-[#30303b]">
+          {poster ? <Image src={poster} alt={event.name} width={172} height={216} className="h-full w-full object-cover" priority /> : <div className="create-display flex h-full items-center justify-center text-xl text-white">{event.name.split(/\s+/).slice(0, 3).map((part: string) => part[0]).join('').toUpperCase()}</div>}
         </div>
-      </div>
-
-      {/* Event summary card — natural flow at the top, no longer sticky/side-column */}
-      <div className="mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="flex flex-col sm:flex-row">
-          <div className="sm:w-[220px] sm:flex-shrink-0">
-            {poster ? (
-              <Image
-                src={poster}
-                alt={event.name}
-                width={1080}
-                height={1920}
-                className="aspect-[9/16] w-full object-cover"
-                priority
-              />
-            ) : (
-              <div className="flex aspect-[9/16] w-full items-center justify-center bg-gradient-to-br from-[#3d3d3d]/10 to-[#3d3d3d]/5">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#3d3d3d]/30">
-                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
-                </svg>
-              </div>
-            )}
+        <div className="min-w-0 flex-1">
+          <span className="mb-2 inline-flex items-center gap-2 rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-3 py-1.5 text-xs font-semibold"><span className={`h-1.5 w-1.5 rounded-full ${event.cancelled ? 'bg-red-500' : event.published ? 'bg-[#2e6fe6]' : 'bg-amber-500'}`} />{event.cancelled ? 'Cancelled' : event.published ? 'On sale' : 'Draft'}</span>
+          <h1 className="create-display truncate text-[30px]">{event.name}</h1>
+          <div className="mt-1 flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#2565d0]">{formatEventDateRange(event)} · {event.venue ?? 'Venue TBA'}</p>
+            <a href={eventUrl} className="create-focus truncate text-xs text-[var(--tikkitte-ink-faint)]" target="_blank" rel="noreferrer">{eventUrl.replace('https://', '')} ↗</a>
           </div>
-          <div className="p-5">
-            <div className="flex items-center gap-2 mb-2">
-              {!event.published && (
-                <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full">
-                  Draft
-                </span>
-              )}
-              {event.cancelled && (
-                <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-full">
-                  Cancelled
-                </span>
-              )}
-            </div>
-            <h1 className="text-xl font-bold text-gray-900 mb-1">{event.name}</h1>
-            <p className="text-sm text-gray-500">
-              {formatEventDateRange(event)}
-            </p>
-            <p className="text-sm text-gray-500">{event.venue ?? 'No venue'}</p>
-            {event.description && (
-              <p className="text-sm text-gray-400 mt-3 leading-relaxed line-clamp-4">{event.description}</p>
-            )}
-          </div>
+          {!event.cancelled && <Link href={`/dashboard/events/${id}/edit`} className="create-focus mt-3 inline-flex min-h-10 items-center rounded-full border border-[var(--tikkitte-cream-border)] px-5 text-sm font-semibold hover:border-[var(--tikkitte-ink)]">Edit event</Link>}
         </div>
-      </div>
+      </header>
 
-      <div className="space-y-5">
-          {/* Stats row */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-              <p className="text-xs text-gray-500 mb-1">Tickets sold</p>
-              <p className="text-xl font-extrabold text-gray-900">
-                {totalSold}
-                {totalCapacity !== null && <span className="text-gray-400 text-sm font-normal">/{totalCapacity}</span>}
-              </p>
+      <EventWorkspace
+        hasTables={event.floor_plan_venue === 'aria'}
+        counts={{ tables: (tablePackages ?? []).length, marketing: (activePromoCount ?? 0) + (trackingLinks ?? []).length + (compTickets ?? []).length, attendees: totalAdmissionsIssued }}
+        panels={{
+          overview: <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[
+              ['Tickets sold', `${totalSold}${totalCapacity !== null ? `/${totalCapacity}` : ''}`],
+              ['Gross collected', `GHS ${grossCollected.toLocaleString()}`],
+              ['Transactions', allPayments.length.toLocaleString()],
+              ['Checked in', `${totalCheckedIn}/${totalAdmissionsIssued}`],
+            ].map(([label, value]) => <div key={label} className="create-card p-4"><p className="text-xs text-[var(--tikkitte-ink-faint)]">{label}</p><p className="create-display mt-1 text-[26px]">{value}</p></div>)}</div>
+            <CheckinStats eventId={id} totalSold={totalAdmissionsIssued} initialCheckedIn={totalCheckedIn} scannerPin={event.scanner_pin ?? null} doorsAt={formatTime(event.time)} />
+            <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+              {ticketTable}
+              <div className="space-y-4">{payoutPanel}<div className="create-card overflow-hidden"><div className="border-b border-[var(--tikkitte-cream-border)] px-5 py-4 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Marketing</div>{[['Message attendees', paidAttendees.length], ['Promo codes', `${activePromoCount ?? 0} active`], ['Tracking links', (trackingLinks ?? []).length], ['Comp tickets', `${(compTickets ?? []).reduce((sum, ticket) => sum + ticket.quantity, 0)} issued`]].map(([label, value]) => <div key={label} className="flex items-center justify-between border-b border-[var(--tikkitte-cream-border)] px-5 py-3 text-sm last:border-0"><span>{label}</span><span className="text-[var(--tikkitte-ink-faint)]">{value} ›</span></div>)}</div></div>
             </div>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-              <p className="text-xs text-gray-500 mb-1">Gross collected</p>
-              <p className="text-xl font-extrabold text-gray-900">
-                GHS {grossCollected.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-              </p>
-              {grossCollected !== totalRevenue && (
-                <p className="text-xs text-gray-400 mt-1">Face value: GHS {totalRevenue.toLocaleString()}</p>
-              )}
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-              <p className="text-xs text-gray-500 mb-1">Transactions</p>
-              <p className="text-xl font-extrabold text-gray-900">{allPayments.length}</p>
-            </div>
-          </div>
-
-          {/* Check-in stats (live via Realtime) */}
-          <CheckinStats
-            eventId={id}
-            totalSold={totalAdmissionsIssued}
-            initialCheckedIn={totalCheckedIn}
-            scannerPin={event.scanner_pin ?? null}
-          />
-
-          <PayoutSummary
-            grossCollected={grossCollected}
-            platformFeePercent={platformFeePercent}
-            platformFeeAmount={platformFeeAmount}
-            estimatedPayout={estimatedPayout}
-            payouts={(payouts ?? []) as Payout[]}
-          />
-
-          {event.floor_plan_venue === 'aria' && (
-            <TablePackageManager
-              eventId={id}
-              initialPackages={(tablePackages ?? []) as TablePackage[]}
-              initialLive={event.aria_tables_live}
-            />
-          )}
-
-          {/* Charts */}
-          {ordinaryTickets.length > 0 && (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="font-semibold text-gray-900 mb-4 text-sm">Sales by ticket type</h2>
-                <TicketBarChart data={chartData} />
+          </div>,
+          tickets: <div className="space-y-5">
+            {ordinaryTickets.length > 0 && <section className="grid gap-5 xl:grid-cols-2" aria-label="Sales analytics">
+              <div className="create-card flex min-h-0 flex-col overflow-hidden">
+                <header className="border-b border-[var(--tikkitte-cream-border)] px-5 py-4 sm:px-6">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Ticket performance</p>
+                  <h2 className="create-display mt-1 text-[22px]">Sales by ticket type</h2>
+                  <p className="mt-1 text-xs text-[var(--tikkitte-ink-faint)]">Admissions issued across each ticket type.</p>
+                </header>
+                <div className="min-h-80 flex-1 p-4 sm:p-6"><TicketBarChart data={chartData} /></div>
               </div>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="font-semibold text-gray-900 mb-4 text-sm">Revenue breakdown</h2>
-                <RevenueBreakdown data={chartData} />
+              <div className="create-card overflow-hidden">
+                <header className="border-b border-[var(--tikkitte-cream-border)] px-5 py-4 sm:px-6">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Revenue mix</p>
+                  <h2 className="create-display mt-1 text-[22px]">Revenue breakdown</h2>
+                  <p className="mt-1 text-xs text-[var(--tikkitte-ink-faint)]">Share of non-refunded collections by ticket type.</p>
+                </header>
+                <div className="p-5 sm:p-6"><RevenueBreakdown data={chartData} /></div>
               </div>
-            </div>
-          )}
-
-          {/* Ticket breakdown table */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="font-semibold text-gray-900 mb-4 text-sm">Ticket types</h2>
-            {ordinaryTickets.length === 0 ? (
-              <p className="text-sm text-gray-400">No ticket types.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="text-left py-3 pr-4 font-medium text-gray-500">Type</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-500">Price</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-500">Sold</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-500">Revenue</th>
-                      <th className="text-right py-3 pl-4 font-medium text-gray-500">Collected</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ordinaryTickets.map((t: Ticket) => (
-                      <tr key={t.id} className="border-b border-gray-50 last:border-0">
-                        <td className="py-3 pr-4 font-medium text-gray-900">{t.label}</td>
-                        <td className="py-3 px-4 text-right text-gray-600">GHS {t.price}</td>
-                        <td className="py-3 px-4 text-right text-gray-900 font-semibold">
-                          {t.purchased_quantity}
-                          {t.total_quantity != null && <span className="text-gray-400 font-normal">/{t.total_quantity}</span>}
-                        </td>
-                        <td className="py-3 px-4 text-right text-gray-900 font-semibold">
-                          GHS {(t.purchased_quantity * t.price).toLocaleString()}
-                        </td>
-                        <td className="py-3 pl-4 text-right text-gray-900 font-semibold">
-                          GHS {(collectedByTicketType[t.id] ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          <PromoCodeManager eventId={id} tickets={ordinaryTickets} />
-
-          <CompTicketManager
-            eventId={id}
-            tickets={ordinaryTickets}
-            initialCompTickets={(compTickets ?? []) as ComplimentaryTicket[]}
-          />
-
-          <TrackingLinkManager
-            eventId={id}
-            eventSlug={event.slug ?? event.id}
-            initialTrackingLinks={(trackingLinks ?? []) as TrackingLink[]}
-          />
-
-          {/* Tabbed section: Transactions & Attendees */}
-          <EventDetailTabs
-            payments={formattedPayments}
-            attendees={formattedAttendees}
-          />
-
-          {!event.cancelled && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h2 className="font-semibold text-gray-900 mb-1 text-sm">Event status</h2>
-              <p className="text-xs text-gray-400 mb-4">Unpublishing or cancelling affects the public event page. Already-issued tickets and bookings are not affected.</p>
-              <div className="flex flex-wrap items-center gap-2">
-                <PublishButton
-                  eventId={id}
-                  published={event.published}
-                  everPublished={event.ever_published}
-                />
-                <CancelButton eventId={id} />
-              </div>
-            </div>
-          )}
-      </div>
+            </section>}
+            <EventDetailTabs payments={formattedPayments} attendees={formattedAttendees} fixedTab="transactions" />
+          </div>,
+          tables: event.floor_plan_venue === 'aria' ? <TablePackageManager eventId={id} initialPackages={(tablePackages ?? []) as TablePackage[]} initialLive={event.aria_tables_live} /> : null,
+          payout: payoutPanel,
+          marketing: <div className="space-y-5"><div className="create-card p-5"><h2 className="create-display text-xl">Reach your audience</h2><p className="mb-4 mt-1 text-sm text-[var(--tikkitte-ink-soft)]">Message ticket holders or create campaign tools for this event.</p><MessageAttendeesButton eventId={id} lastAlertSentAt={event.last_alert_sent_at} attendeeCount={paidAttendees.length} /></div><PromoCodeManager eventId={id} tickets={ordinaryTickets} /><TrackingLinkManager eventId={id} eventSlug={event.slug ?? event.id} initialTrackingLinks={(trackingLinks ?? []) as TrackingLink[]} /><CompTicketManager eventId={id} tickets={ordinaryTickets} initialCompTickets={(compTickets ?? []) as ComplimentaryTicket[]} /></div>,
+          attendees: <EventDetailTabs payments={formattedPayments} attendees={formattedAttendees} fixedTab="attendees" />,
+        }}
+      />
     </div>
   )
 }

@@ -43,20 +43,18 @@ export default function DashboardEventCard({ event, tickets, grossCollected }: P
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
-      <div className="relative aspect-[4/5] bg-gray-100">
+    <article className="create-card relative flex min-h-[126px] overflow-hidden p-3 transition-shadow hover:shadow-lg sm:block sm:p-0">
+      <div className="relative h-[108px] w-[88px] shrink-0 overflow-hidden rounded-[14px] bg-[#191917] sm:aspect-[4/5] sm:h-auto sm:w-auto sm:rounded-none">
         {poster ? (
           <div className="absolute inset-0">
             <PosterFrame src={poster} alt={event.name} sizes="(max-width: 1024px) 100vw, 33vw" className="h-full w-full" />
           </div>
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300">
-              <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
-            </svg>
+          <div className="create-display flex h-full w-full items-center justify-center text-lg text-white">
+            {event.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()}
           </div>
         )}
-        <span className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full ${status.color} backdrop-blur-sm`}>
+        <span className={`absolute left-3 top-3 hidden rounded-full px-2.5 py-1 text-xs font-semibold backdrop-blur-sm sm:block ${status.color}`}>
           {status.label}
         </span>
         {event.published && (
@@ -65,7 +63,7 @@ export default function DashboardEventCard({ event, tickets, grossCollected }: P
             onClick={copyLink}
             aria-label="Copy event link"
             title="Copy event link"
-            className="absolute top-3 right-3 inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-white/95 px-2 text-xs font-semibold text-gray-700 shadow-sm backdrop-blur hover:bg-white hover:text-[#3d3d3d] transition-colors"
+            className="create-focus absolute right-3 top-3 hidden h-9 min-w-9 items-center justify-center rounded-full bg-white/95 px-2 text-xs font-semibold text-gray-700 shadow-sm backdrop-blur transition-colors hover:bg-white hover:text-[#2565d0] sm:inline-flex"
           >
             {copied ? (
               'Copied!'
@@ -79,11 +77,11 @@ export default function DashboardEventCard({ event, tickets, grossCollected }: P
         )}
       </div>
 
-      <div className="p-5 flex flex-col flex-1">
-        <h3 className="font-semibold text-gray-900 text-base mb-1 line-clamp-1">{event.name}</h3>
-        <p className="text-sm text-gray-500 mb-4">{formatDate(event.date)} · {event.venue ?? 'No venue'}</p>
+      <div className="flex min-w-0 flex-1 flex-col px-4 py-2 sm:p-5">
+        <h3 className="create-display mb-1 line-clamp-2 text-[17px]">{event.name}</h3>
+        <p className="mb-3 truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-[#2565d0]">{formatDate(event.date)} · {event.venue ?? 'No venue'}</p>
 
-        <div className="flex gap-4 mb-4 mt-auto">
+        <div className="mb-4 mt-auto hidden gap-4 sm:flex">
           <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2.5 text-center">
             <p className="text-lg font-bold text-gray-900 leading-tight">
               {sold}{capacity !== null ? <span className="text-gray-400 text-sm font-normal">/{capacity}</span> : ''}
@@ -96,13 +94,19 @@ export default function DashboardEventCard({ event, tickets, grossCollected }: P
           </div>
         </div>
 
+        <div className="mt-auto sm:hidden">
+          <div className="mb-2 flex justify-end text-xs text-[var(--tikkitte-ink-soft)]">{sold}{capacity !== null ? `/${capacity}` : ''}</div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-[var(--tikkitte-cream-border)]"><div className="h-full rounded-full bg-[#2e6fe6]" style={{ width: `${capacity ? Math.min(100, sold / capacity * 100) : 0}%` }} /></div>
+        </div>
+
         <Link
           href={`/dashboard/events/${event.id}`}
-          className="w-full bg-gray-900 text-white text-sm font-semibold py-2.5 rounded-lg text-center hover:bg-gray-800 transition-colors"
+          className="create-focus hidden w-full rounded-full bg-[#191917] py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-black sm:block"
         >
           View details
         </Link>
       </div>
-    </div>
+      <Link href={`/dashboard/events/${event.id}`} className="create-focus absolute inset-0 rounded-[18px] sm:hidden"><span className="sr-only">View {event.name}</span></Link>
+    </article>
   )
 }

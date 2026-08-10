@@ -12,8 +12,8 @@ export default function AudienceTabs() {
   const pathname = usePathname()
 
   return (
-    <div className="mb-6 overflow-x-auto">
-      <div className="inline-flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+    <nav className="overflow-x-auto" aria-label="Audience sections">
+      <div className="inline-flex items-center gap-1 rounded-full bg-white p-1 ring-1 ring-[var(--tikkitte-cream-border)]">
         {tabs.map((tab) => {
           const active = tab.href === '/dashboard/audience'
             ? pathname === '/dashboard/audience'
@@ -22,8 +22,8 @@ export default function AudienceTabs() {
             <Link
               key={tab.href}
               href={tab.href}
-              className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                active ? 'bg-[#3d3d3d]/10 text-[#3d3d3d]' : 'text-gray-500 hover:bg-white'
+              className={`create-focus min-h-10 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                active ? 'bg-[#191917] text-white' : 'text-[var(--tikkitte-ink-soft)] hover:text-[var(--tikkitte-ink)]'
               }`}
             >
               {tab.label}
@@ -31,6 +31,6 @@ export default function AudienceTabs() {
           )
         })}
       </div>
-    </div>
+    </nav>
   )
 }

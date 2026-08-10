@@ -11,7 +11,7 @@ type Props = {
   initialCompTickets: ComplimentaryTicket[]
 }
 
-const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400'
+const inputClass = 'create-input min-h-11 text-sm placeholder:text-[var(--tikkitte-ink-faint)]'
 
 function formatSentAt(value: string) {
   return new Date(value).toLocaleDateString('en-US', {
@@ -94,7 +94,7 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
   }
 
   return (
-    <section className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <section className="create-card overflow-hidden">
       <div className="flex w-full items-start justify-between gap-4 p-5">
         <button
           type="button"
@@ -102,8 +102,8 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
           className="text-left"
           aria-expanded={isOpen}
         >
-          <span className="block font-semibold text-gray-900 text-sm">Complimentary tickets</span>
-          <span className="block text-xs text-gray-400 mt-1">
+          <span className="block text-left text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Complimentary tickets</span>
+          <span className="mt-1 block text-xs text-[var(--tikkitte-ink-faint)]">
             Tickets sent directly to recipients by email. Recipients can use the QR code without creating an account.
           </span>
         </button>
@@ -115,7 +115,7 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
               setShowForm((value) => !value)
             }}
             disabled={tickets.length === 0}
-            className="text-sm font-semibold text-[#3d3d3d] border border-[#3d3d3d] rounded-lg px-4 py-2 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:hover:bg-white"
+            className="create-focus min-h-10 rounded-full border border-[var(--tikkitte-cream-border)] px-5 text-sm font-semibold text-[#2565d0] hover:bg-[#f4f7fd] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {showForm ? 'Cancel' : '+ Send complimentary tickets'}
           </button>
@@ -133,28 +133,29 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
       </div>
 
       {isOpen && (
-        <div className="border-t border-gray-100 p-5">
+        <div className="border-t border-[var(--tikkitte-cream-border)] p-5">
           <div className="mb-4 flex flex-col gap-3">
             <div>
               {message && <p className="text-sm text-green-600">{message}</p>}
               {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
-            <div className="relative">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <label className="create-input flex min-h-11 items-center gap-3 rounded-full">
+              <span className="sr-only">Search complimentary ticket recipients</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-gray-400" aria-hidden="true">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.35-4.35" />
               </svg>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full border border-gray-200 bg-white text-gray-900 rounded-lg py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400"
+                className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--tikkitte-ink-faint)]"
                 placeholder="Search recipients by name or email"
               />
-            </div>
+            </label>
           </div>
 
           {showForm && (
-            <div className="mb-5 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+            <div className="mb-5 rounded-[18px] border border-[var(--tikkitte-cream-border)] bg-[var(--tikkitte-cream)] p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Recipient name</label>
@@ -235,7 +236,7 @@ export default function CompTicketManager({ eventId, tickets, initialCompTickets
                 type="button"
                 onClick={handleSubmit}
                 disabled={isPending || tickets.length === 0}
-                className="mt-4 bg-[#3d3d3d] text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#2a2a2a] transition-colors disabled:opacity-60"
+                className="create-focus mt-4 min-h-11 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60"
               >
                 {isPending ? 'Sending...' : 'Send tickets'}
               </button>

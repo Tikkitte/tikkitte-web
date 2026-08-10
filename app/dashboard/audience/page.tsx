@@ -1,24 +1,28 @@
 import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import AudienceTabs from './AudienceTabs'
-import FansClient, { type FanRow } from './FansClient'
+import AudienceHeader from './AudienceHeader'
+import FansClient, { type AudienceResponse } from './FansClient'
 
 export default async function AudiencePage() {
   const supabase = await createClient()
   const user = await getAuthedUser()
   if (!user) redirect('/login')
 
-  const { data: fans } = await supabase.rpc('get_organizer_fans')
+  const { data: audience, error } = await supabase.rpc('get_organizer_audience', {
+    p_page: 1,
+    p_page_size: 25,
+    p_filter: 'all',
+    p_search: '',
+  })
+
+  const initialAudience: AudienceResponse = error || !audience
+    ? { rows: [], total_count: 0, repeat_count: 0, new_this_month_count: 0, filtered_count: 0, page: 1, page_size: 25 }
+    : audience as AudienceResponse
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Audience</h1>
-        <p className="mt-1 text-sm text-gray-500">View and message the people who buy tickets to your events.</p>
-      </div>
-
-      <AudienceTabs />
-      <FansClient fans={(fans ?? []) as FanRow[]} />
+      <AudienceHeader />
+      <FansClient initialAudience={initialAudience} initialLoadFailed={Boolean(error || !audience)} />
     </div>
   )
 }

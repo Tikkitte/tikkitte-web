@@ -62,7 +62,7 @@ export default function SignupForm() {
             required
             value={name}
             onChange={e => setName(e.target.value)}
-            className="w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400"
+            className="create-input text-sm placeholder:text-[#8a887c]"
             placeholder="e.g. Club Aria Events"
           />
         </div>
@@ -76,7 +76,7 @@ export default function SignupForm() {
               setEmail(e.target.value)
               setAlreadyRegistered(false)
             }}
-            className="w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400"
+            className="create-input text-sm placeholder:text-[#8a887c]"
             placeholder="you@example.com"
           />
         </div>
@@ -87,15 +87,15 @@ export default function SignupForm() {
             required
             value={password}
             onChange={e => setPassword(e.target.value)}
-            className="w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400"
+            className="create-input text-sm placeholder:text-[#8a887c]"
             placeholder="At least 6 characters"
           />
         </div>
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#3d3d3d] text-white font-semibold py-3 rounded-lg hover:bg-[#2a2a2a] transition-colors disabled:opacity-60 mt-1"
+          className="create-focus mt-1 min-h-12 w-full rounded-full bg-[#191917] py-3 font-semibold text-white transition-colors hover:bg-black disabled:opacity-60"
         >
           {loading ? 'Submitting…' : 'Request access'}
         </button>
@@ -103,7 +103,7 @@ export default function SignupForm() {
 
       <p className="text-sm text-gray-500 mt-6">
         Already approved?{' '}
-        <Link href="/login" className="font-medium text-[#3d3d3d] hover:underline">
+        <Link href="/login" className="create-focus font-medium text-[#2565d0] hover:underline">
           Sign in
         </Link>
       </p>

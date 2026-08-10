@@ -101,6 +101,16 @@ export async function deletePayoutAccount(id: string): Promise<ActionResult> {
   if (!account) return { ok: false, message: 'Payout account not found.' }
   if (account.is_primary) return { ok: false, message: 'Cannot delete primary account.' }
 
+  const { data: referencedPayout } = await supabase
+    .from('payout')
+    .select('id')
+    .eq('payout_account_id', id)
+    .limit(1)
+    .maybeSingle()
+  if (referencedPayout) {
+    return { ok: false, message: 'This account is attached to payout history and cannot be deleted.' }
+  }
+
   const { error } = await supabase
     .from('payout_account')
     .delete()

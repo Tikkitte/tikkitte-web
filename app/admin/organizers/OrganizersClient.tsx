@@ -78,16 +78,31 @@ export default function OrganizersClient({ organizers }: Props) {
   ]
 
   return (
-    <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="inline-flex w-fit items-center gap-1 rounded-xl bg-gray-100 p-1">
+    <div className="space-y-5">
+      <section className="grid gap-3 sm:grid-cols-3" aria-label="Organizer totals">
+        {[
+          ['Pending approval', counts.pending],
+          ['Approved', counts.approved],
+          ['All organizers', counts.all],
+        ].map(([label, value]) => (
+          <div key={label} className="create-card p-5">
+            <p className="text-[13px] text-[var(--tikkitte-ink-faint)]">{label}</p>
+            <p className="create-display mt-1 text-[30px]">{Number(value).toLocaleString()}</p>
+          </div>
+        ))}
+      </section>
+
+      <section className="create-card overflow-hidden">
+      <div className="border-b border-[var(--tikkitte-cream-border)] p-4">
+        <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-full bg-[var(--tikkitte-cream)] p-1">
           {tabs.map((item) => (
             <button
               key={item.id}
               type="button"
               onClick={() => setTab(item.id)}
-              className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-                tab === item.id ? 'bg-[#3d3d3d]/10 text-[#3d3d3d]' : 'text-gray-500 hover:bg-white'
+              aria-pressed={tab === item.id}
+              className={`create-focus min-h-10 whitespace-nowrap rounded-full px-5 text-sm font-semibold transition-colors ${
+                tab === item.id ? 'bg-[#191917] text-white' : 'text-[var(--tikkitte-ink-soft)] hover:bg-white'
               }`}
             >
               {item.label} ({item.count})
@@ -96,45 +111,45 @@ export default function OrganizersClient({ organizers }: Props) {
         </div>
       </div>
 
-      {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
+      {error && <p role="alert" className="m-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
 
       {visibleOrganizers.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-200 px-5 py-8 text-center">
-          <p className="text-sm font-medium text-gray-700">No organizers in this view</p>
-          <p className="mt-1 text-sm text-gray-400">New organizer accounts will appear here.</p>
+        <div className="m-5 rounded-[16px] border border-dashed border-[var(--tikkitte-cream-border)] px-5 py-10 text-center">
+          <p className="text-sm font-semibold">No organizers in this view</p>
+          <p className="mt-1 text-sm text-[var(--tikkitte-ink-faint)]">New organizer accounts will appear here.</p>
         </div>
       ) : (
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-[var(--tikkitte-cream-border)]">
           {visibleOrganizers.map((organizer) => (
-            <div key={organizer.id} className="py-4 first:pt-0 last:pb-0">
+            <div key={organizer.id} className="px-5 py-4 transition-colors hover:bg-[var(--tikkitte-cream)]">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-start gap-3">
                   {organizer.logo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={organizer.logo_url} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
                   ) : (
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#3d3d3d]/10 text-sm font-bold text-[#3d3d3d]">
+                    <div className="create-display flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#2e6fe6] text-xs text-white">
                       {initialsFor(organizer.display_name)}
                     </div>
                   )}
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-semibold text-gray-900">{organizer.display_name}</p>
+                      <p className="font-semibold">{organizer.display_name}</p>
                       {organizer.approved && (
-                        <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
-                          APPROVED
+                        <span className="rounded-full bg-[#d9e4fa] px-2.5 py-1 text-[10px] font-bold uppercase text-[#2565d0]">
+                          Approved
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 truncate text-sm text-gray-600">{organizer.email}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
+                    <p className="mt-1 truncate text-sm text-[var(--tikkitte-ink-soft)]">{organizer.email}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--tikkitte-ink-faint)]">
                       <span>Joined {formatDate(organizer.created_at)}</span>
                       {organizer.slug && (
                         <Link
                           href={`/o/${organizer.slug}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-semibold text-[#3d3d3d] hover:text-[#2a2a2a]"
+                          className="create-focus font-semibold text-[#2565d0] hover:text-[#1f56b5]"
                         >
                           View public profile
                         </Link>
@@ -148,7 +163,7 @@ export default function OrganizersClient({ organizers }: Props) {
                     type="button"
                     onClick={() => runApprove(organizer.id)}
                     disabled={isPending && activeId === organizer.id}
-                    className="shrink-0 rounded-lg bg-[#3d3d3d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a] disabled:opacity-60"
+                    className="create-focus min-h-11 shrink-0 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60"
                   >
                     {isPending && activeId === organizer.id ? 'Approving...' : 'Approve'}
                   </button>
@@ -158,6 +173,7 @@ export default function OrganizersClient({ organizers }: Props) {
           ))}
         </div>
       )}
-    </section>
+      </section>
+    </div>
   )
 }

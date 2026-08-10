@@ -84,7 +84,7 @@ export default function MessageAttendeesButton({ eventId, lastAlertSentAt, atten
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">Message your attendees</h2>
-                <p className="mt-1 text-sm text-gray-500">Will be sent to all ticket holders for this event.</p>
+                <p className="mt-1 text-sm text-gray-500">Will be sent to all paid and free ticket holders for this event. Complimentary ticket recipients are not messaged.</p>
               </div>
               <button type="button" onClick={close} className="text-gray-400 hover:text-gray-600" aria-label="Close">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

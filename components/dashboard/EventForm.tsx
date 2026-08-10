@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Event, Ticket } from '@/lib/types'
+import PublishButton from '@/app/dashboard/events/[id]/PublishButton'
+import CancelButton from '@/app/dashboard/events/[id]/CancelButton'
 
 type TicketRow = {
   id?: string
@@ -33,6 +35,17 @@ const ARIA_PRESET = {
   venue: 'Aria',
   mapsLink: 'https://maps.app.goo.gl/vUpGGgAAwqAgAEkP9?g_st=ipc',
 } as const
+
+const EDIT_SECTIONS = [
+  ['details', 'Event details'],
+  ['event-image', 'Event image'],
+  ['preview-media', 'Preview media'],
+  ['scanner', 'Scanner PIN'],
+  ['tickets', 'Ticket types'],
+  ['status', 'Event status'],
+] as const
+
+type EditSectionId = (typeof EDIT_SECTIONS)[number][0]
 
 const emptyTicketRow: TicketRow = {
   label: '',
@@ -76,6 +89,15 @@ function formatPreviewTime(timeStr: string) {
   const am = hh < 12
   const h12 = ((hh + 11) % 12) + 1
   return `${h12}:${String(mm).padStart(2, '0')} ${am ? 'AM' : 'PM'}`
+}
+
+function LockIcon() {
+  return (
+    <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="10" width="14" height="10" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  )
 }
 
 function EventPreviewCard({
@@ -138,6 +160,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
   const router = useRouter()
   const isEdit = !!event
   const fileRef = useRef<HTMLInputElement>(null)
+  const allowNavigationRef = useRef(false)
 
   const [name, setName] = useState(event?.name ?? '')
   const [date, setDate] = useState(event?.date ?? '')
@@ -177,6 +200,48 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
   const [scannerPin, setScannerPin] = useState(event?.scanner_pin ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [activeSection, setActiveSection] = useState<EditSectionId>('details')
+
+  const buildEventPayload = () => {
+    const filteredPreviewVideos = previewVideos.map(v => v.trim()).filter(Boolean)
+    return {
+      name,
+      date,
+      time: time + ':00',
+      end_date: endDate || null,
+      end_time: endTime ? endTime + ':00' : null,
+      venue: venue || null,
+      maps_link: mapsLink || null,
+      floor_plan_venue: floorPlanVenue,
+      description: description || null,
+      image: imageUrl ? [imageUrl] : event?.image ?? null,
+      preview_images: previewImages.length > 0 ? previewImages : null,
+      preview_videos: filteredPreviewVideos.length > 0 ? filteredPreviewVideos : null,
+      scanner_pin: scannerPin.trim() || null,
+    }
+  }
+
+  const buildTicketPayloads = () =>
+    ticketRows.map(row => ({
+      id: row.id ?? null,
+      label: row.label.trim(),
+      price: Number(row.price),
+      total_quantity: row.total_quantity === '' ? null : Number(row.total_quantity),
+      min_per_order: Number(row.min_per_order || '1'),
+      max_per_order: row.max_per_order === '' ? null : Number(row.max_per_order),
+      sale_start_date: row.sale_start_date || null,
+      sale_start_time: row.sale_start_time ? row.sale_start_time + ':00' : null,
+      sale_end_date: row.sale_end_date || null,
+      sale_end_time: row.sale_end_time ? row.sale_end_time + ':00' : null,
+    }))
+
+  // Keep the submitted payload and PIN-specific save warning in sync.
+  const currentPayload = { event: buildEventPayload(), tickets: buildTicketPayloads() }
+  const lastSavedSnapshotRef = useRef(currentPayload)
+  const isDirty = JSON.stringify(currentPayload) !== JSON.stringify(lastSavedSnapshotRef.current)
+  const pinDirty = currentPayload.event.scanner_pin !== lastSavedSnapshotRef.current.event.scanner_pin
+  const saveDisabled = loading || imageUploading || previewUploading
+  const saveButtonLabel = loading ? 'Saving…' : isEdit ? 'Save changes' : 'Save as draft'
 
   const handlePreviewImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
@@ -365,41 +430,13 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
 
     setLoading(true)
     const supabase = createClient()
-
-    const filteredPreviewVideos = previewVideos.map(v => v.trim()).filter(Boolean)
-    const eventPayload = {
-      name,
-      date,
-      time: time + ':00',
-      end_date: endDate || null,
-      end_time: endTime ? endTime + ':00' : null,
-      venue: venue || null,
-      maps_link: mapsLink || null,
-      floor_plan_venue: floorPlanVenue,
-      description: description || null,
-      image: imageUrl ? [imageUrl] : event?.image ?? null,
-      preview_images: previewImages.length > 0 ? previewImages : null,
-      preview_videos: filteredPreviewVideos.length > 0 ? filteredPreviewVideos : null,
-      scanner_pin: scannerPin.trim() || null,
-    }
-    const ticketPayloads = ticketRows.map(row => ({
-      id: row.id ?? null,
-      label: row.label.trim(),
-      price: Number(row.price),
-      total_quantity: row.total_quantity === '' ? null : Number(row.total_quantity),
-      min_per_order: Number(row.min_per_order || '1'),
-      max_per_order: row.max_per_order === '' ? null : Number(row.max_per_order),
-      sale_start_date: row.sale_start_date || null,
-      sale_start_time: row.sale_start_time ? row.sale_start_time + ':00' : null,
-      sale_end_date: row.sale_end_date || null,
-      sale_end_time: row.sale_end_time ? row.sale_end_time + ':00' : null,
-    }))
+    const payloadToSave = currentPayload
 
     try {
       const { data: savedEventId, error: saveError } = await supabase.rpc('save_event_with_tickets', {
         p_event_id: event?.id ?? null,
-        p_event: eventPayload,
-        p_tickets: ticketPayloads,
+        p_event: payloadToSave.event,
+        p_tickets: payloadToSave.tickets,
         p_original_ticket_ids: (tickets ?? []).map(ticket => ticket.id),
       })
 
@@ -408,6 +445,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
         return
       }
 
+      lastSavedSnapshotRef.current = payloadToSave
       router.push(`/dashboard/events/${savedEventId}`)
       router.refresh()
     } catch {
@@ -452,14 +490,83 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
     return () => clearTimeout(timer)
   }, [baseSlug, event])
 
+  useEffect(() => {
+    if (!isDirty) return
+    const warnBeforeLeaving = (leaveEvent: BeforeUnloadEvent) => {
+      if (allowNavigationRef.current) return
+      leaveEvent.preventDefault()
+    }
+    const warnBeforeLinkNavigation = (clickEvent: MouseEvent) => {
+      if (allowNavigationRef.current || clickEvent.defaultPrevented) return
+      const target = clickEvent.target
+      const anchor = target instanceof Element ? target.closest('a') : null
+      if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) return
+      const destination = new URL(anchor.href, window.location.href)
+      if (destination.origin !== window.location.origin || destination.hash && destination.pathname === window.location.pathname) return
+      if (!window.confirm('Discard your unsaved changes and leave this page?')) {
+        clickEvent.preventDefault()
+        clickEvent.stopPropagation()
+        return
+      }
+      allowNavigationRef.current = true
+    }
+    window.addEventListener('beforeunload', warnBeforeLeaving)
+    document.addEventListener('click', warnBeforeLinkNavigation, true)
+    return () => {
+      window.removeEventListener('beforeunload', warnBeforeLeaving)
+      document.removeEventListener('click', warnBeforeLinkNavigation, true)
+    }
+  }, [isDirty])
+
+  useEffect(() => {
+    if (!isEdit) return
+
+    const visibleSections = event?.cancelled
+      ? EDIT_SECTIONS.filter(([id]) => id !== 'status')
+      : EDIT_SECTIONS
+    const firstSection = document.getElementById(visibleSections[0][0])
+    const scrollRoot = firstSection?.closest('main')
+    if (!(scrollRoot instanceof HTMLElement)) return
+
+    let animationFrame = 0
+    const updateActiveSection = () => {
+      const rootRect = scrollRoot.getBoundingClientRect()
+      const marker = rootRect.top + Math.min(180, rootRect.height * 0.26)
+      let nextSection: EditSectionId = visibleSections[0][0]
+
+      for (const [id] of visibleSections) {
+        const section = document.getElementById(id)
+        if (section && section.getBoundingClientRect().top <= marker) nextSection = id
+      }
+
+      if (scrollRoot.scrollTop + scrollRoot.clientHeight >= scrollRoot.scrollHeight - 8) {
+        nextSection = visibleSections[visibleSections.length - 1][0]
+      }
+      setActiveSection((current) => current === nextSection ? current : nextSection)
+    }
+    const scheduleUpdate = () => {
+      window.cancelAnimationFrame(animationFrame)
+      animationFrame = window.requestAnimationFrame(updateActiveSection)
+    }
+
+    scheduleUpdate()
+    scrollRoot.addEventListener('scroll', scheduleUpdate, { passive: true })
+    window.addEventListener('resize', scheduleUpdate)
+    return () => {
+      window.cancelAnimationFrame(animationFrame)
+      scrollRoot.removeEventListener('scroll', scheduleUpdate)
+      window.removeEventListener('resize', scheduleUpdate)
+    }
+  }, [event?.cancelled, isEdit])
+
   const slugPreview = resolvedSlug ? 'tikkitte.com/e/' + resolvedSlug : ''
 
-  const inputClass = 'w-full border border-gray-200 bg-white text-gray-900 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#3d3d3d] placeholder:text-gray-400 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500'
+  const inputClass = 'create-input w-full rounded-2xl border border-[#ded8c9] bg-[#fbfaf6] px-4 py-3 text-sm text-[#25251f] outline-none placeholder:text-[#9a978d] disabled:cursor-not-allowed disabled:bg-[#eeeae0] disabled:text-[#77746b]'
 
   const form = (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto w-full flex flex-col gap-6">
+    <form onSubmit={handleSubmit} className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-24">
       {/* Basic info */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
+      <div id="details" className="create-card flex scroll-mt-8 flex-col gap-4 p-6">
         <h2 className="font-semibold text-gray-900">Event details</h2>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Event name</label>
@@ -502,7 +609,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
           </div>
         </div>
         <div>
-          <label htmlFor="floor-plan-venue" className="block text-sm font-medium text-gray-700 mb-1">Venue type</label>
+          <label htmlFor="floor-plan-venue" className="block text-sm font-medium text-gray-700 mb-1">Venue</label>
           <select
             id="floor-plan-venue"
             value={floorPlanVenue ?? 'other'}
@@ -520,16 +627,22 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
             className={inputClass}
           >
             <option value={ARIA_PRESET.value}>{ARIA_PRESET.label}</option>
-            <option value="other">Other</option>
+            <option value="other">Custom venue</option>
           </select>
         </div>
         <div>
           <label htmlFor="venue-name" className="block text-sm font-medium text-gray-700 mb-1">Venue name</label>
-          <input id="venue-name" value={venue} onChange={e => setVenue(e.target.value)} disabled={floorPlanVenue === ARIA_PRESET.value} className={inputClass} placeholder="e.g. Club Aria, Accra" />
+          <div className="relative">
+            <input id="venue-name" value={venue} onChange={e => setVenue(e.target.value)} disabled={floorPlanVenue === ARIA_PRESET.value} className={inputClass} style={floorPlanVenue === ARIA_PRESET.value ? { paddingRight: '3rem' } : undefined} placeholder="e.g. Club Aria, Accra" />
+            {floorPlanVenue === ARIA_PRESET.value && <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#77746b]" title="Managed by the selected venue"><LockIcon /></span>}
+          </div>
         </div>
         <div>
           <label htmlFor="maps-link" className="block text-sm font-medium text-gray-700 mb-1">Google Maps Link <span className="font-normal text-gray-400">(optional)</span></label>
-          <input id="maps-link" type="url" value={mapsLink} onChange={e => setMapsLink(e.target.value)} disabled={floorPlanVenue === ARIA_PRESET.value} className={inputClass} placeholder="https://maps.google.com/..." />
+          <div className="relative">
+            <input id="maps-link" type="url" value={mapsLink} onChange={e => setMapsLink(e.target.value)} disabled={floorPlanVenue === ARIA_PRESET.value} className={inputClass} style={floorPlanVenue === ARIA_PRESET.value ? { paddingRight: '3rem' } : undefined} placeholder="https://maps.google.com/..." />
+            {floorPlanVenue === ARIA_PRESET.value && <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#77746b]" title="Managed by the selected venue"><LockIcon /></span>}
+          </div>
           <p className="text-xs text-gray-400 mt-1">
             {floorPlanVenue === ARIA_PRESET.value
               ? 'ARIA’s verified venue details are used for this event.'
@@ -548,7 +661,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
       </div>
 
       {/* Image upload */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-3">
+      <div id="event-image" className="create-card flex scroll-mt-8 flex-col gap-3 p-6">
         <h2 className="font-semibold text-gray-900">Event image</h2>
         {imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -569,7 +682,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
       </div>
 
       {/* Preview media */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
+      <div id="preview-media" className="create-card flex scroll-mt-8 flex-col gap-4 p-6">
         <div>
           <h2 className="font-semibold text-gray-900">Preview media</h2>
           <p className="text-xs text-gray-400 mt-1">Show attendees what to expect: photos from past events and YouTube links.</p>
@@ -648,7 +761,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
       </div>
 
       {/* Scanner PIN */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-3">
+      <div id="scanner" className="create-card flex scroll-mt-8 flex-col gap-3 p-6">
         <div>
           <h2 className="font-semibold text-gray-900">Scanner PIN</h2>
           <p className="text-xs text-gray-400 mt-1">
@@ -657,7 +770,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
             to scan tickets at the door.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <input
             type="tel"
             inputMode="numeric"
@@ -683,11 +796,16 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
               Remove
             </button>
           )}
+          {pinDirty && (
+            <span role="status" className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
+              This PIN change won’t take effect until you save.
+            </span>
+          )}
         </div>
       </div>
 
       {/* Ticket types */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
+      <div id="tickets" className="create-card flex scroll-mt-8 flex-col gap-4 p-6">
         <div>
           <h2 className="font-semibold text-gray-900">Ticket types</h2>
           {event?.ever_published && (
@@ -844,26 +962,86 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
         </button>
       </div>
 
+      {isEdit && !event.cancelled && (
+        <section id="status" className="create-card scroll-mt-8 overflow-hidden" aria-labelledby="status-title">
+          <div className="p-6">
+            <h2 id="status-title" className="font-semibold text-[#25251f]">Event status</h2>
+            <p className="mt-1 text-sm text-[#77746b]">Control when this event is visible and available to attendees.</p>
+            {isDirty && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">Save or discard your changes before changing the event status.</p>}
+          </div>
+
+          <fieldset disabled={isDirty} className="border-t border-[var(--tikkitte-cream-border)] disabled:opacity-50">
+            <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="max-w-lg">
+                <h3 className="text-sm font-semibold text-[#25251f]">{event.published ? 'Published' : 'Draft'}</h3>
+                <p className="mt-1 text-sm leading-6 text-[#77746b]">
+                  {event.published ? 'Unpublishing hides the event page and pauses new checkouts.' : 'Publish when every detail is ready for attendees.'}
+                </p>
+                {!event.ever_published && <p className="mt-2 text-xs leading-5 text-[#626f84]">After publishing, saved ticket types cannot be removed. Their details and sale windows can still be edited.</p>}
+              </div>
+              <PublishButton eventId={event.id} published={event.published} />
+            </div>
+
+            <div className="flex flex-col gap-4 border-t border-red-100 bg-[#fff9f7] p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="max-w-lg">
+                <h3 className="text-sm font-semibold text-[#8d211d]">Cancel event</h3>
+                <p className="mt-1 text-sm leading-6 text-[#735f5a]">Permanently cancel this event and begin refunds for ticket holders. This cannot be undone.</p>
+              </div>
+              <CancelButton eventId={event.id} />
+            </div>
+          </fieldset>
+        </section>
+      )}
+
       {error && <p className="text-sm text-red-500">{error}</p>}
 
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={loading || imageUploading}
-          className={`${isEdit ? 'bg-[#3d3d3d] hover:bg-[#2a2a2a]' : 'bg-gray-900 hover:bg-gray-800'} text-white font-semibold px-8 py-3 rounded-xl transition-colors disabled:opacity-60`}
-        >
-          {loading ? 'Saving…' : (isEdit ? 'Save changes' : 'Save as draft')}
-        </button>
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="text-gray-500 font-medium px-6 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-        >
-          Cancel
-        </button>
+      <div className={isEdit ? 'sticky bottom-3 z-20 flex items-center justify-between gap-3 rounded-[22px] border border-[#d8d2c4] bg-white/95 p-3 shadow-[0_12px_40px_rgba(38,37,31,0.14)] backdrop-blur' : 'flex gap-3'}>
+        {isEdit && (
+          <p className="hidden pl-2 text-sm font-medium text-[#6d6a60] sm:block" role="status">
+            {isDirty ? 'You have unsaved changes' : 'All changes saved'}
+          </p>
+        )}
+        <div className="ml-auto flex gap-2">
+          <button
+            type="submit"
+            disabled={saveDisabled || (isEdit && !isDirty)}
+            className="create-focus rounded-full bg-[#2766d2] px-7 py-3 font-semibold text-white transition-colors hover:bg-[#1f56b5] disabled:opacity-50"
+          >
+            {saveButtonLabel}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (isEdit && isDirty) {
+                allowNavigationRef.current = true
+                window.location.reload()
+              }
+              else router.back()
+            }}
+            className="create-focus rounded-full px-5 py-3 font-medium text-[#666359] transition-colors hover:bg-[#eeeae0]"
+          >
+            {isEdit && isDirty ? 'Discard' : 'Cancel'}
+          </button>
+        </div>
       </div>
     </form>
   )
+
+  if (!showPreview && isEdit) {
+    const sections = event?.cancelled ? EDIT_SECTIONS.filter(([id]) => id !== 'status') : EDIT_SECTIONS
+    return (
+      <div className="grid items-start gap-8 lg:grid-cols-[180px_minmax(0,1fr)]">
+        <nav className="sticky top-8 hidden rounded-[22px] border border-[#ded8c9] bg-white p-3 lg:block" aria-label="Event form sections">
+          {sections.map(([id, label]) => (
+            <a key={id} href={`#${id}`} aria-current={activeSection === id ? 'location' : undefined} className={`create-focus block rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${activeSection === id ? 'bg-[#e4ecfb] text-[#245dbc]' : 'text-[#666359] hover:bg-[#eeeae0] hover:text-[#25251f]'}`}>
+              {label}
+            </a>
+          ))}
+        </nav>
+        {form}
+      </div>
+    )
+  }
 
   if (!showPreview) return form
 

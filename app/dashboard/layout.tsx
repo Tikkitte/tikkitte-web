@@ -21,15 +21,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-gray-50">
+    <div className="create-shell flex h-dvh overflow-hidden bg-[var(--tikkitte-cream)]">
       <DashboardSidebar
         displayName={profile.display_name ?? user.email ?? 'Organizer'}
         logoUrl={profile.logo_url ?? null}
         signOutAction={signOut}
       />
-      <div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 md:px-8 md:py-8">
-          <div className="mx-auto w-full max-w-6xl">
+      <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-8 pt-[max(24px,env(safe-area-inset-top))] md:px-8 md:py-8 lg:px-10">
+          <div className="mx-auto w-full max-w-[1220px]">
             {children}
           </div>
         </main>

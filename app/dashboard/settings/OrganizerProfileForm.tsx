@@ -16,8 +16,8 @@ type Props = {
   snapchatUrl: string
 }
 
-const inputClass = 'w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3d3d3d]'
-const socialInputClass = 'w-full rounded-lg border border-gray-200 bg-white px-10 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3d3d3d]'
+const inputClass = 'create-input text-sm placeholder:text-[var(--tikkitte-ink-faint)]'
+const socialInputClass = 'min-w-0 flex-1 bg-transparent text-sm text-[var(--tikkitte-ink)] outline-none placeholder:text-[var(--tikkitte-ink-faint)]'
 
 type SocialErrors = {
   tiktokUrl?: string
@@ -202,8 +202,8 @@ export default function OrganizerProfileForm({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <h2 className="mb-5 text-sm font-semibold text-gray-900">Profile</h2>
+      <section className="create-card p-6">
+        <h2 className="mb-5 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Organizer profile</h2>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <p className="mb-2 block text-sm font-medium text-gray-700">Profile photo</p>
@@ -212,7 +212,7 @@ export default function OrganizerProfileForm({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrlValue} alt="" className="h-16 w-16 rounded-full object-cover" />
               ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#3d3d3d]/10 text-2xl font-bold text-[#3d3d3d]">
+                <div className="create-display flex h-16 w-16 items-center justify-center rounded-full bg-[#2e6fe6] text-xl text-white">
                   {name.trim()[0]?.toUpperCase() ?? 'T'}
                 </div>
               )}
@@ -227,7 +227,7 @@ export default function OrganizerProfileForm({
                 type="button"
                 onClick={() => avatarFileRef.current?.click()}
                 disabled={photoUploading}
-                className="rounded-lg border border-[#3d3d3d] px-4 py-2 text-sm font-semibold text-[#3d3d3d] transition-colors hover:bg-gray-100 disabled:opacity-60"
+                className="create-focus min-h-11 rounded-full border border-[var(--tikkitte-cream-border)] px-5 text-sm font-semibold transition-colors hover:border-[var(--tikkitte-ink)] disabled:opacity-60"
               >
                 {photoUploading ? 'Uploading...' : 'Upload photo'}
               </button>
@@ -284,8 +284,8 @@ export default function OrganizerProfileForm({
                 <label htmlFor="tiktok-url" className="mb-1.5 block text-sm font-medium text-gray-700">
                   TikTok
                 </label>
-                <div className="relative">
-                  <TikTokIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <div className="create-input flex items-center gap-3">
+                  <TikTokIcon className="shrink-0 text-[var(--tikkitte-ink-faint)]" />
                   <input
                     id="tiktok-url"
                     value={tiktokUrlValue}
@@ -304,8 +304,8 @@ export default function OrganizerProfileForm({
                 <label htmlFor="instagram-url" className="mb-1.5 block text-sm font-medium text-gray-700">
                   Instagram
                 </label>
-                <div className="relative">
-                  <InstagramIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <div className="create-input flex items-center gap-3">
+                  <InstagramIcon className="shrink-0 text-[var(--tikkitte-ink-faint)]" />
                   <input
                     id="instagram-url"
                     value={instagramUrlValue}
@@ -324,8 +324,8 @@ export default function OrganizerProfileForm({
                 <label htmlFor="snapchat-url" className="mb-1.5 block text-sm font-medium text-gray-700">
                   Snapchat
                 </label>
-                <div className="relative">
-                  <SnapchatIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <div className="create-input flex items-center gap-3">
+                  <SnapchatIcon className="shrink-0 text-[var(--tikkitte-ink-faint)]" />
                   <input
                     id="snapchat-url"
                     value={snapchatUrlValue}
@@ -342,14 +342,14 @@ export default function OrganizerProfileForm({
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          {message && <p className="text-sm text-green-600">{message}</p>}
+          {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+          {message && <p role="status" className="text-sm text-green-700">{message}</p>}
 
           <div className="flex justify-end">
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-lg bg-[#3d3d3d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a] disabled:opacity-60"
+              className="create-focus min-h-11 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60"
             >
               {isPending ? 'Saving...' : 'Save changes'}
             </button>
@@ -357,7 +357,7 @@ export default function OrganizerProfileForm({
         </form>
       </section>
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <section className="create-card p-6">
         <h2 className="mb-4 text-sm font-semibold text-gray-900">Account</h2>
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Email</p>

@@ -16,12 +16,6 @@ const RANGES: { label: string; value: Range }[] = [
   { label: 'All', value: 'all' },
 ]
 
-const GRANULARITIES: { label: string; value: Granularity }[] = [
-  { label: 'Day', value: 'daily' },
-  { label: 'Week', value: 'weekly' },
-  { label: 'Month', value: 'monthly' },
-]
-
 function cutoffDate(range: Range): Date | null {
   const now = new Date()
   switch (range) {
@@ -122,6 +116,11 @@ export default function DashboardRevenueChart({ payments }: { payments: PaymentR
     [payments, range, granularity]
   )
 
+  const selectRange = (nextRange: Range) => {
+    setRange(nextRange)
+    setGranularity(nextRange === '30d' ? 'daily' : nextRange === '3m' ? 'weekly' : 'monthly')
+  }
+
   if (payments.length === 0) {
     return (
       <div className="flex h-56 items-center justify-center text-sm text-gray-400">
@@ -132,16 +131,18 @@ export default function DashboardRevenueChart({ payments }: { payments: PaymentR
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-1">
+        <div className="flex items-center gap-1">
           {RANGES.map((r) => (
             <button
               key={r.value}
-              onClick={() => setRange(r.value)}
-              className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+              type="button"
+              onClick={() => selectRange(r.value)}
+              aria-pressed={range === r.value}
+              className={`create-focus rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                 range === r.value
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-[#191917] text-white'
+                  : 'text-[#8a887c] hover:text-[#191917]'
               }`}
             >
               {r.label}
@@ -149,21 +150,6 @@ export default function DashboardRevenueChart({ payments }: { payments: PaymentR
           ))}
         </div>
 
-        <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1">
-          {GRANULARITIES.map((g) => (
-            <button
-              key={g.value}
-              onClick={() => setGranularity(g.value)}
-              className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
-                granularity === g.value
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {g.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       {data.length === 0 ? (
@@ -176,20 +162,20 @@ export default function DashboardRevenueChart({ payments }: { payments: PaymentR
             <AreaChart data={data}>
               <defs>
                 <linearGradient id="dashRevGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#3d3d3d" stopOpacity={0.15} />
-                  <stop offset="100%" stopColor="#3d3d3d" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#2e6fe6" stopOpacity={0.14} />
+                  <stop offset="100%" stopColor="#2e6fe6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+              <CartesianGrid strokeDasharray="1 4" stroke="#e7e2d4" vertical={false} />
               <XAxis
                 dataKey="date"
-                tick={{ fill: '#9ca3af', fontSize: 11 }}
+                tick={{ fill: '#8a887c', fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
-                tick={{ fill: '#9ca3af', fontSize: 11 }}
+                tick={{ fill: '#8a887c', fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
               />
@@ -211,11 +197,11 @@ export default function DashboardRevenueChart({ payments }: { payments: PaymentR
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#3d3d3d"
+                stroke="#2e6fe6"
                 strokeWidth={2.5}
                 fill="url(#dashRevGradient)"
                 dot={false}
-                activeDot={{ r: 4, fill: '#3d3d3d', stroke: '#fff', strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: '#2e6fe6', stroke: '#fff', strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

@@ -28,8 +28,9 @@ export default function CancelButton({ eventId }: { eventId: string }) {
   return (
     <>
       <button
+        type="button"
         onClick={() => { setError(null); setConfirming(true) }}
-        className="text-sm font-semibold px-5 py-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+        className="create-focus min-h-11 shrink-0 rounded-full border border-red-200 px-6 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
       >
         Cancel event
       </button>

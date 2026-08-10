@@ -16,10 +16,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!adminRow) redirect('/dashboard')
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminNav />
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 md:px-8">
-        {children}
+    <div className="create-shell flex min-h-dvh flex-col bg-[var(--tikkitte-cream)] md:flex-row">
+      <AdminNav displayName={user.email ?? 'Administrator'} />
+      <main className="min-w-0 flex-1 px-4 py-7 md:px-8 md:py-8 lg:px-10">
+        <div className="mx-auto w-full max-w-[1220px]">{children}</div>
       </main>
     </div>
   )

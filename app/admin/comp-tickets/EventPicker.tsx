@@ -19,7 +19,7 @@ export default function EventPicker({ events, selectedEventId }: Props) {
 
   return (
     <div>
-      <label htmlFor="comp-ticket-event" className="mb-1.5 block text-sm font-medium text-gray-700">
+      <label htmlFor="comp-ticket-event" className="mb-1.5 block text-sm font-medium">
         Event
       </label>
       <select
@@ -35,7 +35,7 @@ export default function EventPicker({ events, selectedEventId }: Props) {
             })
           })
         }}
-        className="min-h-11 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus-visible:border-[#3d3d3d] focus-visible:ring-2 focus-visible:ring-[#3d3d3d]/20 disabled:cursor-wait disabled:bg-gray-50 disabled:text-gray-500"
+        className="create-input min-h-11 text-sm disabled:cursor-wait disabled:bg-[var(--tikkitte-cream)] disabled:text-[var(--tikkitte-ink-faint)]"
       >
         {events.map((event) => (
           <option key={event.id} value={event.id}>
@@ -43,7 +43,7 @@ export default function EventPicker({ events, selectedEventId }: Props) {
           </option>
         ))}
       </select>
-      <p className="mt-1.5 text-xs text-gray-500" aria-live="polite">
+      <p className="mt-1.5 text-xs text-[var(--tikkitte-ink-faint)]" aria-live="polite">
         {isPending ? 'Loading event tickets…' : 'Choose the event receiving the complimentary ticket.'}
       </p>
     </div>

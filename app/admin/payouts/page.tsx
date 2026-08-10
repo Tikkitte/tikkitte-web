@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Payout, PayoutAccount } from '@/lib/types'
 import PayoutsClient, { type PayoutAdminRow } from './PayoutsClient'
+import AdminPageHeader from '../AdminPageHeader'
 
 type OrganizerSummary = {
   id: string
@@ -44,10 +45,7 @@ export default async function AdminPayoutsPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Payouts</h1>
-        <p className="mt-1 text-sm text-gray-500">Confirm payouts once they have been sent.</p>
-      </div>
+      <AdminPageHeader title="Payouts" description="Review payout destinations and confirm transfers after they have been sent." />
       <PayoutsClient rows={rows} />
     </div>
   )

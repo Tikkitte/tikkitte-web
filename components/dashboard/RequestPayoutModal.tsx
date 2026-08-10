@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import { requestPayout } from '@/app/dashboard/payout-actions'
-import { inputClass } from './inputStyles'
 
 type Props = {
   availableBalance: number
@@ -90,7 +89,7 @@ export default function RequestPayoutModal({ availableBalance, hasPayoutAccount,
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h2 id="request-payout-title" className="text-lg font-bold text-gray-900">Request payout</h2>
-            <p className="mt-1 text-sm text-gray-500">Payouts are processed after approval.</p>
+            <p className="mt-1 text-sm text-gray-500">Payouts arrive within 3–5 business days of request.</p>
           </div>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -123,8 +122,8 @@ export default function RequestPayoutModal({ availableBalance, hasPayoutAccount,
 
               <div>
                 <label htmlFor="payout-amount" className="mb-1.5 block text-sm font-medium text-gray-700">Amount</label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">
+                <div className={`flex items-center gap-3 rounded-lg border bg-white px-4 py-2.5 focus-within:ring-2 focus-within:ring-[#3d3d3d] ${showValidationMessage ? 'border-red-300' : 'border-gray-200'}`}>
+                  <span className="shrink-0 text-sm font-semibold text-gray-500">
                     GHS
                   </span>
                   <input
@@ -136,7 +135,7 @@ export default function RequestPayoutModal({ availableBalance, hasPayoutAccount,
                       setAmount(event.target.value)
                       setServerError(null)
                     }}
-                    className={`${inputClass} pl-14 ${showValidationMessage ? 'border-red-300 focus:ring-red-100' : ''}`}
+                    className="min-w-0 flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
                     placeholder="0.00"
                   />
                 </div>

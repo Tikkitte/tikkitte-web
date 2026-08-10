@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Static design handoff exports are reference artifacts, not app source.
     "design/**",
+    "codex-briefs/**",
+    // Vendored, pre-built package output is linted in its source repository.
+    "vendor/tikkitte-ui/dist/**",
   ]),
 ]);
 

@@ -23,7 +23,7 @@ export default function HowItWorks() {
           ))}
         </div>
 
-        <Link href="https://create.tikkitte.com/signup" className="mt-9 inline-block rounded-full bg-[#191917] px-8 py-[15px] text-base font-bold !text-white hover:bg-black">
+        <Link href="/signup" className="mt-9 inline-block rounded-full bg-[#191917] px-8 py-[15px] text-base font-bold !text-white hover:bg-black">
           Get started for free →
         </Link>
       </div>

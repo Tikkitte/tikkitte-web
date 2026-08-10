@@ -1,0 +1,385 @@
+/**
+ * Tikkitte UI — design tokens and font faces.
+ * Distilled from tikkitte.com's public marketing/ticketing pages.
+ */
+
+@font-face {
+  font-family: "Anton";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/Anton-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/SpaceGrotesk-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/SpaceGrotesk-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/SpaceGrotesk-Bold.woff2") format("woff2");
+}
+
+:root {
+  /* Color — cream/ink/blue, the palette tikkitte.com actually uses */
+  --tikkitte-cream: #f4f2ec;
+  --tikkitte-cream-border: #e7e2d4;
+  --tikkitte-ink: #191917;
+  --tikkitte-ink-soft: #5f5d54;
+  --tikkitte-ink-faint: #8a887c;
+  --tikkitte-white: #ffffff;
+  --tikkitte-blue: #2565d0;
+  --tikkitte-blue-hover: #1e56b5;
+  --tikkitte-blue-bright: #2e6fe6;
+  --tikkitte-blue-tint: #bcd2f7;
+  --tikkitte-blue-tint-soft: #d9e4fa;
+
+  /* Type */
+  --tikkitte-font-display: "Anton", ui-sans-serif, system-ui, sans-serif;
+  --tikkitte-font-body: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+
+  /* Radius — pills for actions, soft rounding for cards */
+  --tikkitte-radius-pill: 999px;
+  --tikkitte-radius-card: 18px;
+  --tikkitte-radius-card-lg: 24px;
+
+  /* Shadow */
+  --tikkitte-shadow-card: 0 40px 90px rgba(25, 25, 23, 0.16);
+}
+
+:root[data-theme="dark"] {
+  --tikkitte-cream: #17171a;
+  --tikkitte-cream-border: #322f28;
+  --tikkitte-ink: #f4f2ec;
+  --tikkitte-ink-soft: #c9c6ba;
+  --tikkitte-ink-faint: #8a887c;
+  --tikkitte-white: #201f1c;
+  --tikkitte-blue-tint: #24334f;
+  --tikkitte-blue-tint-soft: #1c2740;
+}
+
+/* Tikkitte UI — component styles. Plain CSS, no utility framework, so this
+   ships cleanly into any host app. */
+
+.tk-reset {
+  box-sizing: border-box;
+  font-family: var(--tikkitte-font-body);
+  color: var(--tikkitte-ink);
+}
+
+/* Button */
+.tk-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--tikkitte-font-body);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1;
+  border-radius: var(--tikkitte-radius-pill);
+  border: 1.5px solid transparent;
+  padding: 14px 28px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+.tk-button:active {
+  transform: translateY(1px);
+}
+.tk-button:focus-visible {
+  outline: 2px solid var(--tikkitte-blue);
+  outline-offset: 2px;
+}
+.tk-button--sm {
+  padding: 9px 18px;
+  font-size: 13.5px;
+}
+.tk-button--lg {
+  padding: 16px 34px;
+  font-size: 17px;
+}
+.tk-button--primary {
+  background: var(--tikkitte-blue);
+  color: var(--tikkitte-white);
+}
+.tk-button--primary:hover {
+  background: var(--tikkitte-blue-hover);
+}
+.tk-button--secondary {
+  background: transparent;
+  color: var(--tikkitte-ink);
+  border-color: var(--tikkitte-cream-border);
+}
+.tk-button--secondary:hover {
+  border-color: var(--tikkitte-ink);
+}
+.tk-button--dark {
+  background: var(--tikkitte-ink);
+  color: var(--tikkitte-white);
+}
+.tk-button--dark:hover {
+  background: #000000;
+}
+.tk-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Eyebrow — small uppercase label, no background */
+.tk-eyebrow {
+  display: inline-block;
+  font-family: var(--tikkitte-font-body);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--tikkitte-blue);
+  margin: 0;
+}
+
+/* Badge — pill with optional leading dot */
+.tk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--tikkitte-font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--tikkitte-ink);
+  background: var(--tikkitte-white);
+  border: 1px solid var(--tikkitte-cream-border);
+  border-radius: var(--tikkitte-radius-pill);
+  padding: 7px 16px 7px 14px;
+}
+.tk-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tikkitte-blue);
+  flex-shrink: 0;
+}
+
+/* SectionHeading */
+.tk-section-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.tk-section-heading__title {
+  font-family: var(--tikkitte-font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  color: var(--tikkitte-ink);
+  margin: 0;
+  font-size: clamp(34px, 4.5vw, 58px);
+}
+.tk-section-heading__description {
+  font-family: var(--tikkitte-font-body);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--tikkitte-ink-soft);
+  margin: 0;
+  max-width: 62ch;
+}
+.tk-section-heading--center {
+  align-items: center;
+  text-align: center;
+}
+.tk-section-heading--center .tk-section-heading__description {
+  margin-inline: auto;
+}
+
+/* Card */
+.tk-card {
+  background: var(--tikkitte-white);
+  border: 1px solid var(--tikkitte-cream-border);
+  border-radius: var(--tikkitte-radius-card);
+  overflow: hidden;
+}
+.tk-card--elevated {
+  border: none;
+  box-shadow: var(--tikkitte-shadow-card);
+  border-radius: var(--tikkitte-radius-card-lg);
+}
+.tk-card__body {
+  padding: 20px;
+}
+
+/* StatTile */
+.tk-stat-tile {
+  background: var(--tikkitte-white);
+  border: 1px solid var(--tikkitte-cream-border);
+  border-radius: var(--tikkitte-radius-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tk-stat-tile__label {
+  font-family: var(--tikkitte-font-body);
+  font-size: 13px;
+  color: var(--tikkitte-ink-faint);
+  margin: 0;
+}
+.tk-stat-tile__value {
+  font-family: var(--tikkitte-font-display);
+  font-size: 28px;
+  text-transform: uppercase;
+  color: var(--tikkitte-ink);
+  margin: 0;
+  line-height: 1;
+}
+.tk-stat-tile__value-unit {
+  font-family: var(--tikkitte-font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--tikkitte-ink-faint);
+  margin-left: 4px;
+}
+.tk-stat-tile__caption {
+  font-family: var(--tikkitte-font-body);
+  font-size: 12.5px;
+  color: var(--tikkitte-ink-faint);
+  margin: 2px 0 0;
+}
+
+/* NavBar */
+.tk-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px clamp(20px, 4vw, 56px);
+  font-family: var(--tikkitte-font-body);
+}
+.tk-navbar__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--tikkitte-ink);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.tk-navbar__links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tk-navbar__link {
+  color: var(--tikkitte-ink-soft);
+  text-decoration: none;
+  font-size: 14.5px;
+  font-weight: 500;
+}
+.tk-navbar__link:hover,
+.tk-navbar__link--active {
+  color: var(--tikkitte-ink);
+}
+.tk-navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Footer */
+.tk-footer {
+  border-top: 1px solid var(--tikkitte-cream-border);
+  background: var(--tikkitte-cream);
+  font-family: var(--tikkitte-font-body);
+  padding: 48px clamp(20px, 4vw, 56px) 32px;
+}
+.tk-footer__top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 32px;
+}
+.tk-footer__brand-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tk-footer__tagline {
+  font-size: 14px;
+  color: var(--tikkitte-ink-faint);
+  margin: 0;
+}
+.tk-footer__columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 64px;
+}
+.tk-footer__col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tk-footer__col-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--tikkitte-ink-faint);
+  margin: 0 0 2px;
+}
+.tk-footer__col a {
+  font-size: 14px;
+  color: var(--tikkitte-ink-soft);
+  text-decoration: none;
+}
+.tk-footer__col a:hover {
+  color: var(--tikkitte-ink);
+}
+.tk-footer__legal {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--tikkitte-cream-border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.tk-footer__legal-text {
+  font-size: 13px;
+  color: var(--tikkitte-ink-faint);
+  margin: 0;
+}
+.tk-footer__legal-links {
+  display: flex;
+  gap: 20px;
+}
+.tk-footer__legal-links a {
+  font-size: 13px;
+  color: var(--tikkitte-ink-faint);
+  text-decoration: none;
+}
+.tk-footer__legal-links a:hover {
+  color: var(--tikkitte-ink);
+}

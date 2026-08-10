@@ -16,7 +16,7 @@ export default function RequestPayoutButton({ availableBalance, hasPayoutAccount
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center justify-center rounded-lg bg-[#3d3d3d] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
+        className="create-focus flex min-h-12 w-full items-center justify-center rounded-full bg-[#2e6fe6] py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0]"
       >
         Request payout
       </button>

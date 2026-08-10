@@ -2,7 +2,6 @@ import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Event, Ticket, Payout, PayoutAccount } from '@/lib/types'
-import InfoTip from '@/components/ui/InfoTip'
 import DashboardRevenueChart from '@/components/dashboard/LazyDashboardRevenueChart'
 import RequestPayoutButton from '@/components/dashboard/RequestPayoutButton'
 
@@ -22,12 +21,8 @@ function formatMoney(value: number, decimals = 0) {
   })}`
 }
 
-function eventStatus(event: Event): { label: string; className: string } {
-  if (!event.published) return { label: 'Draft', className: 'bg-purple-50 text-purple-700' }
-  if (event.cancelled) return { label: 'Cancelled', className: 'bg-red-50 text-red-600' }
-  const today = new Date().toISOString().slice(0, 10)
-  if (event.date < today) return { label: 'Past', className: 'bg-gray-100 text-gray-500' }
-  return { label: 'Upcoming', className: 'bg-green-50 text-green-700' }
+function initials(value: string) {
+  return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'TK'
 }
 
 export default async function DashboardHomePage() {
@@ -66,14 +61,15 @@ export default async function DashboardHomePage() {
         supabase.from('ticket').select('*').in('event_id', eventIds).eq('is_table_ticket', false),
         supabase
           .from('payments')
-          .select('amount, paid_at')
+          .select('amount, paid_at, refund_status')
           .in('event_id', eventIds)
           .in('status', ['success', 'free']),
       ])
     : [{ data: [] }, { data: [] }]
 
   const tickets = (rawTickets ?? []) as Ticket[]
-  const payments = (rawPayments ?? []) as { amount: number | null; paid_at: string | null }[]
+  const payments = ((rawPayments ?? []) as { amount: number | null; paid_at: string | null; refund_status: string | null }[])
+    .filter((payment) => payment.refund_status !== 'success')
   const payouts = (rawPayouts ?? []) as Pick<Payout, 'amount' | 'status'>[]
   const account = primaryAccount as PayoutAccount | null
 
@@ -97,194 +93,102 @@ export default async function DashboardHomePage() {
   const upcomingEvents = events
     .filter((e) => e.published && !e.cancelled && e.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 3)
+    .slice(0, 4)
 
   const displayName = profile?.display_name ?? user.email ?? 'there'
   const feePct = (PLATFORM_FEE_PCT * 100).toFixed(0)
 
-  return (
-    <div>
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back, {displayName}</h1>
-          <p className="mt-1 text-sm text-gray-500">Here is your earnings summary.</p>
-        </div>
-        <Link
-          href="/dashboard/events/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#3d3d3d] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
-          Create event
-        </Link>
-      </div>
+  const collectedLastSevenDays = payments.reduce((sum, payment) => {
+    if (!payment.paid_at || new Date(payment.paid_at).getTime() < new Date().getTime() - 7 * 86_400_000) return sum
+    return sum + (payment.amount ?? 0) / 100
+  }, 0)
 
-      {/* Earnings + Payout panel */}
-      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Earnings card */}
-        <div className="lg:col-span-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <div className="mb-1 flex items-center gap-1.5">
-            <p className="text-sm text-gray-500">Total collected</p>
-            <InfoTip
-              text="The actual cash received from ticket buyers via Paystack. May differ from Gross revenue if any payments are pending or failed."
-            />
+  return (
+    <div className="space-y-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Organizer dashboard</p>
+          <h1 className="create-display text-[34px]">Welcome back, {displayName}</h1>
+          <p className="mt-1 text-[13px] text-[var(--tikkitte-ink-soft)]">{formatMoney(collectedLastSevenDays)} collected in the last 7 days.</p>
+        </div>
+        <Link href="/dashboard/events/new" className="create-focus inline-flex min-h-12 items-center justify-center rounded-full bg-[#2e6fe6] px-7 text-sm font-bold text-white transition-colors hover:bg-[#2565d0]">+ Create event</Link>
+      </header>
+
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Organizer totals">
+        {[
+          ['Total events', totalEvents.toLocaleString()],
+          ['Tickets sold', totalTicketsSold.toLocaleString()],
+          ['Gross collected', formatMoney(totalCollected)],
+          ['Avg ticket value', formatMoney(avgTicketValue, 2)],
+        ].map(([label, value]) => (
+          <div key={label} className="create-card p-4 sm:p-5">
+            <p className="text-[13px] text-[var(--tikkitte-ink-faint)]">{label}</p>
+            <p className="create-display mt-1 break-words text-[clamp(24px,3vw,30px)]">{value}</p>
           </div>
-          <p className="text-4xl font-extrabold tracking-tight text-gray-900">
-            {formatMoney(totalCollected, 2)}
-          </p>
-          <p className="mt-1 mb-6 text-xs text-gray-400">Across all events</p>
+        ))}
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_316px]">
+        <div className="create-card p-5">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Revenue</h2>
+            <Link href="/dashboard/transactions" className="create-focus text-xs font-semibold text-[#2565d0]">All transactions →</Link>
+          </div>
           <DashboardRevenueChart payments={payments} />
         </div>
 
-        {/* Payout panel */}
-        <div className="flex flex-col rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-sm font-semibold text-gray-900">Payout</h2>
-
-          <div className="mb-5">
-            <div className="mb-0.5 flex items-center gap-1.5">
-              <p className="text-xs text-gray-400">Available balance</p>
-              <InfoTip
-                text={`Total collected minus the ${feePct}% Tikkitte platform fee (${formatMoney(platformFee, 2)}) and existing payout requests (${formatMoney(totalRequestedOrPaid, 2)}). This is the amount you can request to be paid out.`}
-                width="w-60"
-              />
-            </div>
-            <p className="text-3xl font-extrabold tracking-tight text-gray-900">
-              {formatMoney(displayAvailable, 2)}
-            </p>
-            <p className="mt-1 text-xs text-gray-400">
-              After {feePct}% platform fee ({formatMoney(platformFee, 2)})
-            </p>
-          </div>
-
+        <div className="flex min-h-[300px] flex-col rounded-[18px] bg-[#191917] p-6 text-white">
+          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#a7a59a]">Available balance</p>
+          <p className="create-display mt-3 text-[32px] text-white">{formatMoney(displayAvailable, 2)}</p>
+          <p className="mt-1 text-xs text-[#a7a59a]">After {feePct}% platform fee ({formatMoney(platformFee, 2)})</p>
           {account ? (
-            <div className="mb-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
-              <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-gray-400">
-                Payout to
-              </p>
-              <p className="text-sm font-semibold text-gray-900">{account.provider}</p>
-              <p className="text-sm text-gray-600">{account.account_name}</p>
-              <p className="mt-0.5 text-xs text-gray-400">{account.account_number}</p>
+            <div className="my-5 rounded-full bg-white/[0.07] px-4 py-3 text-xs text-[#d8d6cc]">
+              <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#2e6fe6]" />
+              {account.provider} ···{account.account_number.slice(-4)} connected
             </div>
           ) : (
-            <div className="mb-5 rounded-xl border border-dashed border-gray-200 p-4 text-center">
-              <p className="mb-2 text-sm text-gray-500">No payout account added yet</p>
-              <Link
-                href="/dashboard/settings"
-                className="text-xs font-semibold text-[#3d3d3d] underline underline-offset-2 transition-colors hover:text-[#2a2a2a]"
-              >
-                Add account in Settings →
-              </Link>
-            </div>
+            <Link href="/dashboard/settings" className="create-focus my-5 rounded-xl border border-dashed border-white/20 px-4 py-3 text-center text-xs text-[#d8d6cc]">Add a payout account in Settings →</Link>
           )}
-
-          <div className="mt-auto space-y-2">
-            <RequestPayoutButton
-              availableBalance={displayAvailable}
-              hasPayoutAccount={Boolean(account)}
-            />
-            <p className="text-center text-xs text-gray-400">Processed within 2–3 business days</p>
+          <div className="mt-auto">
+            <RequestPayoutButton availableBalance={displayAvailable} hasPayoutAccount={Boolean(account)} />
+            <p className="mt-3 text-center text-[11px] text-[#8a887c]">Payouts arrive within 3–5 business days of request.</p>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Stat cards */}
-      <div className="mb-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <p className="mb-1 text-sm text-gray-500">Total events</p>
-          <p className="text-2xl font-extrabold text-gray-900">{totalEvents}</p>
+      <section className="create-card overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4">
+          <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Upcoming events</h2>
+          <Link href="/dashboard/events" className="create-focus text-xs font-semibold text-[#2565d0]">All events →</Link>
         </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <p className="mb-1 text-sm text-gray-500">Tickets sold</p>
-          <p className="text-2xl font-extrabold text-gray-900">{totalTicketsSold}</p>
-        </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="mb-1 flex items-center gap-1.5">
-            <p className="text-sm text-gray-500">Gross collected</p>
-            <InfoTip
-              text="Successful and free payment records across all events, including table deposits."
-              width="w-60"
-            />
-          </div>
-          <p className="text-2xl font-extrabold text-gray-900">{formatMoney(totalCollected)}</p>
-        </div>
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="mb-1 flex items-center gap-1.5">
-            <p className="text-sm text-gray-500">Avg ticket value</p>
-            <InfoTip text="Average ticket price across all ticket types and events." />
-          </div>
-          <p className="text-2xl font-extrabold text-gray-900">{formatMoney(avgTicketValue, 2)}</p>
-        </div>
-      </div>
-
-      {/* Upcoming events */}
-      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 className="text-sm font-semibold text-gray-900">Upcoming events</h2>
-          {events.length > 3 && (
-            <Link href="/dashboard/events" className="text-sm font-semibold text-[#3d3d3d] transition-colors hover:text-[#2a2a2a]">
-              View all events
-            </Link>
-          )}
-        </div>
-
         {upcomingEvents.length === 0 ? (
-          <div className="py-14 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400" aria-hidden="true">
-                <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
-              </svg>
-            </div>
-            <p className="mb-1 font-semibold text-gray-700">No upcoming events</p>
-            <p className="mb-6 text-sm text-gray-500">Events you publish will appear here.</p>
-            <Link
-              href="/dashboard/events/new"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#3d3d3d] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#2a2a2a]"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10" /></svg>
-              Create event
-            </Link>
+          <div className="border-t border-[var(--tikkitte-cream-border)] px-5 py-12 text-center">
+            <p className="font-semibold">No upcoming events</p>
+            <p className="mt-1 text-sm text-[var(--tikkitte-ink-faint)]">Published events will appear here.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {upcomingEvents.map((event) => {
-              const status = eventStatus(event)
-              const sold = (ticketsByEvent[event.id] ?? []).reduce((sum, t) => sum + t.purchased_quantity, 0)
-              const poster = event.image?.[0]
-
+          <div>
+            {upcomingEvents.map((event, index) => {
+              const eventTickets = ticketsByEvent[event.id] ?? []
+              const sold = eventTickets.reduce((sum, ticket) => sum + ticket.purchased_quantity, 0)
+              const capacity = eventTickets.some((ticket) => ticket.total_quantity === null) ? null : eventTickets.reduce((sum, ticket) => sum + (ticket.total_quantity ?? 0), 0)
+              const percent = capacity ? Math.min(100, (sold / capacity) * 100) : 0
               return (
-                <Link
-                  key={event.id}
-                  href={`/dashboard/events/${event.id}`}
-                  className="flex items-center gap-4 py-3 transition-colors hover:bg-gray-50"
-                >
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-gray-100">
-                    {poster ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={poster} alt="" className="h-full w-full object-cover" loading="lazy" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300" aria-hidden="true">
-                          <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
-                        </svg>
-                      </div>
-                    )}
+                <Link key={event.id} href={`/dashboard/events/${event.id}`} className={`create-focus grid min-h-[66px] grid-cols-[42px_minmax(0,1fr)] items-center gap-3 px-5 py-3 transition-colors hover:bg-[var(--tikkitte-cream)] sm:grid-cols-[42px_minmax(0,1fr)_150px_72px_16px] ${index % 2 ? 'bg-[#faf9f5]' : 'bg-white'}`}>
+                  <div className={`create-display flex h-[42px] w-[42px] items-center justify-center rounded-[10px] text-sm text-white ${index % 3 === 1 ? 'bg-[#191917]' : index % 3 === 2 ? 'bg-[#3d3c4a]' : 'bg-[#2e6fe6]'}`}>{initials(event.name)}</div>
+                  <div className="min-w-0">
+                    <p className="create-display truncate text-[14.5px]">{event.name}</p>
+                    <p className="truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-[#2565d0]">{formatDate(event.date)} · {event.venue ?? 'Venue TBA'}</p>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-semibold text-gray-900">{event.name}</p>
-                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}>
-                        {status.label}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-xs text-gray-500">{formatDate(event.date)}</p>
-                  </div>
-                  <p className="hidden text-sm font-medium text-gray-600 sm:block">{sold} sold</p>
-                  <span className="text-sm font-semibold text-[#3d3d3d]">View details →</span>
+                  <div className="hidden h-1.5 overflow-hidden rounded-full bg-[var(--tikkitte-cream-border)] sm:block"><div className="h-full rounded-full bg-[#2e6fe6]" style={{ width: `${percent}%` }} /></div>
+                  <p className="hidden text-right text-xs text-[var(--tikkitte-ink-soft)] sm:block">{sold}{capacity !== null ? `/${capacity}` : ''}</p>
+                  <span className="hidden text-[var(--tikkitte-ink-faint)] sm:block">›</span>
                 </Link>
               )
             })}
           </div>
         )}
-      </div>
+      </section>
     </div>
   )
 }

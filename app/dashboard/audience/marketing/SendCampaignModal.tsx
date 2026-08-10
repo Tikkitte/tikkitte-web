@@ -41,8 +41,8 @@ export default function SendCampaignModal(props: Props) {
 
   const title = mode === 'event' ? `Message ${props.eventName}` : 'Message all fans'
   const description = mode === 'event'
-    ? 'Will be sent to ticket holders for this event.'
-    : 'Will be sent to every fan across all your events.'
+    ? 'Will be sent to paid and free ticket holders for this event. Complimentary ticket recipients are not messaged.'
+    : 'Will be sent to every paid and free ticket holder across all your events. Complimentary ticket recipients are not messaged.'
   const rateLimitCopy = mode === 'event'
     ? 'You can send one attendee message per event every 24 hours.'
     : 'You can send one all-fans message every 24 hours.'

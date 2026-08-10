@@ -3,6 +3,7 @@ import { formatDate } from '@/lib/format'
 import type { ComplimentaryTicket, Ticket } from '@/lib/types'
 import CompTicketManager from '@/app/dashboard/events/[id]/CompTicketManager'
 import EventPicker from './EventPicker'
+import AdminPageHeader from '../AdminPageHeader'
 
 type EventSummary = {
   id: string
@@ -64,13 +65,7 @@ export default async function AdminCompTicketsPage({ searchParams }: Props) {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Complimentary tickets</h1>
-        <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-          Issue a scannable ticket for any event. Complimentary tickets do not reduce paid
-          availability or increase sales totals.
-        </p>
-      </div>
+      <AdminPageHeader title="Complimentary tickets" description="Issue scannable tickets without reducing paid availability or increasing sales totals." />
 
       {loadError && (
         <div
@@ -82,15 +77,15 @@ export default async function AdminCompTicketsPage({ searchParams }: Props) {
       )}
 
       {!selectedEvent ? (
-        <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-sm">
-          <h2 className="text-base font-semibold text-gray-900">No events available</h2>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className="create-card p-8 text-center">
+          <h2 className="font-semibold">No events available</h2>
+          <p className="mt-1 text-sm text-[var(--tikkitte-ink-faint)]">
             Create an event before issuing complimentary tickets.
           </p>
         </div>
       ) : (
         <div className="space-y-6">
-          <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <section className="create-card p-5">
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(240px,0.8fr)] md:items-end">
               <EventPicker
                 events={events.map((event) => ({
@@ -99,12 +94,12 @@ export default async function AdminCompTicketsPage({ searchParams }: Props) {
                 }))}
                 selectedEventId={selectedEvent.id}
               />
-              <div className="rounded-xl bg-gray-50 px-4 py-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Selected event</p>
-                <p className="mt-1 text-sm font-semibold text-gray-900">
+              <div className="rounded-[16px] bg-[var(--tikkitte-cream)] px-4 py-3">
+                <p className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[var(--tikkitte-ink-faint)]">Selected event</p>
+                <p className="mt-1 text-sm font-semibold">
                   {selectedEvent.name?.trim() || 'Untitled event'}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-[var(--tikkitte-ink-soft)]">
                   {formatDate(selectedEvent.date)}
                   {selectedEvent.venue ? ` · ${selectedEvent.venue}` : ''}
                 </p>
