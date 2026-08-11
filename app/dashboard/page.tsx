@@ -4,8 +4,7 @@ import Link from 'next/link'
 import type { Event, Ticket, Payout, PayoutAccount } from '@/lib/types'
 import DashboardRevenueChart from '@/components/dashboard/LazyDashboardRevenueChart'
 import RequestPayoutButton from '@/components/dashboard/RequestPayoutButton'
-
-const PLATFORM_FEE_PCT = Number(process.env.PLATFORM_FEE_PERCENT ?? '5') / 100
+import { resolvePlatformFeePercent } from '@/lib/platformFee'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -33,7 +32,7 @@ export default async function DashboardHomePage() {
   const [{ data: profile }, { data: rawEvents }, { data: primaryAccount }, { data: rawPayouts }] = await Promise.all([
     supabase
       .from('organizer_profile')
-      .select('display_name')
+      .select('display_name, platform_fee_percent')
       .eq('id', user.id)
       .maybeSingle(),
     supabase
@@ -79,6 +78,8 @@ export default async function DashboardHomePage() {
     return acc
   }, {})
 
+  const PLATFORM_FEE_PCT = resolvePlatformFeePercent((profile as { platform_fee_percent: number | null } | null)?.platform_fee_percent) / 100
+
   const totalEvents = events.length
   const totalTicketsSold = tickets.reduce((sum, t) => sum + t.purchased_quantity, 0)
   const totalRevenue = tickets.reduce((sum, t) => sum + t.purchased_quantity * t.price, 0)
@@ -87,6 +88,7 @@ export default async function DashboardHomePage() {
   const totalRequestedOrPaid = payouts.reduce((sum, payout) => sum + Number(payout.amount), 0)
   const netAvailable = totalCollected - platformFee - totalRequestedOrPaid
   const displayAvailable = Math.max(0, netAvailable)
+  const feeOnAvailable = displayAvailable * PLATFORM_FEE_PCT
   const avgTicketValue = totalTicketsSold > 0 ? totalRevenue / totalTicketsSold : 0
 
   const today = new Date().toISOString().slice(0, 10)
@@ -140,7 +142,7 @@ export default async function DashboardHomePage() {
         <div className="flex min-h-[300px] flex-col rounded-[18px] bg-[#191917] p-6 text-white">
           <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#a7a59a]">Available balance</p>
           <p className="create-display mt-3 text-[32px] text-white">{formatMoney(displayAvailable, 2)}</p>
-          <p className="mt-1 text-xs text-[#a7a59a]">After {feePct}% platform fee ({formatMoney(platformFee, 2)})</p>
+          <p className="mt-1 text-xs text-[#a7a59a]">After {feePct}% platform fee ({formatMoney(feeOnAvailable, 2)})</p>
           {account ? (
             <div className="my-5 rounded-full bg-white/[0.07] px-4 py-3 text-xs text-[#d8d6cc]">
               <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#2e6fe6]" />

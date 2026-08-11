@@ -78,7 +78,6 @@ function VerifyForm() {
         id: user.id,
         display_name,
         email,
-        approved: false,
         slug,
       }, { onConflict: 'id', ignoreDuplicates: true })
       setLoading(false)
@@ -101,7 +100,6 @@ function VerifyForm() {
         id: data.user.id,
         display_name,
         email,
-        approved: false,
         slug,
       }, { onConflict: 'id', ignoreDuplicates: true })
       if (profileError) {

@@ -7,7 +7,7 @@ export default async function AdminOrganizersPage() {
 
   const { data } = await supabase
     .from('organizer_profile')
-    .select('id, display_name, email, logo_url, created_at, approved, slug')
+    .select('id, display_name, email, logo_url, created_at, approved, slug, platform_fee_percent')
     .order('created_at', { ascending: false })
     .limit(200)
 

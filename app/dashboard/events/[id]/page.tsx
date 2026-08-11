@@ -14,6 +14,7 @@ import MessageAttendeesButton from './MessageAttendeesButton'
 import PayoutSummary from './PayoutSummary'
 import TablePackageManager from './TablePackageManager'
 import EventWorkspace from './EventWorkspace'
+import { resolvePlatformFeePercent } from '@/lib/platformFee'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -112,6 +113,7 @@ export default async function EventDetailPage({
     { data: attendeeProfiles },
     { data: tablePackages },
     { count: activePromoCount },
+    { data: organizerProfile },
   ] = await Promise.all([
     supabase
       .from('ticket')
@@ -162,6 +164,11 @@ export default async function EventDetailPage({
       .select('id', { count: 'exact', head: true })
       .eq('event_id', id)
       .eq('active', true),
+    supabase
+      .from('organizer_profile')
+      .select('platform_fee_percent')
+      .eq('id', user.id)
+      .maybeSingle(),
   ])
 
   const allTickets = (tickets ?? []) as Ticket[]
@@ -189,8 +196,7 @@ export default async function EventDetailPage({
   }, {})
 
   const grossCollected = eligiblePayments.reduce((s: number, p: Payment) => s + (p.amount ?? 0), 0) / 100
-  const configuredPlatformFeePercent = Number(process.env.PLATFORM_FEE_PERCENT ?? '5')
-  const platformFeePercent = Number.isFinite(configuredPlatformFeePercent) ? configuredPlatformFeePercent : 5
+  const platformFeePercent = resolvePlatformFeePercent((organizerProfile as { platform_fee_percent: number | null } | null)?.platform_fee_percent)
   const platformFeeAmount = grossCollected * platformFeePercent / 100
   const estimatedPayout = grossCollected - platformFeeAmount
   const collectedByTicketType = eligiblePayments.reduce((acc: Record<string, number>, payment: Payment) => {

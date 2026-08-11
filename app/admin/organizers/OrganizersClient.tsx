@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
-import { approveOrganizer } from './actions'
+import { approveOrganizer, setOrganizerFee } from './actions'
 
 export type OrganizerAdminRow = {
   id: string
@@ -13,6 +13,69 @@ export type OrganizerAdminRow = {
   created_at: string
   approved: boolean
   slug: string | null
+  platform_fee_percent: number | null
+}
+
+const DEFAULT_FEE_LABEL = 'Default (5%)'
+
+function FeeEditor({ organizer }: { organizer: OrganizerAdminRow }) {
+  const router = useRouter()
+  const [value, setValue] = useState(organizer.platform_fee_percent === null ? '' : String(organizer.platform_fee_percent))
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  const save = (nextFeePercent: number | null) => {
+    setError(null)
+    startTransition(async () => {
+      const result = await setOrganizerFee(organizer.id, nextFeePercent)
+      if (!result.ok) {
+        setError(result.message)
+        return
+      }
+      router.refresh()
+    })
+  }
+
+  const handleSave = () => {
+    const trimmed = value.trim()
+    if (trimmed === '') { save(null); return }
+    const parsed = Number(trimmed)
+    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
+      setError('Enter a number between 0 and 100.')
+      return
+    }
+    save(parsed)
+  }
+
+  return (
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      <div className="flex items-center gap-2">
+        <div className="create-input flex min-h-9 w-24 items-center gap-1 rounded-full px-3 py-0">
+          <input
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder={DEFAULT_FEE_LABEL}
+            inputMode="decimal"
+            aria-label={`Platform fee percent for ${organizer.display_name}`}
+            className="w-full bg-transparent text-sm outline-none placeholder:text-[11px] placeholder:text-[var(--tikkitte-ink-faint)]"
+          />
+          <span className="text-xs text-[var(--tikkitte-ink-faint)]">%</span>
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isPending}
+          className="create-focus min-h-9 shrink-0 rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-4 text-xs font-semibold transition-colors hover:bg-[var(--tikkitte-cream)] disabled:opacity-60"
+        >
+          {isPending ? 'Saving…' : 'Save'}
+        </button>
+      </div>
+      <p className="text-[11px] text-[var(--tikkitte-ink-faint)]">
+        {organizer.platform_fee_percent === null ? DEFAULT_FEE_LABEL : `Custom rate: ${organizer.platform_fee_percent}%`}
+      </p>
+      {error && <p role="alert" className="text-[11px] text-red-600">{error}</p>}
+    </div>
+  )
 }
 
 type Props = {
@@ -158,16 +221,19 @@ export default function OrganizersClient({ organizers }: Props) {
                   </div>
                 </div>
 
-                {!organizer.approved && (
-                  <button
-                    type="button"
-                    onClick={() => runApprove(organizer.id)}
-                    disabled={isPending && activeId === organizer.id}
-                    className="create-focus min-h-11 shrink-0 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60"
-                  >
-                    {isPending && activeId === organizer.id ? 'Approving...' : 'Approve'}
-                  </button>
-                )}
+                <div className="flex flex-wrap items-start justify-end gap-3">
+                  <FeeEditor organizer={organizer} />
+                  {!organizer.approved && (
+                    <button
+                      type="button"
+                      onClick={() => runApprove(organizer.id)}
+                      disabled={isPending && activeId === organizer.id}
+                      className="create-focus min-h-11 shrink-0 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60"
+                    >
+                      {isPending && activeId === organizer.id ? 'Approving...' : 'Approve'}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}
