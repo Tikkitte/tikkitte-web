@@ -187,6 +187,7 @@ export default function PayoutsClient({ rows }: Props) {
                           <p className="font-semibold text-[var(--tikkitte-ink)]">{account.provider}</p>
                           <p>{account.account_number}</p>
                           <p className="text-gray-400">{account.account_name}</p>
+                          {account.branch && <p className="text-gray-400">Branch: {account.branch}</p>}
                           <p className="text-xs text-gray-400">{methodLabel(account.method)}</p>
                         </div>
                       ) : (

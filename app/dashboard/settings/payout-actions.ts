@@ -11,6 +11,7 @@ type AddPayoutAccountInput = {
   provider: string
   accountNumber: string
   accountName: string
+  branch: string
   isPrimary: boolean
 }
 
@@ -25,6 +26,7 @@ function parseAddInput(input: unknown): AddPayoutAccountInput | null {
     typeof input.provider !== 'string' ||
     typeof input.accountNumber !== 'string' ||
     typeof input.accountName !== 'string' ||
+    typeof input.branch !== 'string' ||
     typeof input.isPrimary !== 'boolean'
   ) {
     return null
@@ -35,6 +37,7 @@ function parseAddInput(input: unknown): AddPayoutAccountInput | null {
     provider: input.provider,
     accountNumber: input.accountNumber,
     accountName: input.accountName,
+    branch: input.branch,
     isPrimary: input.isPrimary,
   }
 }
@@ -52,6 +55,7 @@ export async function addPayoutAccount(input: unknown): Promise<ActionResult> {
   const provider = parsed.provider.trim()
   const accountNumber = parsed.accountNumber.trim()
   const accountName = parsed.accountName.trim()
+  const branch = parsed.method === 'bank_transfer' ? parsed.branch.trim() : ''
   const validProviders = validProvidersFor(parsed.method)
 
   if (!validProviders.includes(provider as never)) return { ok: false, message: 'Invalid provider.' }
@@ -59,6 +63,7 @@ export async function addPayoutAccount(input: unknown): Promise<ActionResult> {
   if (!accountName) return { ok: false, message: 'Account name required.' }
   if (accountNumber.length > 80) return { ok: false, message: 'Account number is too long.' }
   if (accountName.length > 120) return { ok: false, message: 'Account name is too long.' }
+  if (branch.length > 120) return { ok: false, message: 'Branch is too long.' }
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -76,6 +81,7 @@ export async function addPayoutAccount(input: unknown): Promise<ActionResult> {
     provider,
     account_number: accountNumber,
     account_name: accountName,
+    branch: branch || null,
     is_primary: (existingAccounts ?? []).length === 0 || parsed.isPrimary,
   })
 

@@ -17,6 +17,7 @@ export default function AddPayoutAccountModal({ hasAccounts, onClose }: Props) {
   const [provider, setProvider] = useState<string>(MOBILE_MONEY_PROVIDERS[0])
   const [accountNumber, setAccountNumber] = useState('')
   const [accountName, setAccountName] = useState('')
+  const [branch, setBranch] = useState('')
   const [isPrimary, setIsPrimary] = useState(!hasAccounts)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -26,6 +27,7 @@ export default function AddPayoutAccountModal({ hasAccounts, onClose }: Props) {
   const changeMethod = (nextMethod: PayoutMethod) => {
     setMethod(nextMethod)
     setProvider(nextMethod === 'mobile_money' ? MOBILE_MONEY_PROVIDERS[0] : BANK_PROVIDERS[0])
+    if (nextMethod === 'mobile_money') setBranch('')
   }
 
   const save = () => {
@@ -36,6 +38,7 @@ export default function AddPayoutAccountModal({ hasAccounts, onClose }: Props) {
         provider,
         accountNumber,
         accountName,
+        branch: method === 'bank_transfer' ? branch : '',
         isPrimary: hasAccounts ? isPrimary : true,
       })
 
@@ -73,7 +76,7 @@ export default function AddPayoutAccountModal({ hasAccounts, onClose }: Props) {
               onChange={(event) => changeMethod(event.target.value as PayoutMethod)}
               className={inputClass}
             >
-              <option value="mobile_money">Mobile Money</option>
+              <option value="mobile_money">Mobile Money (Preferred)</option>
               <option value="bank_transfer">Bank Transfer</option>
             </select>
           </div>
@@ -113,6 +116,19 @@ export default function AddPayoutAccountModal({ hasAccounts, onClose }: Props) {
               placeholder="Account holder name"
             />
           </div>
+
+          {method === 'bank_transfer' && (
+            <div>
+              <label htmlFor="account-branch" className="mb-1.5 block text-sm font-medium text-gray-700">Branch <span className="font-normal text-gray-400">(optional)</span></label>
+              <input
+                id="account-branch"
+                value={branch}
+                onChange={(event) => setBranch(event.target.value)}
+                className={inputClass}
+                placeholder="e.g. Obuasi"
+              />
+            </div>
+          )}
 
           {hasAccounts && (
             <label className="flex items-start gap-3 text-sm text-gray-600">

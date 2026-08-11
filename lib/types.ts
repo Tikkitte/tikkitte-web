@@ -183,6 +183,7 @@ export type PayoutAccount = {
   provider: string
   account_number: string
   account_name: string
+  branch: string | null
   is_primary: boolean
   created_at: string | null
 }
