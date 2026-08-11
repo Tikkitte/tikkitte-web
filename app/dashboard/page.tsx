@@ -31,6 +31,7 @@ export default async function DashboardHomePage() {
     { data: profile },
     { data: rawEvents },
     { data: outstandingPayoutTotal, error: outstandingPayoutTotalError },
+    { data: primaryAccount },
   ] = await Promise.all([
     supabase
       .from('organizer_profile')
@@ -42,12 +43,19 @@ export default async function DashboardHomePage() {
       .select('*')
       .eq('organizer_id', user.id),
     supabase.rpc('get_organizer_outstanding_payout_total', { p_organizer_id: user.id }),
+    supabase
+      .from('payout_account')
+      .select('provider, account_number')
+      .eq('organizer_id', user.id)
+      .eq('is_primary', true)
+      .maybeSingle(),
   ])
 
   if (outstandingPayoutTotalError) {
     throw new Error('Unable to load the outstanding payout total.')
   }
 
+  const account = primaryAccount as { provider: string; account_number: string } | null
   const events = (rawEvents ?? []) as Event[]
   const eventIds = events.map((e) => e.id)
 
@@ -127,15 +135,22 @@ export default async function DashboardHomePage() {
         </div>
 
         <div className="flex min-h-[300px] flex-col rounded-[18px] bg-[#191917] p-6 text-white">
-          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#a7a59a]">Outstanding payouts</p>
+          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#a7a59a]">Available balance</p>
           <p className="create-display mt-3 text-[32px] text-white">{formatMoney(outstandingTotal, 2)}</p>
-          <p className="mt-2 max-w-[250px] text-xs leading-5 text-[#a7a59a]">Net unsettled total across your events, after each event&apos;s own fee and adjustments.</p>
-          <div className="my-5 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-xs leading-5 text-[#d8d6cc]">
-            Payouts are requested from each event so every settlement stays clear and auditable.
+          {account ? (
+            <div className="my-5 rounded-full bg-white/[0.07] px-4 py-3 text-xs text-[#d8d6cc]">
+              <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#2e6fe6]" />
+              {account.provider} ···{account.account_number.slice(-4)} connected
+            </div>
+          ) : (
+            <Link href="/dashboard/settings" className="create-focus my-5 rounded-xl border border-dashed border-white/20 px-4 py-3 text-center text-xs text-[#d8d6cc]">Add a payout account in Settings →</Link>
+          )}
+          <div className="mt-auto">
+            <Link href="/dashboard/events?filter=all" className="create-focus inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0]">
+              Review event payouts
+            </Link>
+            <p className="mt-3 text-center text-[11px] text-[#8a887c]">Payouts arrive within 3–5 business days.</p>
           </div>
-          <Link href="/dashboard/events" className="create-focus mt-auto inline-flex min-h-12 items-center justify-center rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0]">
-            Review event payouts
-          </Link>
         </div>
       </section>
 

@@ -69,16 +69,12 @@ export default function RequestPayoutModal({ eventId, breakdown, hasPayoutAccoun
         role="dialog"
         aria-modal="true"
         aria-labelledby="request-payout-title"
-        aria-describedby="request-payout-description"
         className="create-card w-full max-w-lg p-6 shadow-2xl sm:p-7"
       >
         <div className="flex items-start justify-between gap-5">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Full event settlement</p>
             <h2 id="request-payout-title" className="create-display mt-1 text-[26px]">Request payout</h2>
-            <p id="request-payout-description" className="mt-1 max-w-sm text-sm leading-6 text-[var(--tikkitte-ink-soft)]">
-              This requests the full amount currently owed for this event. The amount is recalculated securely when you confirm.
-            </p>
           </div>
           <button
             ref={closeButtonRef}
@@ -106,7 +102,7 @@ export default function RequestPayoutModal({ eventId, breakdown, hasPayoutAccoun
           </div>
         ) : (
           <>
-            <dl className="my-6 overflow-hidden rounded-2xl border border-[var(--tikkitte-cream-border)] bg-[var(--tikkitte-cream)] px-5 py-2 text-sm">
+            <dl className="mt-8 mb-6 overflow-hidden rounded-2xl border border-[var(--tikkitte-cream-border)] bg-[var(--tikkitte-cream)] px-5 py-2 text-sm">
               <div className="flex items-center justify-between gap-4 border-b border-[var(--tikkitte-cream-border)] py-3">
                 <dt className="text-[var(--tikkitte-ink-soft)]">Unsettled ticket sales</dt>
                 <dd className="font-semibold tabular-nums">{formatMoneyFromCents(breakdown.outstanding_gross_cents)}</dd>

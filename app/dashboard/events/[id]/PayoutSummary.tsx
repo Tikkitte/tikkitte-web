@@ -45,7 +45,6 @@ export default function PayoutSummary({ eventId, breakdown, hasPayoutAccount, pa
       <div className="border-b border-[var(--tikkitte-cream-border)] px-5 py-4">
         <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Event settlement</p>
         <h2 id="event-payout-heading" className="create-display mt-1 text-[22px]">Payout</h2>
-        <p className="mt-1 text-xs leading-5 text-[var(--tikkitte-ink-faint)]">Only unsettled sales for this event are included.</p>
       </div>
 
       <div className="p-5">
@@ -94,18 +93,18 @@ export default function PayoutSummary({ eventId, breakdown, hasPayoutAccount, pa
       </div>
 
       {payouts.length > 0 && (
-        <div className="border-t border-[var(--tikkitte-cream-border)] px-5 py-5">
-          <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Payout history</h3>
-          <div className="space-y-2">
+        <div className="border-t border-[var(--tikkitte-cream-border)] px-5 py-6">
+          <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Payout history</h3>
+          <div className="space-y-3">
             {payouts.map((payout) => (
-              <div key={payout.id} className="flex items-center justify-between gap-4 rounded-xl bg-[var(--tikkitte-cream)] px-3.5 py-3 text-sm">
+              <div key={payout.id} className="flex items-center justify-between gap-4 rounded-xl bg-[var(--tikkitte-cream)] px-4 py-3.5 text-sm">
                 <div className="min-w-0">
                   <p className="font-semibold tabular-nums">{formatMoney(Number(payout.amount))}</p>
-                  <p className="mt-0.5 text-[11px] text-[var(--tikkitte-ink-faint)]">
+                  <p className="mt-1 text-[11px] text-[var(--tikkitte-ink-faint)]">
                     {formatDate(payout.status === 'paid' ? payout.paid_at : payout.created_at)}
                   </p>
                   {payout.status_reason && (
-                    <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[var(--tikkitte-ink-soft)]">{payout.status_reason}</p>
+                    <p className="mt-1.5 line-clamp-2 text-[11px] leading-4 text-[var(--tikkitte-ink-soft)]">{payout.status_reason}</p>
                   )}
                 </div>
                 <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] ${statusStyles[payout.status]}`}>
