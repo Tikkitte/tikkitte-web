@@ -14,6 +14,10 @@ function PayoutIcon({ className }: IconProps) {
   return <svg className={className} width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M17 15h.01"/></svg>
 }
 
+function CalendarIcon({ className }: IconProps) {
+  return <svg className={className} width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+}
+
 function RefundIcon({ className }: IconProps) {
   return <svg className={className} width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v10M15 9.5c-.5-1-1.5-1.5-3-1.5-1.7 0-3 1-3 2.3 0 3.7 6 1.3 6 5 0 1.4-1.3 2.7-3 2.7-1.5 0-2.7-.6-3.3-1.7"/></svg>
 }
@@ -24,6 +28,7 @@ function TicketIcon({ className }: IconProps) {
 
 const tabs = [
   { href: '/admin/organizers', label: 'Organizers', Icon: PeopleIcon },
+  { href: '/admin/events', label: 'Events', Icon: CalendarIcon },
   { href: '/admin/payouts', label: 'Payouts', Icon: PayoutIcon },
   { href: '/admin/refunds', label: 'Refunds', Icon: RefundIcon },
   { href: '/admin/comp-tickets', label: 'Comp tickets', Icon: TicketIcon },

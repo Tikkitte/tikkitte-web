@@ -1,10 +1,8 @@
 import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import type { Event, Ticket, Payout, PayoutAccount } from '@/lib/types'
+import type { Event, Ticket } from '@/lib/types'
 import DashboardRevenueChart from '@/components/dashboard/LazyDashboardRevenueChart'
-import RequestPayoutButton from '@/components/dashboard/RequestPayoutButton'
-import { resolvePlatformFeePercent } from '@/lib/platformFee'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -29,28 +27,26 @@ export default async function DashboardHomePage() {
   const user = await getAuthedUser()
   if (!user) redirect('/login')
 
-  const [{ data: profile }, { data: rawEvents }, { data: primaryAccount }, { data: rawPayouts }] = await Promise.all([
+  const [
+    { data: profile },
+    { data: rawEvents },
+    { data: outstandingPayoutTotal, error: outstandingPayoutTotalError },
+  ] = await Promise.all([
     supabase
       .from('organizer_profile')
-      .select('display_name, platform_fee_percent')
+      .select('display_name')
       .eq('id', user.id)
       .maybeSingle(),
     supabase
       .from('event')
       .select('*')
       .eq('organizer_id', user.id),
-    supabase
-      .from('payout_account')
-      .select('*')
-      .eq('organizer_id', user.id)
-      .eq('is_primary', true)
-      .maybeSingle(),
-    supabase
-      .from('payout')
-      .select('amount, status')
-      .eq('organizer_id', user.id)
-      .in('status', ['pending', 'paid']),
+    supabase.rpc('get_organizer_outstanding_payout_total', { p_organizer_id: user.id }),
   ])
+
+  if (outstandingPayoutTotalError) {
+    throw new Error('Unable to load the outstanding payout total.')
+  }
 
   const events = (rawEvents ?? []) as Event[]
   const eventIds = events.map((e) => e.id)
@@ -69,8 +65,6 @@ export default async function DashboardHomePage() {
   const tickets = (rawTickets ?? []) as Ticket[]
   const payments = ((rawPayments ?? []) as { amount: number | null; paid_at: string | null; refund_status: string | null }[])
     .filter((payment) => payment.refund_status !== 'success')
-  const payouts = (rawPayouts ?? []) as Pick<Payout, 'amount' | 'status'>[]
-  const account = primaryAccount as PayoutAccount | null
 
   const ticketsByEvent = tickets.reduce((acc: Record<string, Ticket[]>, t) => {
     if (!acc[t.event_id]) acc[t.event_id] = []
@@ -78,17 +72,11 @@ export default async function DashboardHomePage() {
     return acc
   }, {})
 
-  const PLATFORM_FEE_PCT = resolvePlatformFeePercent((profile as { platform_fee_percent: number | null } | null)?.platform_fee_percent) / 100
-
   const totalEvents = events.length
   const totalTicketsSold = tickets.reduce((sum, t) => sum + t.purchased_quantity, 0)
   const totalRevenue = tickets.reduce((sum, t) => sum + t.purchased_quantity * t.price, 0)
   const totalCollected = payments.reduce((sum, p) => sum + (p.amount ?? 0) / 100, 0)
-  const platformFee = totalCollected * PLATFORM_FEE_PCT
-  const totalRequestedOrPaid = payouts.reduce((sum, payout) => sum + Number(payout.amount), 0)
-  const netAvailable = totalCollected - platformFee - totalRequestedOrPaid
-  const displayAvailable = Math.max(0, netAvailable)
-  const feeOnAvailable = displayAvailable * PLATFORM_FEE_PCT
+  const outstandingTotal = Number(outstandingPayoutTotal ?? 0) / 100
   const avgTicketValue = totalTicketsSold > 0 ? totalRevenue / totalTicketsSold : 0
 
   const today = new Date().toISOString().slice(0, 10)
@@ -98,7 +86,6 @@ export default async function DashboardHomePage() {
     .slice(0, 4)
 
   const displayName = profile?.display_name ?? user.email ?? 'there'
-  const feePct = (PLATFORM_FEE_PCT * 100).toFixed(0)
 
   const collectedLastSevenDays = payments.reduce((sum, payment) => {
     if (!payment.paid_at || new Date(payment.paid_at).getTime() < new Date().getTime() - 7 * 86_400_000) return sum
@@ -140,21 +127,15 @@ export default async function DashboardHomePage() {
         </div>
 
         <div className="flex min-h-[300px] flex-col rounded-[18px] bg-[#191917] p-6 text-white">
-          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#a7a59a]">Available balance</p>
-          <p className="create-display mt-3 text-[32px] text-white">{formatMoney(displayAvailable, 2)}</p>
-          <p className="mt-1 text-xs text-[#a7a59a]">After {feePct}% platform fee ({formatMoney(feeOnAvailable, 2)})</p>
-          {account ? (
-            <div className="my-5 rounded-full bg-white/[0.07] px-4 py-3 text-xs text-[#d8d6cc]">
-              <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#2e6fe6]" />
-              {account.provider} ···{account.account_number.slice(-4)} connected
-            </div>
-          ) : (
-            <Link href="/dashboard/settings" className="create-focus my-5 rounded-xl border border-dashed border-white/20 px-4 py-3 text-center text-xs text-[#d8d6cc]">Add a payout account in Settings →</Link>
-          )}
-          <div className="mt-auto">
-            <RequestPayoutButton availableBalance={displayAvailable} hasPayoutAccount={Boolean(account)} />
-            <p className="mt-3 text-center text-[11px] text-[#8a887c]">Payouts arrive within 3–5 business days of request.</p>
+          <p className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#a7a59a]">Outstanding payouts</p>
+          <p className="create-display mt-3 text-[32px] text-white">{formatMoney(outstandingTotal, 2)}</p>
+          <p className="mt-2 max-w-[250px] text-xs leading-5 text-[#a7a59a]">Net unsettled total across your events, after each event&apos;s own fee and adjustments.</p>
+          <div className="my-5 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-xs leading-5 text-[#d8d6cc]">
+            Payouts are requested from each event so every settlement stays clear and auditable.
           </div>
+          <Link href="/dashboard/events" className="create-focus mt-auto inline-flex min-h-12 items-center justify-center rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0]">
+            Review event payouts
+          </Link>
         </div>
       </section>
 

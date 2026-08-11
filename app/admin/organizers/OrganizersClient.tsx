@@ -16,7 +16,7 @@ export type OrganizerAdminRow = {
   platform_fee_percent: number | null
 }
 
-const DEFAULT_FEE_LABEL = 'Default (5%)'
+const DEFAULT_FEE_LABEL = 'Default (12.5%)'
 
 function FeeEditor({ organizer }: { organizer: OrganizerAdminRow }) {
   const router = useRouter()
@@ -71,7 +71,7 @@ function FeeEditor({ organizer }: { organizer: OrganizerAdminRow }) {
         </button>
       </div>
       <p className="text-[11px] text-[var(--tikkitte-ink-faint)]">
-        {organizer.platform_fee_percent === null ? DEFAULT_FEE_LABEL : `Custom rate: ${organizer.platform_fee_percent}%`}
+        {organizer.platform_fee_percent === null ? `${DEFAULT_FEE_LABEL} for new events` : `New-event default: ${organizer.platform_fee_percent}%`}
       </p>
       {error && <p role="alert" className="text-[11px] text-red-600">{error}</p>}
     </div>

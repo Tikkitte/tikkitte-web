@@ -2,7 +2,7 @@ import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment, Payout, TablePackage } from '@/lib/types'
+import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment, Payout, TablePackage, EventOutstandingPayout } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/LazyTicketChart'
 import ShareLiveModal from './ShareLiveModal'
 import PromoCodeManager from './PromoCodeManager'
@@ -14,7 +14,6 @@ import MessageAttendeesButton from './MessageAttendeesButton'
 import PayoutSummary from './PayoutSummary'
 import TablePackageManager from './TablePackageManager'
 import EventWorkspace from './EventWorkspace'
-import { resolvePlatformFeePercent } from '@/lib/platformFee'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -113,7 +112,8 @@ export default async function EventDetailPage({
     { data: attendeeProfiles },
     { data: tablePackages },
     { count: activePromoCount },
-    { data: organizerProfile },
+    { data: outstandingPayout, error: outstandingPayoutError },
+    { data: primaryPayoutAccount },
   ] = await Promise.all([
     supabase
       .from('ticket')
@@ -165,11 +165,19 @@ export default async function EventDetailPage({
       .eq('event_id', id)
       .eq('active', true),
     supabase
-      .from('organizer_profile')
-      .select('platform_fee_percent')
-      .eq('id', user.id)
+      .rpc('get_event_outstanding_payout', { p_event_id: id })
+      .single(),
+    supabase
+      .from('payout_account')
+      .select('id')
+      .eq('organizer_id', user.id)
+      .eq('is_primary', true)
       .maybeSingle(),
   ])
+
+  if (outstandingPayoutError || !outstandingPayout) {
+    throw new Error('Unable to load this event’s payout settlement.')
+  }
 
   const allTickets = (tickets ?? []) as Ticket[]
   const ordinaryTickets = allTickets.filter((ticket) => !ticket.is_table_ticket)
@@ -196,9 +204,14 @@ export default async function EventDetailPage({
   }, {})
 
   const grossCollected = eligiblePayments.reduce((s: number, p: Payment) => s + (p.amount ?? 0), 0) / 100
-  const platformFeePercent = resolvePlatformFeePercent((organizerProfile as { platform_fee_percent: number | null } | null)?.platform_fee_percent)
-  const platformFeeAmount = grossCollected * platformFeePercent / 100
-  const estimatedPayout = grossCollected - platformFeeAmount
+  const payoutBreakdownRaw = outstandingPayout as EventOutstandingPayout
+  const payoutBreakdown: EventOutstandingPayout = {
+    outstanding_gross_cents: Number(payoutBreakdownRaw.outstanding_gross_cents),
+    fee_percent: Number(payoutBreakdownRaw.fee_percent),
+    fee_cents: Number(payoutBreakdownRaw.fee_cents),
+    unconsumed_adjustments_cents: Number(payoutBreakdownRaw.unconsumed_adjustments_cents),
+    net_cents: Number(payoutBreakdownRaw.net_cents),
+  }
   const collectedByTicketType = eligiblePayments.reduce((acc: Record<string, number>, payment: Payment) => {
     for (const allocation of paymentRevenueAllocations(payment)) {
       acc[allocation.ticketTypeId] = (acc[allocation.ticketTypeId] ?? 0) + allocation.amount
@@ -312,7 +325,14 @@ export default async function EventDetailPage({
     </div>
   )
 
-  const payoutPanel = <PayoutSummary grossCollected={grossCollected} platformFeePercent={platformFeePercent} platformFeeAmount={platformFeeAmount} estimatedPayout={estimatedPayout} payouts={(payouts ?? []) as Payout[]} />
+  const payoutPanel = (
+    <PayoutSummary
+      eventId={id}
+      breakdown={payoutBreakdown}
+      hasPayoutAccount={Boolean(primaryPayoutAccount)}
+      payouts={(payouts ?? []) as Payout[]}
+    />
+  )
 
   return (
     <div>

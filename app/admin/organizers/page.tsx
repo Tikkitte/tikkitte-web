@@ -13,7 +13,7 @@ export default async function AdminOrganizersPage() {
 
   return (
     <div>
-      <AdminPageHeader title="Organizers" description="Review new organizer accounts and manage platform access." />
+      <AdminPageHeader title="Organizers" description="Review organizer access and set the default fee applied when each new event is created." />
       <OrganizersClient organizers={(data ?? []) as OrganizerAdminRow[]} />
     </div>
   )

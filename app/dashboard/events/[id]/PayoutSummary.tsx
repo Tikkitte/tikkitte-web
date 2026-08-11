@@ -1,10 +1,10 @@
-import type { Payout } from '@/lib/types'
+import RequestPayoutButton from '@/components/dashboard/RequestPayoutButton'
+import type { EventOutstandingPayout, Payout } from '@/lib/types'
 
 type Props = {
-  grossCollected: number
-  platformFeePercent: number
-  platformFeeAmount: number
-  estimatedPayout: number
+  eventId: string
+  breakdown: EventOutstandingPayout
+  hasPayoutAccount: boolean
   payouts: Payout[]
 }
 
@@ -13,6 +13,10 @@ function formatMoney(value: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
+}
+
+function formatCents(value: number) {
+  return formatMoney(value / 100)
 }
 
 function formatDate(value: string | null) {
@@ -24,77 +28,94 @@ function formatDate(value: string | null) {
   })
 }
 
-export default function PayoutSummary({
-  grossCollected,
-  platformFeePercent,
-  platformFeeAmount,
-  estimatedPayout,
-  payouts,
-}: Props) {
-  if (grossCollected <= 0) return null
+const statusStyles: Record<Payout['status'], string> = {
+  pending: 'bg-[#fff2c7] text-[#765400]',
+  paid: 'bg-[#e8f4ea] text-[#147a35]',
+  cancelled: 'bg-[#f0efeb] text-[#5e5b52]',
+  rejected: 'bg-[#fde9e7] text-[#a8322d]',
+}
+
+export default function PayoutSummary({ eventId, breakdown, hasPayoutAccount, payouts }: Props) {
+  const hasPendingPayout = payouts.some((payout) => payout.status === 'pending')
+  const hasOutstandingActivity = breakdown.outstanding_gross_cents !== 0
+    || breakdown.unconsumed_adjustments_cents !== 0
 
   return (
-    <div className="rounded-[18px] bg-[#191917] px-[22px] py-5 text-white">
-      <h2 className="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#a7a59a]">Payout for this event</h2>
+    <section className="create-card overflow-hidden" aria-labelledby="event-payout-heading">
+      <div className="border-b border-[var(--tikkitte-cream-border)] px-5 py-4">
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Event settlement</p>
+        <h2 id="event-payout-heading" className="create-display mt-1 text-[22px]">Payout</h2>
+        <p className="mt-1 text-xs leading-5 text-[var(--tikkitte-ink-faint)]">Only unsettled sales for this event are included.</p>
+      </div>
 
-      <div className="text-[12.5px]">
-        <div className="flex items-center justify-between gap-4 py-1 text-[#d8d6cc]">
-          <span>Gross collected</span>
-          <span className="tabular-nums">{formatMoney(grossCollected)}</span>
-        </div>
-        <div className="flex items-center justify-between gap-4 py-1 text-[#d8d6cc]">
-          <span>Platform fee ({platformFeePercent}%)</span>
-          <span className="tabular-nums">−{formatMoney(platformFeeAmount)}</span>
-        </div>
-        <div className="mt-1.5 flex items-baseline justify-between gap-4 border-t border-white/15 pb-0.5 pt-2.5 text-white">
-          <span className="font-semibold">You get</span>
-          <span className="create-display text-[20px] text-white tabular-nums">{formatMoney(estimatedPayout)}</span>
+      <div className="p-5">
+        <dl className="text-[13px]">
+          <div className="flex items-center justify-between gap-4 py-1.5 text-[var(--tikkitte-ink-soft)]">
+            <dt>Unsettled ticket sales</dt>
+            <dd className="font-medium tabular-nums">{formatCents(breakdown.outstanding_gross_cents)}</dd>
+          </div>
+          <div className="flex items-center justify-between gap-4 py-1.5 text-[var(--tikkitte-ink-soft)]">
+            <dt>Platform fee ({breakdown.fee_percent}%)</dt>
+            <dd className="font-medium tabular-nums">−{formatCents(breakdown.fee_cents)}</dd>
+          </div>
+          {breakdown.unconsumed_adjustments_cents !== 0 && (
+            <div className="flex items-center justify-between gap-4 py-1.5 text-[var(--tikkitte-ink-soft)]">
+              <dt>Settlement adjustments</dt>
+              <dd className="font-medium tabular-nums">
+                {breakdown.unconsumed_adjustments_cents > 0 ? '+' : '−'}
+                {formatCents(Math.abs(breakdown.unconsumed_adjustments_cents))}
+              </dd>
+            </div>
+          )}
+          <div className="mt-2 flex items-baseline justify-between gap-4 border-t border-[var(--tikkitte-cream-border)] pt-3">
+            <dt className="font-semibold">Available to request</dt>
+            <dd className="create-display text-[23px] tabular-nums">{formatCents(breakdown.net_cents)}</dd>
+          </div>
+        </dl>
+
+        <div className="mt-5">
+          {hasPendingPayout ? (
+            <div className="rounded-xl bg-[#fff8df] px-4 py-3 text-center text-xs font-semibold text-[#765400]">
+              A payout for this event is pending review.
+            </div>
+          ) : breakdown.net_cents >= 1000 ? (
+            <RequestPayoutButton eventId={eventId} breakdown={breakdown} hasPayoutAccount={hasPayoutAccount} />
+          ) : (
+            <p className="rounded-xl bg-[var(--tikkitte-cream)] px-4 py-3 text-center text-xs leading-5 text-[var(--tikkitte-ink-soft)]">
+              {!hasOutstandingActivity
+                ? 'No unsettled sales are available for payout yet.'
+                : breakdown.net_cents < 0
+                ? 'Refund adjustments will be applied to this event’s future sales.'
+                : 'A minimum of GHS 10 is required to request a payout.'}
+            </p>
+          )}
+          <p className="mt-3 text-center text-[11px] leading-5 text-[var(--tikkitte-ink-faint)]">Payouts normally arrive within 3–5 business days after approval.</p>
         </div>
       </div>
 
-      <p className="mt-2 text-[11px] leading-5 text-[#a7a59a]">
-        Included in your available balance. Payouts arrive within 3–5 business days of request.
-      </p>
-
       {payouts.length > 0 && (
-        <div className="mt-5 border-t border-[#49483f] pt-5">
-          <h3 className="mb-3 text-sm font-semibold text-white">Payout history</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[#49483f]">
-                  <th className="py-2 pr-4 text-left font-medium text-[#aaa89f]">Date</th>
-                  <th className="px-4 py-2 text-right font-medium text-[#aaa89f]">Amount</th>
-                  <th className="py-2 pl-4 text-right font-medium text-[#aaa89f]">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payouts.map((payout) => (
-                  <tr key={payout.id} className="border-b border-[#3c3b35] last:border-0">
-                    <td className="py-3 pr-4 text-[#cbc9be]">
-                      {payout.status === 'paid' ? formatDate(payout.paid_at) : formatDate(payout.created_at)}
-                    </td>
-                    <td className="px-4 py-3 text-right font-semibold text-white">
-                      {formatMoney(Number(payout.amount))}
-                    </td>
-                    <td className="py-3 pl-4 text-right">
-                      <span
-                        className={
-                          payout.status === 'paid'
-                            ? 'inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700'
-                            : 'inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600'
-                        }
-                      >
-                        {payout.status === 'paid' ? 'Paid' : 'Pending'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="border-t border-[var(--tikkitte-cream-border)] px-5 py-5">
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Payout history</h3>
+          <div className="space-y-2">
+            {payouts.map((payout) => (
+              <div key={payout.id} className="flex items-center justify-between gap-4 rounded-xl bg-[var(--tikkitte-cream)] px-3.5 py-3 text-sm">
+                <div className="min-w-0">
+                  <p className="font-semibold tabular-nums">{formatMoney(Number(payout.amount))}</p>
+                  <p className="mt-0.5 text-[11px] text-[var(--tikkitte-ink-faint)]">
+                    {formatDate(payout.status === 'paid' ? payout.paid_at : payout.created_at)}
+                  </p>
+                  {payout.status_reason && (
+                    <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-[var(--tikkitte-ink-soft)]">{payout.status_reason}</p>
+                  )}
+                </div>
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] ${statusStyles[payout.status]}`}>
+                  {payout.status}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}
-    </div>
+    </section>
   )
 }

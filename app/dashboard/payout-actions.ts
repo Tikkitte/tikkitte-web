@@ -7,14 +7,10 @@ type RequestPayoutResult =
   | { ok: true; payoutId: string }
   | { ok: false; message: string }
 
-export async function requestPayout(amount: number): Promise<RequestPayoutResult> {
-  if (typeof amount !== 'number' || !Number.isFinite(amount)) {
-    return { ok: false, message: 'Enter a valid payout amount.' }
-  }
-
-  const roundedAmount = Math.round(amount * 100) / 100
-  if (roundedAmount !== amount) {
-    return { ok: false, message: 'Amount can only have up to 2 decimal places.' }
+export async function requestPayout(eventId: string): Promise<RequestPayoutResult> {
+  const normalizedEventId = typeof eventId === 'string' ? eventId.trim() : ''
+  if (!normalizedEventId || normalizedEventId.length > 200) {
+    return { ok: false, message: 'Choose a valid event.' }
   }
 
   const supabase = await createClient()
@@ -30,7 +26,7 @@ export async function requestPayout(amount: number): Promise<RequestPayoutResult
       'Content-Type': 'application/json',
       Authorization: `Bearer ${session.access_token}`,
     },
-    body: JSON.stringify({ amount }),
+    body: JSON.stringify({ event_id: normalizedEventId }),
   })
 
   const result = await response.json().catch(() => null) as { message?: string; payoutId?: string } | null
@@ -39,5 +35,6 @@ export async function requestPayout(amount: number): Promise<RequestPayoutResult
   }
 
   revalidatePath('/dashboard')
+  revalidatePath(`/dashboard/events/${normalizedEventId}`)
   return { ok: true, payoutId: result.payoutId }
 }

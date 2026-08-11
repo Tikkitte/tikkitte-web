@@ -146,13 +146,31 @@ export type TrackingLink = {
   created_at: string
 }
 
+export type EventPayoutTerms = {
+  event_id: string
+  platform_fee_percent: number
+}
+
+export type EventOutstandingPayout = {
+  outstanding_gross_cents: number
+  fee_percent: number
+  fee_cents: number
+  unconsumed_adjustments_cents: number
+  net_cents: number
+}
+
 export type Payout = {
   id: string
   organizer_id: string
   event_id: string | null
   payout_account_id: string | null
   amount: number
-  status: 'pending' | 'paid'
+  gross_amount_cents: number | null
+  fee_percent_applied: number | null
+  fee_amount_cents: number | null
+  status: 'pending' | 'paid' | 'cancelled' | 'rejected'
+  status_reason: string | null
+  legacy_unattributed: boolean
   paid_at: string | null
   note: string | null
   created_at: string

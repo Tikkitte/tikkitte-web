@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import RequestPayoutModal from './RequestPayoutModal'
+import type { EventOutstandingPayout } from '@/lib/types'
 
 type Props = {
-  availableBalance: number
+  eventId: string
+  breakdown: EventOutstandingPayout
   hasPayoutAccount: boolean
 }
 
-export default function RequestPayoutButton({ availableBalance, hasPayoutAccount }: Props) {
+export default function RequestPayoutButton({ eventId, breakdown, hasPayoutAccount }: Props) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -22,7 +24,8 @@ export default function RequestPayoutButton({ availableBalance, hasPayoutAccount
       </button>
       {open && (
         <RequestPayoutModal
-          availableBalance={availableBalance}
+          eventId={eventId}
+          breakdown={breakdown}
           hasPayoutAccount={hasPayoutAccount}
           onClose={() => setOpen(false)}
         />
