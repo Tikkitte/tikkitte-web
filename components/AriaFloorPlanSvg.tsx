@@ -94,7 +94,7 @@ export default function AriaFloorPlanSvg({
       <line x1="99" y1="634" x2="372" y2="634" stroke="url(#aria-level-bottom)" strokeWidth="1" opacity="0.4" />
       <rect x="170" y="340" width="86" height="156" rx="43" fill={t.fill} fillOpacity={t.fillOpacity} stroke={t.backdrop} strokeOpacity={t.backdropOpacity} strokeWidth="1.5" />
       <rect x="192" y="362" width="42" height="112" rx="21" fill="none" stroke={t.backdrop} strokeOpacity={t.backdropOpacity} strokeWidth="1.5" />
-      <image href="/images/logo.png" x="70" y="640" width="274" height="156" opacity="0.12" preserveAspectRatio="xMidYMid meet" />
+      <image href="/images/logo-watermark.png" x="70" y="640" width="274" height="156" opacity="0.12" preserveAspectRatio="xMidYMid meet" />
 
       {ARIA_TABLES.map((geometry) => {
         const table = packageByCode.get(geometry.table_code)

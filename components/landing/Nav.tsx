@@ -58,8 +58,8 @@ export default function Nav({ listEventHref = '/organizers' }: Props) {
     <header className="bg-[#F4F2EC]">
       <nav className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-4 px-[clamp(20px,4vw,56px)] py-5 font-grotesk">
         <Link href="/" className="flex flex-shrink-0 select-none items-center gap-2.5">
-          <Image src="/images/logo.png" alt="" width={42} height={28} priority unoptimized style={{ width: 'auto', height: '34px' }} />
-          <Image src="/images/text-logo-web.png" alt="Tikkitte" width={120} height={20} priority unoptimized style={{ height: '22px', width: 'auto' }} />
+          <Image src="/images/logo.png" alt="" width={42} height={28} preload style={{ width: 'auto', height: '34px' }} />
+          <Image src="/images/text-logo-web.png" alt="Tikkitte" width={120} height={20} preload style={{ height: '22px', width: 'auto' }} />
         </Link>
 
         <div className="hidden flex-wrap items-center gap-[clamp(14px,2.5vw,32px)] min-[760px]:flex">

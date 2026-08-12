@@ -26,7 +26,6 @@ export default function EventLayout({ children }: { children: React.ReactNode })
               alt=""
               width={42}
               height={28}
-              unoptimized
               style={{ width: 'auto', height: '24px', display: 'block', flexShrink: 0 }}
             />
             <Image
@@ -34,7 +33,6 @@ export default function EventLayout({ children }: { children: React.ReactNode })
               alt="Tikkitte"
               width={120}
               height={20}
-              unoptimized
               style={{ height: '18px', width: 'auto', display: 'block' }}
             />
           </Link>

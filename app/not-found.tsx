@@ -12,8 +12,7 @@ export default function NotFound() {
           alt=""
           width={42}
           height={28}
-          unoptimized
-          priority
+          preload
           style={{ width: 'auto', height: '28px' }}
         />
         <Image
@@ -21,8 +20,7 @@ export default function NotFound() {
           alt="Tikkitte"
           width={120}
           height={20}
-          unoptimized
-          priority
+          preload
           style={{ height: '20px', width: 'auto' }}
         />
       </Link>

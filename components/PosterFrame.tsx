@@ -16,22 +16,22 @@ type Props = {
 export default function PosterFrame({ src, alt, sizes, className = '', priority, quality }: Props) {
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      <div
+      <Image
+        src={src}
+        alt=""
         aria-hidden="true"
-        className="absolute inset-0 scale-110"
-        style={{
-          backgroundImage: `url(${src})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'blur(28px) brightness(0.45) saturate(1.2)',
-        }}
+        width={32}
+        height={32}
+        quality={20}
+        className="absolute inset-0 h-full w-full scale-110 object-cover"
+        style={{ filter: 'blur(28px) brightness(0.45) saturate(1.2)' }}
       />
       <Image
         src={src}
         alt={alt}
         fill
         sizes={sizes}
-        priority={priority}
+        preload={priority}
         quality={quality}
         className="relative z-10 object-contain"
       />

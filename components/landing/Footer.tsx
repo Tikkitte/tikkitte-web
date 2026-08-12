@@ -8,8 +8,8 @@ export default function Footer() {
         <div className="flex flex-wrap justify-between gap-8">
           <div className="flex flex-col gap-3">
             <Link href="/" className="flex items-center gap-2.5">
-              <Image src="/images/logo.png" alt="" width={54} height={36} unoptimized style={{ height: '28px', width: 'auto' }} />
-              <Image src="/images/text-logo-web.png" alt="Tikkitte" width={120} height={20} unoptimized style={{ height: '18px', width: 'auto' }} />
+              <Image src="/images/logo.png" alt="" width={54} height={36} style={{ height: '28px', width: 'auto' }} />
+              <Image src="/images/text-logo-web.png" alt="Tikkitte" width={120} height={20} style={{ height: '18px', width: 'auto' }} />
             </Link>
             <p className="text-sm text-[#8a887c]">Event ticketing for Ghana.</p>
           </div>

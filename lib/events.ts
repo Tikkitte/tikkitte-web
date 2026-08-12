@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { unstable_cache } from 'next/cache'
+import { createPublicClient } from '@/lib/supabase/server-public'
 import type { Event, Ticket } from '@/lib/types'
 
 export type MarketingEvent = Pick<
@@ -9,8 +10,8 @@ export type MarketingEvent = Pick<
 
 export type EventWithPrice = MarketingEvent & { startingPrice: number | null }
 
-export async function getUpcomingEvents(limit: number): Promise<EventWithPrice[]> {
-  const supabase = await createClient()
+async function fetchUpcomingEvents(limit: number): Promise<EventWithPrice[]> {
+  const supabase = createPublicClient()
   const today = new Date().toISOString().slice(0, 10)
 
   const { data: events, error: eventsError } = await supabase
@@ -53,6 +54,14 @@ export async function getUpcomingEvents(limit: number): Promise<EventWithPrice[]
     startingPrice: startingPriceByEvent.get(event.id) ?? null,
   }))
 }
+
+// Public, session-independent data only. The limit argument is part of
+// unstable_cache's key, so the homepage and full listing remain distinct.
+export const getUpcomingEvents = unstable_cache(
+  fetchUpcomingEvents,
+  ['upcoming-events'],
+  { revalidate: 30, tags: ['events-listing'] }
+)
 
 export function formatEventPrice(price: number | null): string {
   if (price === null) return 'TBA'

@@ -1,8 +1,11 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import { after } from 'next/server'
+import { unstable_cache } from 'next/cache'
+import { cache } from 'react'
 import type { Metadata } from 'next'
 import type { Event, Ticket } from '@/lib/types'
+import { createPublicClient } from '@/lib/supabase/server-public'
 import { isValidUUID } from '@/lib/validation'
 import EventCheckout from './EventCheckout'
 import EventPreviewGallery from '@/components/EventPreviewGallery'
@@ -16,7 +19,30 @@ type OrganizerSummary = {
   logo_url: string | null
 }
 
-function formatEventDateRange(event: Event) {
+type EventCore = Pick<
+  Event,
+  | 'id'
+  | 'name'
+  | 'slug'
+  | 'date'
+  | 'time'
+  | 'end_date'
+  | 'end_time'
+  | 'venue'
+  | 'maps_link'
+  | 'description'
+  | 'image'
+  | 'preview_images'
+  | 'preview_videos'
+  | 'organizer_id'
+>
+
+const EVENT_CORE_COLUMNS =
+  'id, name, slug, date, time, end_date, end_time, venue, maps_link, description, image, preview_images, preview_videos, organizer_id'
+
+const refPattern = /^[a-z0-9-]{2,20}$/
+
+function formatEventDateRange(event: Pick<EventCore, 'date' | 'time' | 'end_date' | 'end_time'>) {
   const start = [formatDate(event.date), formatTime(event.time)].filter(Boolean).join(' · ')
   if (!event.end_date) return start
   const end = [formatDate(event.end_date), formatTime(event.end_time)].filter(Boolean).join(' · ')
@@ -28,42 +54,107 @@ type Props = {
   searchParams?: Promise<{ ref?: string }>
 }
 
-async function getEventData(idOrSlug: string) {
-  const supabase = await createClient()
+async function fetchEventCore(idOrSlug: string) {
+  const supabase = createPublicClient()
   const isUUID = isValidUUID(idOrSlug)
-  const { data: event } = await supabase
+  const { data: event, error: eventError } = await supabase
     .from('event')
-    .select('*')
+    .select(EVENT_CORE_COLUMNS)
     .eq(isUUID ? 'id' : 'slug', idOrSlug)
-    .eq('published', true)
     .maybeSingle()
+
+  if (eventError) {
+    console.error('[event-page] failed to load event core:', eventError.message)
+    return null
+  }
   if (!event) return null
 
-  const [{ data: tickets }, { data: organizer }, { data: tablePackages }] = await Promise.all([
+  const { data: organizer, error: organizerError } = event.organizer_id
+    ? await supabase
+        .from('organizer_profile')
+        .select('id, slug, display_name, logo_url')
+        .eq('id', event.organizer_id)
+        .eq('approved', true)
+        .maybeSingle()
+    : { data: null, error: null }
+
+  if (organizerError) {
+    console.error('[event-page] failed to load organizer:', organizerError.message)
+  }
+
+  return {
+    event: event as EventCore,
+    organizer: organizer as OrganizerSummary | null,
+  }
+}
+
+const getEventCore = unstable_cache(fetchEventCore, ['event-core'], {
+  revalidate: 30,
+  tags: ['event-core'],
+})
+
+async function fetchEventLiveState(eventId: string) {
+  const supabase = createPublicClient()
+  const { data, error } = await supabase
+    .from('event')
+    .select('published, cancelled')
+    .eq('id', eventId)
+    .maybeSingle()
+
+  if (error) {
+    console.error('[event-page] failed to load live event state:', error.message)
+  }
+
+  // Fail closed if the live-state lookup is unavailable.
+  return {
+    published: data?.published ?? false,
+    cancelled: data?.cancelled ?? true,
+  }
+}
+
+async function getEventInventory(eventId: string) {
+  const supabase = createPublicClient()
+  const [ticketResult, tableResult] = await Promise.all([
     supabase
       .from('ticket')
       .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity, min_per_order, max_per_order, sale_start_date, sale_start_time, sale_end_date, sale_end_time, is_table_ticket')
-      .eq('event_id', event.id)
+      .eq('event_id', eventId)
       .eq('is_table_ticket', false)
       .order('price', { ascending: true }),
-    event.organizer_id
-      ? supabase
-          .from('organizer_profile')
-          .select('id, slug, display_name, logo_url')
-          .eq('id', event.organizer_id)
-          .eq('approved', true)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-    supabase.rpc('get_public_event_tables', { p_event_id: event.id }),
+    supabase.rpc('get_public_event_tables', { p_event_id: eventId }),
   ])
 
+  if (ticketResult.error) {
+    console.error('[event-page] failed to load tickets:', ticketResult.error.message)
+  }
+  if (tableResult.error) {
+    console.error('[event-page] failed to load table availability:', tableResult.error.message)
+  }
+
   return {
-    event: event as Event,
-    tickets: (tickets ?? []) as Ticket[],
-    organizer: organizer as OrganizerSummary | null,
-    hasTableReservations: (tablePackages?.length ?? 0) > 0,
+    tickets: (ticketResult.data ?? []) as Ticket[],
+    hasTableReservations: (tableResult.data?.length ?? 0) > 0,
   }
 }
+
+const getEventData = cache(async (idOrSlug: string) => {
+  const core = await getEventCore(idOrSlug)
+  if (!core) return null
+
+  const [liveState, inventory] = await Promise.all([
+    fetchEventLiveState(core.event.id),
+    getEventInventory(core.event.id),
+  ])
+
+  // Preserve the original behavior: unpublished events resolve as not found.
+  if (!liveState.published) return null
+
+  return {
+    ...core,
+    cancelled: liveState.cancelled,
+    ...inventory,
+  }
+})
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
@@ -97,17 +188,23 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
   const data = await getEventData(id)
   if (!data) notFound()
 
-  const { event, tickets, organizer, hasTableReservations } = data
+  const { event, tickets, organizer, hasTableReservations, cancelled } = data
   const ref = (await searchParams)?.ref?.trim().toLowerCase()
-  if (ref) {
-    const supabase = await createClient()
-    await supabase.rpc('record_tracking_click', {
-      p_event_id: event.id,
-      p_slug: ref,
+  if (ref && refPattern.test(ref)) {
+    const eventId = event.id
+    after(async () => {
+      const supabase = createPublicClient()
+      const { error } = await supabase.rpc('record_tracking_click', {
+        p_event_id: eventId,
+        p_slug: ref,
+      })
+      if (error) {
+        console.error('[event-page] failed to record referral click:', error.message)
+      }
     })
   }
 
-  if (event.cancelled) {
+  if (cancelled) {
     return (
       <div className="mx-auto max-w-[1440px] px-6 py-24 text-center lg:px-12">
         <div className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-50">

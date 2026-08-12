@@ -95,7 +95,6 @@ export default async function TicketPage({ params }: Props) {
               alt=""
               width={42}
               height={28}
-              unoptimized
               style={{ width: 'auto', height: '24px' }}
             />
             <Image
@@ -103,7 +102,6 @@ export default async function TicketPage({ params }: Props) {
               alt="Tikkitte"
               width={120}
               height={20}
-              unoptimized
               style={{ height: '18px', width: 'auto' }}
             />
           </Link>
