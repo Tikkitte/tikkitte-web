@@ -33,6 +33,7 @@ function ticketSaleStatus(ticket: Ticket) {
     return {
       available: false,
       label: `On sale ${formatSaleDate(ticket.sale_start_date, ticket.sale_start_time)}`,
+      saleStartDate: ticket.sale_start_date,
     }
   }
   if (ticket.sale_end_date && now > saleDateTime(ticket.sale_end_date, ticket.sale_end_time, true)) {
@@ -347,11 +348,6 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
                     SOLD OUT
                   </span>
                 )}
-                {!soldOut && !saleStatus.available && (
-                  <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-[#5F5D54]">
-                    {saleStatus.label}
-                  </span>
-                )}
                 {isLow && !unavailable && (
                   <span className="text-xs font-semibold text-amber-600">
                     {available} left
@@ -363,7 +359,11 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
                 <div className="py-2 text-center text-sm font-medium text-red-500">
                   Sold out
                 </div>
-              ) : unavailable ? null : (
+              ) : unavailable ? (
+                <div className="flex items-center justify-center rounded-lg border border-[#E7E2D4] bg-white px-3 py-2 text-center text-sm font-medium text-[#5F5D54]">
+                  {saleStatus.saleStartDate ? `On sale ${formatSaleDate(saleStatus.saleStartDate, null)}` : saleStatus.label}
+                </div>
+              ) : (
                 <>
                   {(ticket.min_per_order > 1 || ticket.max_per_order !== null) && (
                     <p className="mb-2 text-xs text-[#8a887c]">
