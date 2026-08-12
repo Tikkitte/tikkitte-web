@@ -359,11 +359,11 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
                 )}
               </div>
 
-              {unavailable ? (
-                <div className={`py-2 text-center text-sm font-medium ${soldOut ? 'text-red-500' : 'text-[#8a887c]'}`}>
-                  {soldOut ? 'Sold out' : saleStatus.label}
+              {soldOut ? (
+                <div className="py-2 text-center text-sm font-medium text-red-500">
+                  Sold out
                 </div>
-              ) : (
+              ) : unavailable ? null : (
                 <>
                   {(ticket.min_per_order > 1 || ticket.max_per_order !== null) && (
                     <p className="mb-2 text-xs text-[#8a887c]">
