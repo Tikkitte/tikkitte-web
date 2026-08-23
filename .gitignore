@@ -53,3 +53,6 @@ verify_phase1.sql
 # supabase CLI local state (project ref, pooler URL, org ID)
 supabase/.temp/
 .certs/
+
+# local dev scratch notes (may reference local test credentials)
+local-dev-notes/

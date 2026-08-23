@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Nav from '@/components/landing/Nav'
 import Footer from '@/components/landing/Footer'
-import { formatDate } from '@/lib/format'
+import { formatDateShort } from '@/lib/format'
 
 export const revalidate = 30
 
@@ -187,7 +187,7 @@ export default async function OrganizerPage({ params }: { params: Promise<{ slug
                     </div>
                     <div className="p-5">
                       <h3 className="line-clamp-1 font-anton font-normal text-2xl uppercase leading-[1.05] text-[#191917]">{event.name}</h3>
-                      <p className="mt-2 text-sm font-semibold text-[#2565D0]">{formatDate(event.date)}</p>
+                      <p className="mt-2 text-sm font-semibold text-[#2565D0]">{formatDateShort(event.date)}</p>
                       <p className="mt-1 line-clamp-1 text-sm text-[#5F5D54]">{event.venue ?? 'No venue'}</p>
                     </div>
                   </Link>

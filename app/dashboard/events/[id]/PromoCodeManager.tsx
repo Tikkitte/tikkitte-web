@@ -121,14 +121,37 @@ export default function PromoCodeManager({ eventId, tickets }: Props) {
     setCodes((prev) => prev.map((item) => item.id === promoCode.id ? { ...item, active: !item.active } : item))
   }
 
-  const deleteCode = async (promoCodeId: string) => {
+  const deactivateCode = async (promoCode: PromoCode, explanation: string) => {
     const supabase = createClient()
-    const { error } = await supabase.from('promo_code').delete().eq('id', promoCodeId)
+    const { error } = await supabase.from('promo_code').update({ active: false }).eq('id', promoCode.id)
     if (error) {
       setError(error.message)
       return
     }
-    setCodes((prev) => prev.filter((item) => item.id !== promoCodeId))
+    setCodes((prev) => prev.map((item) => item.id === promoCode.id ? { ...item, active: false } : item))
+    setMessage(explanation)
+  }
+
+  const deleteCode = async (promoCode: PromoCode) => {
+    setError(null)
+    setMessage(null)
+
+    if (promoCode.uses_count > 0) {
+      await deactivateCode(promoCode, `${promoCode.code} was deactivated because its order history must be retained.`)
+      return
+    }
+
+    const supabase = createClient()
+    const { error } = await supabase.from('promo_code').delete().eq('id', promoCode.id)
+    if (error?.code === '23503') {
+      await deactivateCode(promoCode, `${promoCode.code} was deactivated because it has checkout history.`)
+      return
+    }
+    if (error) {
+      setError(error.message)
+      return
+    }
+    setCodes((prev) => prev.filter((item) => item.id !== promoCode.id))
   }
 
   return (
@@ -231,6 +254,9 @@ export default function PromoCodeManager({ eventId, tickets }: Props) {
       {codes.length === 0 ? (
         <p className="text-sm text-gray-400">No promo codes yet.</p>
       ) : (
+        <>
+          {message && !showForm && <p className="mb-3 text-sm text-amber-700">{message}</p>}
+          {error && !showForm && <p className="mb-3 text-sm text-red-500">{error}</p>}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -238,45 +264,75 @@ export default function PromoCodeManager({ eventId, tickets }: Props) {
                 <th className="text-left py-3 pr-4 font-medium text-gray-500">Code</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-500">Type</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-500">Discount</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-500">Uses</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-500">Limit</th>
+                <th className="min-w-48 py-3 px-4 text-left font-medium text-gray-500">Usage</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-500">Active</th>
-                <th className="text-right py-3 pl-4 font-medium text-gray-500">Delete</th>
+                <th className="text-right py-3 pl-4 font-medium text-gray-500">Action</th>
               </tr>
             </thead>
             <tbody>
-              {codes.map((promoCode) => (
+              {codes.map((promoCode) => {
+                const hasLimit = promoCode.max_uses !== null
+                const usagePercent = hasLimit
+                  ? Math.min(100, Math.max(0, (promoCode.uses_count / Math.max(1, promoCode.max_uses!)) * 100))
+                  : 0
+                const exhausted = hasLimit && promoCode.uses_count >= promoCode.max_uses!
+                const nearLimit = hasLimit && !exhausted && usagePercent >= 80
+
+                return (
                 <tr key={promoCode.id} className="border-b border-gray-50 last:border-0">
                   <td className="py-3 pr-4 font-semibold text-gray-900">{promoCode.code}</td>
                   <td className="py-3 px-4 text-gray-600">{promoCode.discount_type === 'percent' ? 'Percent' : 'Fixed'}</td>
                   <td className="py-3 px-4 text-right text-gray-900 font-semibold">
                     {promoCode.discount_type === 'percent' ? `${promoCode.discount_value}%` : `GHS ${promoCode.discount_value}`}
                   </td>
-                  <td className="py-3 px-4 text-right text-gray-600">{promoCode.uses_count}</td>
-                  <td className="py-3 px-4 text-right text-gray-600">{promoCode.max_uses ?? 'Unlimited'}</td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center justify-between gap-3 text-xs">
+                      <span className="font-semibold text-gray-700">
+                        {hasLimit ? `${promoCode.uses_count} of ${promoCode.max_uses} used` : `${promoCode.uses_count} used · No limit`}
+                      </span>
+                      {exhausted && <span className="font-bold text-red-700">Exhausted</span>}
+                      {nearLimit && <span className="font-semibold text-amber-700">Near limit</span>}
+                    </div>
+                    {hasLimit && (
+                      <div
+                        role="progressbar"
+                        aria-label={`${promoCode.code} promo usage`}
+                        aria-valuemin={0}
+                        aria-valuemax={promoCode.max_uses!}
+                        aria-valuenow={Math.min(promoCode.uses_count, promoCode.max_uses!)}
+                        className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100"
+                      >
+                        <div
+                          className={`h-full rounded-full transition-[width] ${exhausted ? 'bg-red-500' : nearLimit ? 'bg-amber-500' : 'bg-[#2e6fe6]'}`}
+                          style={{ width: `${usagePercent}%` }}
+                        />
+                      </div>
+                    )}
+                  </td>
                   <td className="py-3 px-4 text-right">
                     <button
                       type="button"
                       onClick={() => toggleActive(promoCode)}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${promoCode.active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${exhausted ? 'bg-red-50 text-red-700' : promoCode.active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}
                     >
-                      {promoCode.active ? 'Active' : 'Inactive'}
+                      {exhausted ? 'Exhausted' : promoCode.active ? 'Active' : 'Inactive'}
                     </button>
                   </td>
                   <td className="py-3 pl-4 text-right">
                     <button
                       type="button"
-                      onClick={() => deleteCode(promoCode.id)}
+                      onClick={() => deleteCode(promoCode)}
                       className="text-sm font-semibold text-red-500 hover:text-red-600"
                     >
-                      Delete
+                      {promoCode.uses_count > 0 ? 'Deactivate' : 'Delete'}
                     </button>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   )

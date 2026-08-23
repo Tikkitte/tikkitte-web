@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { EventWithPrice } from '@/lib/events'
-import { formatDate } from '@/lib/format'
+import { formatDateShort } from '@/lib/format'
 import PosterFrame from '@/components/PosterFrame'
 
 const fallbackFlyers = [
@@ -34,9 +34,9 @@ export default function Trending({ events }: { events: EventWithPrice[] }) {
               href={`/e/${event.slug ?? event.id}`}
               className="flex flex-col overflow-hidden rounded-[20px] border border-[#E4DFD1] bg-white text-[#191917] transition-colors hover:border-[#2565D0]"
             >
-              <PosterFrame src={poster} alt={event.name} sizes="(max-width: 768px) 100vw, 33vw" className="aspect-[4/5] bg-[#F4F2EC]" />
+              <PosterFrame src={poster} alt={event.name} sizes="(max-width: 768px) 100vw, 33vw" className="aspect-[4/5] bg-[#F4F2EC]" variant="fill" />
               <div className="flex flex-1 flex-col gap-2 p-[22px]">
-                <div className="text-[13px] font-bold uppercase tracking-[0.1em] text-[#2565D0]">{formatDate(event.date)}</div>
+                <div className="text-[13px] font-bold uppercase tracking-[0.1em] text-[#2565D0]">{formatDateShort(event.date)}</div>
                 <div className="font-anton font-normal text-2xl uppercase leading-[1.1]">{event.name}</div>
                 <div className="text-sm text-[#5F5D54]">{event.venue}</div>
                 <div className="mt-auto pt-3 text-[15px] font-bold text-[#2565D0]">Get tickets</div>

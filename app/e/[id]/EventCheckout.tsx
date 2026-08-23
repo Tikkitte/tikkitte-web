@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { formatSaleDate, saleDateTime, ticketSaleStatus } from '@/lib/ticketAvailability'
 import { validateEmail, sanitizeName, suggestEmailDomain } from '@/lib/validation'
 import type { PromoCode, Ticket } from '@/lib/types'
 
@@ -11,35 +12,6 @@ type Props = {
   eventId: string
   eventSlug: string
   tickets: Ticket[]
-}
-
-function saleDateTime(date: string, time: string | null, endOfDay = false) {
-  return new Date(`${date}T${time ? time.slice(0, 5) : endOfDay ? '23:59' : '00:00'}`)
-}
-
-function formatSaleDate(date: string, time: string | null) {
-  const value = saleDateTime(date, time)
-  return value.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    ...(time ? { hour: 'numeric', minute: '2-digit', hour12: true } : {}),
-  })
-}
-
-function ticketSaleStatus(ticket: Ticket) {
-  const now = new Date()
-  if (ticket.sale_start_date && now < saleDateTime(ticket.sale_start_date, ticket.sale_start_time)) {
-    return {
-      available: false,
-      label: `On sale ${formatSaleDate(ticket.sale_start_date, ticket.sale_start_time)}`,
-      saleStartDate: ticket.sale_start_date,
-    }
-  }
-  if (ticket.sale_end_date && now > saleDateTime(ticket.sale_end_date, ticket.sale_end_time, true)) {
-    return { available: false, label: 'Sales ended' }
-  }
-  return { available: true, label: null }
 }
 
 function promoDescription(promoCode: PromoCode) {
@@ -61,6 +33,36 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null)
   const [promoMessage, setPromoMessage] = useState<string | null>(null)
   const [promoError, setPromoError] = useState<string | null>(null)
+  const [, setSaleClockTick] = useState(0)
+
+  // ticketSaleStatus() reads the wall clock fresh on every call, but nothing
+  // otherwise prompts a re-render when a sale window opens or closes while
+  // this page is just sitting open — so schedule one for the next boundary
+  // (sale_start/sale_end across all tickets), then reschedule for the one
+  // after that once it fires.
+  useEffect(() => {
+    const now = Date.now()
+    const boundaries = tickets.flatMap((t) => {
+      const times: number[] = []
+      if (t.sale_start_date) times.push(saleDateTime(t.sale_start_date, t.sale_start_time).getTime())
+      if (t.sale_end_date) times.push(saleDateTime(t.sale_end_date, t.sale_end_time, true).getTime())
+      return times
+    })
+    const nextBoundary = boundaries.filter((t) => t > now).sort((a, b) => a - b)[0]
+    if (nextBoundary === undefined) return
+
+    // setTimeout delays above ~24.8 days (2^31-1 ms) overflow its 32-bit
+    // internal delay and fire immediately instead — which, with no
+    // dependency array here, would reschedule another immediately-firing
+    // timeout on every render and spin the tab. Cap each wait well under
+    // that limit and let the effect's next run (triggered by the tick
+    // below) recompute the remaining time and cap again.
+    const MAX_TIMEOUT_MS = 20 * 24 * 60 * 60 * 1000 // 20 days
+    const delay = Math.min(nextBoundary - now + 1000, MAX_TIMEOUT_MS)
+
+    const timeout = setTimeout(() => setSaleClockTick((n) => n + 1), delay)
+    return () => clearTimeout(timeout)
+  })
 
   const totalTickets = useMemo(() => Object.values(counts).reduce((s, n) => s + n, 0), [counts])
   const totalPrice = useMemo(
@@ -294,14 +296,36 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
     }
   }
 
-  const allUnavailable = tickets.every(
+  // Hide tiers whose sale window hasn't opened yet — only show tickets that
+  // are currently on sale or already ended, per organizer feedback that
+  // listing future phases ahead of time was confusing buyers.
+  const visibleTickets = tickets.filter((t) => !ticketSaleStatus(t).saleStartDate)
+
+  const allUnavailable = visibleTickets.every(
     (t) => !ticketSaleStatus(t).available || (t.available_quantity !== null && t.available_quantity <= 0),
   )
+
+  // Earliest upcoming sale start among the hidden future tiers, if any — used
+  // both for the fully-hidden empty state and the between-phases hint below,
+  // so a buyer who lands while every visible tier is ended still learns
+  // another phase is coming instead of just seeing a dead "Sales ended".
+  const nextSaleStart = tickets
+    .map((t) => ticketSaleStatus(t).saleStartDate)
+    .filter((d): d is string => !!d)
+    .sort()[0]
 
   if (tickets.length === 0) {
     return (
       <div className="py-8 text-center text-[#8a887c]">
         No tickets available for this event.
+      </div>
+    )
+  }
+
+  if (visibleTickets.length === 0) {
+    return (
+      <div className="py-8 text-center text-[#8a887c]">
+        {nextSaleStart ? `Ticket sales open ${formatSaleDate(nextSaleStart, null)}.` : 'Ticket sales are not currently open.'}
       </div>
     )
   }
@@ -314,7 +338,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
       </h2>
 
       <div className="space-y-3 mb-8">
-        {tickets.map((ticket) => {
+        {visibleTickets.map((ticket) => {
           const count = counts[ticket.id] ?? 0
           const available = ticket.available_quantity
           const soldOut = available !== null && available <= 0
@@ -361,7 +385,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
                 </div>
               ) : unavailable ? (
                 <div className="flex items-center justify-center rounded-lg border border-[#E7E2D4] bg-white px-3 py-2 text-center text-sm font-medium text-[#5F5D54]">
-                  {saleStatus.saleStartDate ? `On sale ${formatSaleDate(saleStatus.saleStartDate, null)}` : saleStatus.label}
+                  {saleStatus.label}
                 </div>
               ) : (
                 <>
@@ -397,6 +421,14 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
           )
         })}
       </div>
+
+      {/* Between-phases hint: every visible tier is ended/sold out, but
+          another tier opens later — say so instead of leaving a dead end. */}
+      {allUnavailable && nextSaleStart && (
+        <p className="-mt-6 mb-8 text-sm text-[#5F5D54]">
+          More tickets go on sale {formatSaleDate(nextSaleStart, null)}.
+        </p>
+      )}
 
       {/* Email + name */}
       {totalTickets > 0 && (

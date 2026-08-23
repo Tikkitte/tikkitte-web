@@ -56,8 +56,11 @@ const securityHeaders = [
       `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
       // Google Fonts files
       `font-src 'self' https://fonts.gstatic.com`,
-      // Supabase storage images, data: URIs (QR codes), blob: (camera preview)
-      `img-src 'self' data: blob: https://${supabaseHost}`,
+      // Supabase storage images, data: URIs (QR codes), blob: (camera preview).
+      // Local dev also needs the local Supabase stack's storage host, same set
+      // of origins as connect-src below — ticket QR images are served from
+      // there in local dev. Never added in production.
+      `img-src 'self' data: blob: https://${supabaseHost}${isDev ? ' http://localhost:54321 https://localhost:54443' + lanIPs.map((ip) => ` http://${ip}:54321 https://${ip}:54443`).join('') + (lanHostname ? ` https://${lanHostname}:54443` : '') : ''}`,
       // API calls: Supabase REST + realtime WS, Vercel analytics, Paystack API
       // Local dev also needs the local Supabase stack — localhost, plain-http
       // LAN IP (dashboard testing), and the mkcert-backed https LAN proxy on

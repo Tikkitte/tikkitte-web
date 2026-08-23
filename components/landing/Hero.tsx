@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Nav from './Nav'
 import type { EventWithPrice } from '@/lib/events'
-import { formatDate, formatTime } from '@/lib/format'
+import { formatDateShort, formatTime } from '@/lib/format'
 
 type Props = {
   events: EventWithPrice[]
@@ -46,7 +46,7 @@ export default function Hero({ events }: Props) {
     id: event.id,
     href: `/e/${event.slug ?? event.id}`,
     poster: event.image?.[0] ?? fallbackFlyers[index % fallbackFlyers.length],
-    dateLabel: [formatDate(event.date), formatTime(event.time)].filter(Boolean).join(' · '),
+    dateLabel: [formatDateShort(event.date), formatTime(event.time)].filter(Boolean).join(' · '),
     name: event.name,
     venue: event.venue,
   }))

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { EventWithPrice } from '@/lib/events'
 import { formatEventPrice } from '@/lib/events'
-import { formatDate, formatTime } from '@/lib/format'
+import { formatDateShort, formatTime } from '@/lib/format'
 import PosterFrame from '@/components/PosterFrame'
 
 const fallbackFlyers = [
@@ -28,7 +28,7 @@ export default function EventList({ events }: { events: EventWithPrice[] }) {
   return (
     <div className="flex flex-col">
       {events.map((event, i) => {
-        const eventDateTime = [formatDate(event.date), formatTime(event.time)].filter(Boolean).join(' · ')
+        const eventDateTime = [formatDateShort(event.date), formatTime(event.time)].filter(Boolean).join(' · ')
         const poster = event.image?.[0] ?? fallbackFlyers[i % fallbackFlyers.length]
 
         return (

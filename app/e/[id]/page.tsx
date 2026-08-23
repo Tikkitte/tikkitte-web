@@ -10,7 +10,9 @@ import { isValidUUID } from '@/lib/validation'
 import EventCheckout from './EventCheckout'
 import EventPreviewGallery from '@/components/EventPreviewGallery'
 import PosterFrame from '@/components/PosterFrame'
-import { formatDate, formatTime } from '@/lib/format'
+import PosterOutlineCard from '@/components/PosterOutlineCard'
+import ExpandableText from '@/components/ExpandableText'
+import { formatDate, formatDateShort, formatTime } from '@/lib/format'
 
 type OrganizerSummary = {
   id: string
@@ -43,9 +45,11 @@ const EVENT_CORE_COLUMNS =
 const refPattern = /^[a-z0-9-]{2,20}$/
 
 function formatEventDateRange(event: Pick<EventCore, 'date' | 'time' | 'end_date' | 'end_time'>) {
-  const start = [formatDate(event.date), formatTime(event.time)].filter(Boolean).join(' · ')
-  if (!event.end_date) return start
-  const end = [formatDate(event.end_date), formatTime(event.end_time)].filter(Boolean).join(' · ')
+  const start = [formatDateShort(event.date), formatTime(event.time)].filter(Boolean).join(' · ')
+  // Only show the end side for genuinely multi-day events — same-day end
+  // times just added noise to what's otherwise a single date/time line.
+  if (!event.end_date || event.end_date === event.date) return start
+  const end = [formatDateShort(event.end_date), formatTime(event.end_time)].filter(Boolean).join(' · ')
   return `${start} → ${end}`
 }
 
@@ -233,7 +237,10 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
         <div>
 
           {/* Event info card */}
-          <div className="mb-8 overflow-hidden rounded-[24px] border border-[#E4DFD1] bg-white shadow-[0_24px_70px_rgba(25,25,23,0.08)]">
+          <PosterOutlineCard
+            posterSrc={poster ?? null}
+            className="mb-8 w-full max-w-[640px] overflow-hidden rounded-[24px] border-2 bg-white shadow-[0_24px_70px_rgba(25,25,23,0.08)]"
+          >
             {poster ? (
               <PosterFrame
                 src={poster}
@@ -241,10 +248,10 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 sizes="(max-width: 1024px) 100vw, 640px"
                 quality={90}
                 priority
-                className="mx-auto aspect-[9/16] w-full max-w-[640px] bg-black"
+                className="aspect-[3/4] w-full bg-black"
               />
             ) : (
-              <div className="mx-auto flex aspect-[9/16] w-full max-w-[640px] items-center justify-center bg-[#ECE7D8]">
+              <div className="flex aspect-[3/4] w-full items-center justify-center bg-[#ECE7D8]">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#C8C3B2]">
                   <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
                 </svg>
@@ -269,9 +276,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 )
               )}
               {event.description && (
-                <p className="mt-4 line-clamp-4 text-sm leading-relaxed text-[#5F5D54]">
-                  {event.description}
-                </p>
+                <ExpandableText text={event.description} className="mt-4 text-sm leading-relaxed text-[#5F5D54]" />
               )}
               {organizer && (
                 <Link
@@ -298,7 +303,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 </Link>
               )}
             </div>
-          </div>
+          </PosterOutlineCard>
 
           {/* Preview gallery */}
           {((event.preview_images?.length ?? 0) + (event.preview_videos?.length ?? 0)) > 0 && (

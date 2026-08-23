@@ -1,8 +1,19 @@
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
 export function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
   const [y, m, d] = dateStr.split('-').map(Number)
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  return `${months[m - 1]} ${d}, ${y}`
+  return `${MONTHS[m - 1]} ${d}, ${y}`
+}
+
+// Year-less variant for public browsing surfaces (event page, homepage,
+// organizer page) where the year is implied by context. Ticket/confirmation
+// receipts and admin tools keep the full formatDate — those are records
+// someone might read long after the fact, where the year still matters.
+export function formatDateShort(dateStr: string | null | undefined) {
+  if (!dateStr) return 'TBA'
+  const [, m, d] = dateStr.split('-').map(Number)
+  return `${MONTHS[m - 1]} ${d}`
 }
 
 export function formatTime(timeStr: string | null | undefined) {
