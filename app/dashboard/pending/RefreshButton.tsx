@@ -19,11 +19,17 @@ export default function RefreshButton() {
       return
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('organizer_profile')
       .select('approved')
       .eq('id', user.id)
       .maybeSingle()
+
+    if (profileError) {
+      setMessage('Could not check your status. Please try again.')
+      setChecking(false)
+      return
+    }
 
     if (profile?.approved) {
       router.push('/dashboard')

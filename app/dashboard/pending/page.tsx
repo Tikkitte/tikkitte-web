@@ -9,11 +9,17 @@ export default async function PendingPage() {
   if (!user) redirect('/login')
 
   // If already approved, send straight to dashboard
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('organizer_profile')
     .select('approved')
     .eq('id', user.id)
     .maybeSingle()
+
+  // A query error here means something went wrong reading the profile, not
+  // that the organizer is unapproved — don't claim "under review" for it.
+  if (profileError) {
+    throw new Error(`Failed to load organizer profile: ${profileError.message}`)
+  }
 
   if (profile?.approved) redirect('/dashboard')
 
