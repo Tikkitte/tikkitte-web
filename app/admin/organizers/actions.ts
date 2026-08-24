@@ -28,6 +28,25 @@ export async function approveOrganizer(organizerId: string): Promise<ApproveOrga
   const { error } = await supabase.rpc('approve_organizer', { target_organizer_id: organizerId })
   if (error) return { ok: false, message: 'Failed to approve organizer.' }
 
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session?.access_token) {
+    try {
+      const emailRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-organizer-approved`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ organizer_id: organizerId }),
+      })
+      if (!emailRes.ok) {
+        console.error('[approveOrganizer] send-organizer-approved failed', emailRes.status, await emailRes.text())
+      }
+    } catch (err) {
+      console.error('[approveOrganizer] send-organizer-approved invoke failed', err)
+    }
+  }
+
   revalidatePath('/admin/organizers')
   return { ok: true }
 }

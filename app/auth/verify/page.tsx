@@ -15,6 +15,28 @@ function slugify(input: string): string {
     .replace(/[\s-]+/g, '-')
 }
 
+const SUPABASE_FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/functions/v1'
+
+async function notifyOrganizerWelcome(supabase: ReturnType<typeof createClient>) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    const accessToken = session?.access_token
+    if (!accessToken) return
+    const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/send-organizer-welcome`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    if (!res.ok) {
+      console.error('[auth/verify] send-organizer-welcome failed', res.status, await res.text())
+    }
+  } catch (err) {
+    console.error('[auth/verify] send-organizer-welcome invoke failed', err)
+  }
+}
+
 // Matches the slugify pattern used in the one-time DB backfill
 // (20260703_organizer_profile_slug.sql): base slug from display_name,
 // short id suffix if that base is already taken by someone else.
@@ -86,6 +108,9 @@ function VerifyForm() {
         setError('Your email was verified, but we could not finish setting up your account. Please contact support.')
         return
       }
+      // Idempotent server-side (welcome_email_sent_at marker), so it's safe
+      // to call on every successful verify, not just the first insert.
+      await notifyOrganizerWelcome(supabase)
       router.push('/dashboard')
       router.refresh()
       return
@@ -107,6 +132,7 @@ function VerifyForm() {
         setError('Your email was verified, but we could not finish setting up your account. Please contact support.')
         return
       }
+      await notifyOrganizerWelcome(supabase)
     }
     router.push('/dashboard')
     router.refresh()
