@@ -53,7 +53,7 @@ export default async function AdminEventsPage() {
     <div>
       <AdminPageHeader
         title="Events"
-        description="Review and renegotiate each event’s platform fee. Changes affect unsettled revenue and future sales; completed payouts never change."
+        description="Review event financials and renegotiate platform fees. Fee changes affect unsettled revenue and future sales; completed payouts never change."
       />
       <EventsClient rows={rows} />
     </div>

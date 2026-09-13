@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import type { EventOutstandingPayout } from '@/lib/types'
+import type { EventFinancials, EventOutstandingPayout } from '@/lib/types'
 
 type PreviewResult =
   | {
@@ -37,6 +37,25 @@ async function getAdminClient() {
     .maybeSingle()
 
   return adminRow ? supabase : null
+}
+
+export async function getEventFinancials(eventId: string): Promise<
+  { ok: true; data: EventFinancials } | { ok: false; message: string }
+> {
+  if (!validEventId(eventId)) return { ok: false, message: 'Invalid event.' }
+
+  try {
+    const supabase = await getAdminClient()
+    if (!supabase) return { ok: false, message: 'Not authorized.' }
+
+    const { data, error } = await supabase.rpc('admin_get_event_financials', { p_event_id: eventId.trim() })
+    if (error || !data) {
+      return { ok: false, message: error?.code === 'P0002' ? 'Event not found.' : 'Could not load financials. Please try again.' }
+    }
+    return { ok: true, data: data as EventFinancials }
+  } catch {
+    return { ok: false, message: 'Could not load financials. Please try again.' }
+  }
 }
 
 export async function previewEventFee(eventId: string, feePercent: number): Promise<PreviewResult> {

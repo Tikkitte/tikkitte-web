@@ -159,6 +159,21 @@ export type EventOutstandingPayout = {
   net_cents: number
 }
 
+export type EventFinancials = {
+  grossCents: number
+  currentFeePercent: number | null
+  statusBreakdown: Array<{ status: string; count: number; amountCents: number }>
+  ticketQuantities: Array<{ ticketId: string; label: string; checkoutQuantity: number; compQuantity: number }>
+  promoDiscountCents: number
+  promoCodeCount: number
+  promoCodes: Array<{ id: string; code: string; active: boolean | null; redemptions: number; discountCents: number }>
+  compIssuanceCount: number
+  compTicketQuantity: number
+  compIssuances: Array<{ id: string; recipientName: string; ticketLabel: string; quantity: number; note: string | null; sentAt: string }>
+  feeChangeCount: number
+  feeChanges: Array<{ id: string; oldFeePercent: number | null; newFeePercent: number; changedBy: string; reason: string | null; createdAt: string }>
+}
+
 export type Payout = {
   id: string
   organizer_id: string

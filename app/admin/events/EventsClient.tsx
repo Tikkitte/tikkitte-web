@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import type { EventOutstandingPayout } from '@/lib/types'
 import { previewEventFee, setEventFee } from './actions'
+import EventFinancials from './EventFinancials'
+import { formatCents } from './format'
 
 export type EventFeeAdminRow = {
   id: string
@@ -42,14 +44,7 @@ function formatDate(value: string | null) {
   })
 }
 
-function formatCents(value: number) {
-  return `GHS ${(value / 100).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`
-}
-
-function FeeEditor({ event }: { event: EventFeeAdminRow }) {
+function FeeEditor({ event, onSaved }: { event: EventFeeAdminRow; onSaved: () => void }) {
   const router = useRouter()
   const [value, setValue] = useState(event.fee_percent === null ? '' : String(event.fee_percent))
   const [reason, setReason] = useState('')
@@ -101,6 +96,7 @@ function FeeEditor({ event }: { event: EventFeeAdminRow }) {
         return
       }
       setSaved(true)
+      onSaved()
       router.refresh()
     })
   }
@@ -184,12 +180,14 @@ function FeeEditor({ event }: { event: EventFeeAdminRow }) {
 
 export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
+  const [financialsEventId, setFinancialsEventId] = useState<string | null>(null)
+  const [financialsVersion, setFinancialsVersion] = useState<Record<string, number>>({})
 
   return (
     <section className="create-card overflow-hidden">
       <div className="border-b border-[var(--tikkitte-cream-border)] px-5 py-4">
         <p className="text-sm font-semibold">{rows.length.toLocaleString()} events</p>
-        <p className="mt-1 text-xs text-[var(--tikkitte-ink-faint)]">Open an event to preview and record a negotiated fee change.</p>
+        <p className="mt-1 text-xs text-[var(--tikkitte-ink-faint)]">Review event financials or preview and record a negotiated fee change.</p>
       </div>
       {rows.length === 0 ? (
         <div className="px-5 py-12 text-center text-sm text-[var(--tikkitte-ink-faint)]">No events found.</div>
@@ -209,8 +207,17 @@ export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
                     <p className="mt-1 text-sm text-[var(--tikkitte-ink-soft)]">{event.organizer?.display_name ?? 'Unknown organizer'} · {formatDate(event.date)}</p>
                     <p className="mt-0.5 truncate text-xs text-[var(--tikkitte-ink-faint)]">{event.organizer?.email ?? 'No organizer email'}</p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
                     <Link href={`/e/${event.slug ?? event.id}`} target="_blank" rel="noreferrer" className="create-focus inline-flex min-h-11 items-center rounded-full border border-[var(--tikkitte-cream-border)] px-4 text-xs font-semibold hover:bg-[var(--tikkitte-cream)]">Public page ↗</Link>
+                    <button
+                      type="button"
+                      onClick={() => setFinancialsEventId(financialsEventId === event.id ? null : event.id)}
+                      aria-expanded={financialsEventId === event.id}
+                      aria-controls={`financials-${event.id}`}
+                      className="create-focus min-h-11 rounded-full border border-[var(--tikkitte-cream-border)] px-4 text-xs font-semibold hover:bg-[var(--tikkitte-cream)]"
+                    >
+                      {financialsEventId === event.id ? 'Close financials' : 'Financials'}
+                    </button>
                     <button
                       type="button"
                       onClick={() => setExpandedEventId(expanded ? null : event.id)}
@@ -221,7 +228,12 @@ export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
                     </button>
                   </div>
                 </div>
-                {expanded && <FeeEditor event={event} />}
+                {expanded && <FeeEditor event={event} onSaved={() => setFinancialsVersion((v) => ({ ...v, [event.id]: (v[event.id] ?? 0) + 1 }))} />}
+                {financialsEventId === event.id && (
+                  <div id={`financials-${event.id}`}>
+                    <EventFinancials key={`${event.id}:${financialsVersion[event.id] ?? 0}`} eventId={event.id} />
+                  </div>
+                )}
               </article>
             )
           })}
