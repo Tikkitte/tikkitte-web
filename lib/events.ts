@@ -13,7 +13,14 @@ export type EventWithPrice = MarketingEvent & { startingPrice: number | null }
 
 async function fetchUpcomingEvents(limit: number): Promise<EventWithPrice[]> {
   const supabase = createPublicClient()
-  const today = new Date().toISOString().slice(0, 10)
+  // Keep an event listed until 2am the day after it starts, not just until
+  // midnight. Ghana has no UTC offset, so comparing UTC hours directly is
+  // equivalent to Accra local time — no timezone conversion needed.
+  const currentTime = new Date()
+  const cutoff = currentTime.getUTCHours() < 2
+    ? new Date(currentTime.getTime() - 24 * 60 * 60 * 1000)
+    : currentTime
+  const today = cutoff.toISOString().slice(0, 10)
 
   const { data: events, error: eventsError } = await supabase
     .from('event')
