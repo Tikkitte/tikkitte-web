@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import type { EventFinancials as FinancialsData } from '@/lib/types'
-import { getEventFinancials } from './actions'
+import { getEventFinancials, getEventPayoutBalance } from './actions'
 import { formatCents } from './format'
+
+type PayoutBalanceState =
+  | { status: 'loading' }
+  | { status: 'error' }
+  | { status: 'ready'; netCents: number | null }
 
 const cell = 'border-t border-[var(--tikkitte-cream-border)] py-2 pr-4'
 const heading = 'mb-2 text-xs font-semibold text-[var(--tikkitte-ink-soft)]'
@@ -16,6 +21,7 @@ export default function EventFinancials({ eventId }: { eventId: string }) {
   const [data, setData] = useState<FinancialsData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
+  const [payoutBalance, setPayoutBalance] = useState<PayoutBalanceState>({ status: 'loading' })
 
   useEffect(() => {
     let cancelled = false
@@ -25,6 +31,19 @@ export default function EventFinancials({ eventId }: { eventId: string }) {
       else setError(result.message)
     }).catch(() => {
       if (!cancelled) setError('Could not load financials. Please try again.')
+    })
+    return () => { cancelled = true }
+  }, [eventId, attempt])
+
+  useEffect(() => {
+    let cancelled = false
+    setPayoutBalance({ status: 'loading' })
+    getEventPayoutBalance(eventId).then((result) => {
+      if (cancelled) return
+      if (result.ok) setPayoutBalance({ status: 'ready', netCents: result.data === null ? null : result.data.net_cents })
+      else setPayoutBalance({ status: 'error' })
+    }).catch(() => {
+      if (!cancelled) setPayoutBalance({ status: 'error' })
     })
     return () => { cancelled = true }
   }, [eventId, attempt])
@@ -52,6 +71,16 @@ export default function EventFinancials({ eventId }: { eventId: string }) {
           <div><dt className="text-xs text-[var(--tikkitte-ink-soft)]">Organizer net (estimate)</dt><dd className="mt-1 font-semibold tabular-nums">{feeCents === null ? '—' : formatCents(data.grossCents - feeCents)}</dd></div>
         </dl>
         <p className="mt-2 text-xs leading-5 text-[var(--tikkitte-ink-soft)]">Lifetime successful payments, before refunds. Fee and net apply today’s rate to that gross; settled payouts may use older rates. These estimates are not the outstanding payout balance.</p>
+      </div>
+
+      <div className="rounded-xl bg-white p-4 text-sm">
+        <dt className="text-xs text-[var(--tikkitte-ink-soft)]">Available payout balance</dt>
+        <dd className="mt-1 font-semibold tabular-nums">
+          {payoutBalance.status === 'error' ? 'Could not load' :
+            payoutBalance.status === 'loading' ? 'Loading…' :
+            payoutBalance.netCents === null ? 'Not configured' : formatCents(payoutBalance.netCents)}
+        </dd>
+        <p className="mt-1 text-xs leading-5 text-[var(--tikkitte-ink-soft)]">Net of the current fee, minus any amount already tied to a payout or refunded. What the organizer could be paid out right now.</p>
       </div>
 
       <dl className="grid gap-4 rounded-xl bg-white p-4 text-sm sm:grid-cols-2">

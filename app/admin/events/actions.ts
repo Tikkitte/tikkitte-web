@@ -58,6 +58,30 @@ export async function getEventFinancials(eventId: string): Promise<
   }
 }
 
+export async function getEventPayoutBalance(eventId: string): Promise<
+  { ok: true; data: EventOutstandingPayout | null } | { ok: false; message: string }
+> {
+  if (!validEventId(eventId)) return { ok: false, message: 'Invalid event.' }
+
+  try {
+    const supabase = await getAdminClient()
+    if (!supabase) return { ok: false, message: 'Not authorized.' }
+
+    const { data, error } = await supabase
+      .rpc('get_event_outstanding_payout', { p_event_id: eventId.trim() })
+      .single()
+
+    if (error) {
+      if (error.code === 'P0001') return { ok: true, data: null }
+      return { ok: false, message: 'Could not load the payout balance.' }
+    }
+
+    return { ok: true, data: data as EventOutstandingPayout }
+  } catch {
+    return { ok: false, message: 'Could not load the payout balance.' }
+  }
+}
+
 export async function previewEventFee(eventId: string, feePercent: number): Promise<PreviewResult> {
   if (!validEventId(eventId) || !validFee(feePercent)) {
     return { ok: false, message: 'Enter a fee between 0 and 100.' }
