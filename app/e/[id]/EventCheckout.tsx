@@ -26,6 +26,10 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
   )
   const [email, setEmail] = useState('')
   const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null)
+  // The exact address the buyer explicitly chose to keep despite a typo
+  // suggestion, via the "Keep" button below. Cleared implicitly whenever
+  // email no longer equals it (i.e. they edit the address again).
+  const [keptEmail, setKeptEmail] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -82,6 +86,10 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
     return Math.min(discount, eligibleSubtotal)
   }, [appliedPromo, counts, tickets])
   const displayedTotal = Math.max(0, totalPrice - discountAmount)
+  // A suggestion the buyer hasn't explicitly resolved yet (via Use/Keep
+  // below) — gates the Pay button. Re-typing back to a previously-kept
+  // value still counts as resolved; typing anything else doesn't.
+  const unresolvedSuggestion = emailSuggestion && email !== keptEmail ? emailSuggestion : null
 
   const applyPromoCode = async () => {
     setPromoError(null)
@@ -139,6 +147,18 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
     const validEmail = validateEmail(email)
     if (!validEmail) {
       setError('Please enter a valid email address.')
+      return
+    }
+
+    // Recomputed fresh here rather than trusting emailSuggestion state: on
+    // mobile, tapping Pay can fire the email field's blur (which sets that
+    // state) and this submit handler in the same gesture, before the blur's
+    // state update has rendered a disabled button. Compute independently so
+    // that race can't slip an unresolved suggestion through.
+    const liveSuggestion = suggestEmailDomain(email)
+    if (liveSuggestion && email !== keptEmail) {
+      setEmailSuggestion(liveSuggestion)
+      setError('Please confirm your email address before continuing.')
       return
     }
 
@@ -451,21 +471,31 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
               onBlur={() => setEmailSuggestion(suggestEmailDomain(email))}
               className="w-full rounded-lg border border-[#E4DFD1] bg-white px-4 py-2.5 text-sm text-[#191917] placeholder:text-[#8a887c] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#2565D0]"
             />
-            {emailSuggestion ? (
-              <p className="mt-1 text-xs text-[#2565D0]">
-                Did you mean{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail(emailSuggestion)
-                    setEmailSuggestion(null)
-                  }}
-                  className="font-semibold underline underline-offset-2"
-                >
-                  {emailSuggestion}
-                </button>
-                ?
-              </p>
+            {unresolvedSuggestion ? (
+              <div className="mt-1.5 rounded-lg border border-[#2565D0]/25 bg-[#2565D0]/5 p-2.5">
+                <p className="mb-2 text-xs text-[#191917]">
+                  Did you mean <span className="font-semibold">{unresolvedSuggestion}</span>?
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail(unresolvedSuggestion)
+                      setEmailSuggestion(null)
+                    }}
+                    className="rounded-full bg-[#2565D0] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#1E56B5]"
+                  >
+                    Use {unresolvedSuggestion}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setKeptEmail(email)}
+                    className="rounded-full border border-[#C8C3B2] px-3 py-1.5 text-xs font-semibold text-[#191917] transition-colors hover:border-[#191917]"
+                  >
+                    Keep {email}
+                  </button>
+                </div>
+              </div>
             ) : (
               <p className="mt-1 text-xs text-[#8a887c]">
                 Your tickets and QR code will be sent here
@@ -537,10 +567,15 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
             </div>
           </div>
         )}
+        {totalTickets > 0 && email && (
+          <p className="mb-2 text-center text-xs text-[#5F5D54]">
+            Tickets will be sent to: <span className="font-semibold text-[#191917]">{email}</span>
+          </p>
+        )}
         <button
           type="button"
           onClick={handleCheckout}
-          disabled={loading || totalTickets === 0 || allUnavailable}
+          disabled={loading || totalTickets === 0 || allUnavailable || !!unresolvedSuggestion}
           className="w-full rounded-xl bg-[#2565D0] py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#1E56B5] disabled:cursor-not-allowed disabled:opacity-40"
         >
           {loading ? (
