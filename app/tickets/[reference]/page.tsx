@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Metadata } from 'next'
 import { formatDate } from '@/lib/format'
+import TicketQrCode from './TicketQrCode'
 
 type Props = {
   params: Promise<{ reference: string }>
@@ -109,6 +110,12 @@ export default async function TicketPage({ params }: Props) {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-8">
+        {payment.email && (
+          <p className="mb-6 rounded-xl border border-[#E4DFD1] bg-white px-4 py-3 text-center text-sm text-[#5F5D54]">
+            A copy has also been sent to <span className="font-semibold text-[#191917]">{payment.email}</span>
+          </p>
+        )}
+
         {/* Event info */}
         {event && (
           <div className="mb-8">
@@ -149,9 +156,12 @@ export default async function TicketPage({ params }: Props) {
         )}
 
         {/* Tickets */}
-        <h2 className="mb-4 text-sm font-bold uppercase tracking-[0.16em] text-[#2565D0]">
+        <h2 className="mb-1 text-sm font-bold uppercase tracking-[0.16em] text-[#2565D0]">
           Your Tickets
         </h2>
+        <p className="mb-4 text-xs text-[#8a887c]">
+          Screenshot or save each QR code below so it&apos;s on hand even offline.
+        </p>
 
         <div className="space-y-4 mb-8">
           {(userTickets as TicketRow[]).map((ut) => (
@@ -184,19 +194,7 @@ export default async function TicketPage({ params }: Props) {
               </div>
 
               {/* QR Code */}
-              {ut.qr_code && (
-                <div className="flex flex-col items-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={ut.qr_code}
-                    alt="Ticket QR Code"
-                    className="h-48 w-48 rounded-xl border border-[#E4DFD1] bg-white"
-                  />
-                  <p className="mt-2 text-xs text-[#8a887c]">
-                    Show this QR code at the entrance
-                  </p>
-                </div>
-              )}
+              <TicketQrCode ticketId={ut.id} initialQrCode={ut.qr_code} />
             </div>
           ))}
         </div>
@@ -206,6 +204,12 @@ export default async function TicketPage({ params }: Props) {
           <h3 className="mb-3 text-sm font-bold uppercase tracking-[0.16em] text-[#8a887c]">
             Order Summary
           </h3>
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-[#5F5D54]">Tickets</span>
+            <span className="font-semibold text-[#191917]">
+              {userTickets.length} ticket{userTickets.length === 1 ? '' : 's'}
+            </span>
+          </div>
           <div className="flex justify-between text-sm mb-2">
             <span className="text-[#5F5D54]">Reference</span>
             <span className="font-mono text-xs text-[#191917]">{reference}</span>
