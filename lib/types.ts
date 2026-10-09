@@ -96,6 +96,8 @@ export type Payment = {
   event_id: string
   status: string
   amount: number
+  // Tikkitte's service fee, included in amount. Never organizer revenue.
+  service_fee_cents?: number | null
   ticket_type_id: string
   quantity: number
   paid_at: string | null
@@ -161,6 +163,8 @@ export type EventOutstandingPayout = {
 
 export type EventFinancials = {
   grossCents: number
+  // Customer service fees on successful payments. Tikkitte revenue, not in grossCents.
+  serviceFeeCents?: number
   currentFeePercent: number | null
   statusBreakdown: Array<{ status: string; count: number; amountCents: number }>
   ticketQuantities: Array<{ ticketId: string; label: string; checkoutQuantity: number; compQuantity: number }>

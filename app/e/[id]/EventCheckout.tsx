@@ -4,7 +4,9 @@ import { useState, useMemo, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatSaleDate, saleDateTime, ticketSaleStatus } from '@/lib/ticketAvailability'
 import { validateEmail, sanitizeName, suggestEmailDomain } from '@/lib/validation'
+import { formatMinor, priceOrder, pricingFromBreakdown, type OrderPricing } from '@/lib/checkout-pricing'
 import type { PromoCode, Ticket } from '@/lib/types'
+import OrderSummary from './OrderSummary'
 
 const SUPABASE_FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/functions/v1'
 
@@ -25,6 +27,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
     Object.fromEntries(tickets.map((t) => [t.id, 0]))
   )
   const [email, setEmail] = useState('')
+  const [confirmEmail, setConfirmEmail] = useState('')
   const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null)
   // The exact address the buyer explicitly chose to keep despite a typo
   // suggestion, via the "Keep" button below. Cleared implicitly whenever
@@ -37,6 +40,10 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
   const [appliedPromo, setAppliedPromo] = useState<PromoCode | null>(null)
   const [promoMessage, setPromoMessage] = useState<string | null>(null)
   const [promoError, setPromoError] = useState<string | null>(null)
+  // Set when the server's total differs from what was displayed, so the customer
+  // re-confirms the price the server will actually charge.
+  const [serverPricing, setServerPricing] = useState<OrderPricing | null>(null)
+  const [priceNotice, setPriceNotice] = useState<string | null>(null)
   const [, setSaleClockTick] = useState(0)
 
   // ticketSaleStatus() reads the wall clock fresh on every call, but nothing
@@ -69,23 +76,11 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
   })
 
   const totalTickets = useMemo(() => Object.values(counts).reduce((s, n) => s + n, 0), [counts])
-  const totalPrice = useMemo(
-    () => tickets.reduce((s, t) => s + (counts[t.id] ?? 0) * t.price, 0),
-    [tickets, counts],
+  const clientPricing = useMemo(
+    () => priceOrder(tickets.map((t) => ({ id: t.id, price: t.price, quantity: counts[t.id] ?? 0 })), appliedPromo),
+    [tickets, counts, appliedPromo],
   )
-  const discountAmount = useMemo(() => {
-    if (!appliedPromo) return 0
-    const eligibleSubtotal = tickets.reduce((sum, ticket) => {
-      if (appliedPromo.ticket_type_id && ticket.id !== appliedPromo.ticket_type_id) return sum
-      return sum + (counts[ticket.id] ?? 0) * ticket.price
-    }, 0)
-    if (eligibleSubtotal <= 0) return 0
-    const discount = appliedPromo.discount_type === 'percent'
-      ? eligibleSubtotal * (appliedPromo.discount_value / 100)
-      : appliedPromo.discount_value
-    return Math.min(discount, eligibleSubtotal)
-  }, [appliedPromo, counts, tickets])
-  const displayedTotal = Math.max(0, totalPrice - discountAmount)
+  const pricing = serverPricing ?? clientPricing
   // A suggestion the buyer hasn't explicitly resolved yet (via Use/Keep
   // below) — gates the Pay button. Re-typing back to a previously-kept
   // value still counts as resolved; typing anything else doesn't.
@@ -95,6 +90,8 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
     setPromoError(null)
     setPromoMessage(null)
     setAppliedPromo(null)
+    setServerPricing(null)
+    setPriceNotice(null)
 
     const normalizedCode = promoInput.trim().toUpperCase()
     if (!normalizedCode) {
@@ -133,16 +130,21 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
     const current = counts[ticketId] ?? 0
     if (ticket.available_quantity !== null && current >= ticket.available_quantity) return
     if (ticket.max_per_order !== null && current >= ticket.max_per_order) return
+    setServerPricing(null)
+    setPriceNotice(null)
     setCounts((prev) => ({ ...prev, [ticketId]: current + 1 }))
   }
 
   const decrement = (ticketId: string) => {
+    setServerPricing(null)
+    setPriceNotice(null)
     setCounts((prev) => ({ ...prev, [ticketId]: Math.max(0, (prev[ticketId] ?? 0) - 1) }))
   }
 
   const handleCheckout = async () => {
     if (loading) return
     setError(null)
+    setPriceNotice(null)
 
     const validEmail = validateEmail(email)
     if (!validEmail) {
@@ -159,6 +161,11 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
     if (liveSuggestion && email !== keptEmail) {
       setEmailSuggestion(liveSuggestion)
       setError('Please confirm your email address before continuing.')
+      return
+    }
+
+    if (email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) {
+      setError('Email addresses do not match. Please re-enter to confirm.')
       return
     }
 
@@ -260,6 +267,16 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
         return
       }
 
+      // Never start a payment for a total the customer was not shown: if the
+      // server's quote differs from what is on screen, show the quoted price
+      // and let them confirm it with another tap.
+      const quotedPricing = pricingFromBreakdown(quoteData.breakdown)
+      if (quotedPricing && quotedPricing.totalMinor !== pricing.totalMinor) {
+        setServerPricing(quotedPricing)
+        setPriceNotice(`Your total was updated to ${formatMinor(quotedPricing.totalMinor)}. Please review and tap Pay again.`)
+        return
+      }
+
       // 6. Make payment
       if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 6: making payment...')
       const callbackUrl = `${window.location.origin}/e/${eventSlug}/confirmation`
@@ -275,12 +292,21 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
           quote_id: quoteData.quote_id,
           callback_url: callbackUrl,
           promo_code: appliedPromo?.code ?? null,
+          expected_total: pricing.totalMinor / 100,
         }),
       })
 
       const paymentData = await makeRes.json()
       if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 6 response:', makeRes.status, JSON.stringify(paymentData))
       if (!makeRes.ok) {
+        if (paymentData.code === 'ERR_TOTAL_CHANGED' || paymentData.code === 'ERR_QUOTE_STALE') {
+          const changedPricing = pricingFromBreakdown(paymentData.breakdown)
+          if (changedPricing) {
+            setServerPricing(changedPricing)
+            setPriceNotice(`Your total was updated to ${formatMinor(changedPricing.totalMinor)}. Please review and tap Pay again.`)
+            return
+          }
+        }
         setError(paymentData.message || 'Failed to start payment. Please try again.')
         return
       }
@@ -503,8 +529,25 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
             )}
           </div>
           <div>
+            <label htmlFor="confirm-email" className="mb-1 block text-sm font-semibold text-[#191917]">
+              Confirm email address <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="confirm-email"
+              type="email"
+              required
+              maxLength={254}
+              placeholder="you@example.com"
+              value={confirmEmail}
+              onChange={(e) => setConfirmEmail(e.target.value)}
+              onPaste={(e) => e.preventDefault()}
+              autoComplete="off"
+              className="w-full rounded-lg border border-[#E4DFD1] bg-white px-4 py-2.5 text-sm text-[#191917] placeholder:text-[#8a887c] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#2565D0]"
+            />
+          </div>
+          <div>
             <label htmlFor="name" className="mb-1 block text-sm font-semibold text-[#191917]">
-              Name <span className="font-normal text-[#8a887c]">(optional)</span>
+              Name <span className="font-normal text-[#8a887c]">(recommended)</span>
             </label>
             <input
               id="name"
@@ -546,6 +589,13 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
         </div>
       )}
 
+      {/* Price changed since it was displayed */}
+      {priceNotice && (
+        <div role="status" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">
+          {priceNotice}
+        </div>
+      )}
+
       {/* Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm font-medium rounded-lg p-3 mb-4">
@@ -555,18 +605,14 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
 
       {/* Checkout button */}
       <div className="sticky bottom-4">
-        {totalTickets > 0 && discountAmount > 0 && (
-          <div className="mb-3 rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm">
-            <div className="flex justify-between text-[#5F5D54]">
-              <span>Subtotal</span>
-              <span>GH₵ {totalPrice.toFixed(2)}</span>
-            </div>
-            <div className="mt-1 flex justify-between font-semibold text-green-700">
-              <span>Discount</span>
-              <span>-GH₵ {discountAmount.toFixed(2)}</span>
-            </div>
-          </div>
-        )}
+        <OrderSummary
+          ticketCount={totalTickets}
+          subtotalMinor={pricing.subtotalMinor}
+          discountMinor={pricing.discountMinor}
+          promoCode={appliedPromo?.code ?? null}
+          serviceFeeMinor={pricing.serviceFeeMinor}
+          totalMinor={pricing.totalMinor}
+        />
         {totalTickets > 0 && email && (
           <p className="mb-2 text-center text-xs text-[#5F5D54]">
             Tickets will be sent to: <span className="font-semibold text-[#191917]">{email}</span>
@@ -588,10 +634,10 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
             </span>
           ) : totalTickets === 0 ? (
             'Select tickets'
-          ) : displayedTotal === 0 ? (
+          ) : pricing.totalMinor === 0 ? (
             `Claim ${totalTickets} Free Ticket${totalTickets > 1 ? 's' : ''}`
           ) : (
-            `Pay GH₵ ${displayedTotal.toFixed(2)} for ${totalTickets} Ticket${totalTickets > 1 ? 's' : ''}`
+            `Pay ${formatMinor(pricing.totalMinor)} for ${totalTickets} Ticket${totalTickets > 1 ? 's' : ''}`
           )}
         </button>
       </div>

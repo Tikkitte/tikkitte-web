@@ -14,6 +14,7 @@ import MessageAttendeesButton from './MessageAttendeesButton'
 import PayoutSummary from './PayoutSummary'
 import TablePackageManager from './TablePackageManager'
 import EventWorkspace from './EventWorkspace'
+import { ticketRevenueCents } from '@/lib/revenue'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -65,7 +66,7 @@ function paymentRevenueAllocations(payment: Payment) {
     return [{ ticketTypeId, weight: quantity * unitPrice }]
   })
   const totalWeight = lines.reduce((sum, line) => sum + line.weight, 0)
-  const collected = Number(payment.amount ?? 0) / 100
+  const collected = ticketRevenueCents(payment) / 100
 
   if (lines.length > 0 && totalWeight > 0) {
     return lines.map((line) => ({
@@ -203,7 +204,7 @@ export default async function EventDetailPage({
     return acc
   }, {})
 
-  const grossCollected = eligiblePayments.reduce((s: number, p: Payment) => s + (p.amount ?? 0), 0) / 100
+  const grossCollected = eligiblePayments.reduce((s: number, p: Payment) => s + ticketRevenueCents(p), 0) / 100
   const payoutBreakdownRaw = outstandingPayout as EventOutstandingPayout
   const payoutBreakdown: EventOutstandingPayout = {
     outstanding_gross_cents: Number(payoutBreakdownRaw.outstanding_gross_cents),
@@ -281,7 +282,7 @@ export default async function EventDetailPage({
       : p.quantity
     return {
       reference: p.reference,
-      amount: p.amount,
+      amount: ticketRevenueCents(p),
       status: p.refund_status === 'success' ? 'refunded' : p.status,
       paidAt: p.paid_at ? formatDateTime(p.paid_at) : '—',
       ticketLabel,

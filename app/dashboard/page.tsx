@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Event, Ticket } from '@/lib/types'
 import DashboardRevenueChart from '@/components/dashboard/LazyDashboardRevenueChart'
+import { ticketRevenueCents } from '@/lib/revenue'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -64,14 +65,14 @@ export default async function DashboardHomePage() {
         supabase.from('ticket').select('*').in('event_id', eventIds).eq('is_table_ticket', false),
         supabase
           .from('payments')
-          .select('amount, paid_at, refund_status')
+          .select('amount, service_fee_cents, paid_at, refund_status')
           .in('event_id', eventIds)
           .in('status', ['success', 'free']),
       ])
     : [{ data: [] }, { data: [] }]
 
   const tickets = (rawTickets ?? []) as Ticket[]
-  const payments = ((rawPayments ?? []) as { amount: number | null; paid_at: string | null; refund_status: string | null }[])
+  const payments = ((rawPayments ?? []) as { amount: number | null; service_fee_cents: number | null; paid_at: string | null; refund_status: string | null }[])
     .filter((payment) => payment.refund_status !== 'success')
 
   const ticketsByEvent = tickets.reduce((acc: Record<string, Ticket[]>, t) => {
@@ -83,7 +84,7 @@ export default async function DashboardHomePage() {
   const totalEvents = events.length
   const totalTicketsSold = tickets.reduce((sum, t) => sum + t.purchased_quantity, 0)
   const totalRevenue = tickets.reduce((sum, t) => sum + t.purchased_quantity * t.price, 0)
-  const totalCollected = payments.reduce((sum, p) => sum + (p.amount ?? 0) / 100, 0)
+  const totalCollected = payments.reduce((sum, p) => sum + ticketRevenueCents(p) / 100, 0)
   const outstandingTotal = Number(outstandingPayoutTotal ?? 0) / 100
   const avgTicketValue = totalTicketsSold > 0 ? totalRevenue / totalTicketsSold : 0
 
@@ -97,7 +98,7 @@ export default async function DashboardHomePage() {
 
   const collectedLastSevenDays = payments.reduce((sum, payment) => {
     if (!payment.paid_at || new Date(payment.paid_at).getTime() < new Date().getTime() - 7 * 86_400_000) return sum
-    return sum + (payment.amount ?? 0) / 100
+    return sum + ticketRevenueCents(payment) / 100
   }, 0)
 
   return (

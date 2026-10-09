@@ -2,6 +2,7 @@ import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Event, Payment } from '@/lib/types'
 import DashboardRevenueChart from '@/components/dashboard/LazyDashboardRevenueChart'
+import { ticketRevenueCents } from '@/lib/revenue'
 
 function formatDateTime(dateStr: string) {
   const d = new Date(dateStr)
@@ -61,7 +62,7 @@ export default async function TransactionsPage() {
   const eligiblePayments = allPayments.filter((payment) => payment.refund_status !== 'success')
   const totalRevenue = eligiblePayments
     .filter(p => p.status === 'success')
-    .reduce((s, p) => s + p.amount / 100, 0)
+    .reduce((s, p) => s + ticketRevenueCents(p) / 100, 0)
 
   const totalTransactions = allPayments.length
 
@@ -86,7 +87,7 @@ export default async function TransactionsPage() {
 
       <div className="create-card mb-5 p-5">
         <h2 className="mb-2 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Revenue</h2>
-        <DashboardRevenueChart payments={eligiblePayments.map(({ amount, paid_at }) => ({ amount, paid_at }))} />
+        <DashboardRevenueChart payments={eligiblePayments.map((p) => ({ amount: ticketRevenueCents(p), paid_at: p.paid_at }))} />
       </div>
 
       <div className="create-card overflow-hidden">
@@ -119,7 +120,7 @@ export default async function TransactionsPage() {
                           p.refund_status === 'success' ? 'bg-red-400' : p.status === 'success' ? 'bg-green-500' : p.status === 'free' ? 'bg-blue-400' : 'bg-gray-400'
                         }`} />
                         <span className="font-semibold text-[var(--tikkitte-ink)]">
-                          {p.status === 'free' ? 'Free' : `GHS ${(p.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                          {p.status === 'free' ? 'Free' : `GHS ${(ticketRevenueCents(p) / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
                         </span>
                       </div>
                     </td>

@@ -48,7 +48,8 @@ export default function Page() {
           >
             If an event organizer cancels an event, Tikkitte automatically
             refunds every ticket holder in full, to the original payment method
-            used at checkout, via Paystack. You don&apos;t need to request
+            used at checkout, via Paystack. The refund covers everything you
+            paid, including the service fee. You don&apos;t need to request
             anything: the refund is initiated as soon as the event is marked
             cancelled, and you&apos;ll receive an email confirming it. Refunds
             are processed by Paystack in up to 10 business days, though the

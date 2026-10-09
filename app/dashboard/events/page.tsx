@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Event, Ticket } from '@/lib/types'
 import DashboardEventsClient from '@/components/dashboard/DashboardEventsClient'
+import { ticketRevenueCents } from '@/lib/revenue'
 
 type EventFilter = 'all' | 'upcoming' | 'past' | 'drafts'
 
@@ -38,14 +39,14 @@ export default async function EventsPage({
           .eq('is_table_ticket', false),
         supabase
           .from('payments')
-          .select('event_id, amount, refund_status')
+          .select('event_id, amount, service_fee_cents, refund_status')
           .in('event_id', eventIds)
           .in('status', ['success', 'free']),
       ])
     : [{ data: [] }, { data: [] }]
 
   const grossCollectedByEvent = (rawPayments ?? []).filter((payment) => payment.refund_status !== 'success').reduce((totals: Record<string, number>, payment) => {
-    totals[payment.event_id] = (totals[payment.event_id] ?? 0) + (payment.amount ?? 0) / 100
+    totals[payment.event_id] = (totals[payment.event_id] ?? 0) + ticketRevenueCents(payment) / 100
     return totals
   }, {})
 

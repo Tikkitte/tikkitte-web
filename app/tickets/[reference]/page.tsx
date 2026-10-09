@@ -72,6 +72,7 @@ export default async function TicketPage({ params }: Props) {
 
   const { payment, userTickets, event } = data
   const totalAmount = payment.amount ? Number(payment.amount) / 100 : 0
+  const serviceFeeAmount = Number(payment.service_fee_cents ?? 0) / 100
   const metadata = payment.metadata && typeof payment.metadata === 'object'
     ? payment.metadata as Record<string, unknown>
     : {}
@@ -220,6 +221,11 @@ export default async function TicketPage({ params }: Props) {
               {totalAmount === 0 ? 'Free' : `GH₵ ${totalAmount.toFixed(2)}`}
             </span>
           </div>
+          {serviceFeeAmount > 0 && (
+            <p className="mt-1 text-right text-xs text-[#8a887c]">
+              Includes GH₵ {serviceFeeAmount.toFixed(2)} service fee
+            </p>
+          )}
         </div>
 
         {/* Back to event link */}

@@ -37,7 +37,6 @@ export default function EventFinancials({ eventId }: { eventId: string }) {
 
   useEffect(() => {
     let cancelled = false
-    setPayoutBalance({ status: 'loading' })
     getEventPayoutBalance(eventId).then((result) => {
       if (cancelled) return
       if (result.ok) setPayoutBalance({ status: 'ready', netCents: result.data === null ? null : result.data.net_cents })
@@ -54,6 +53,7 @@ export default function EventFinancials({ eventId }: { eventId: string }) {
       <button type="button" className="create-focus min-h-11 rounded-full border px-4 text-xs font-semibold" onClick={() => {
         setError(null)
         setData(null)
+        setPayoutBalance({ status: 'loading' })
         setAttempt((value) => value + 1)
       }}>Try again</button>
     </div>
@@ -70,7 +70,15 @@ export default function EventFinancials({ eventId }: { eventId: string }) {
           <div><dt className="text-xs text-[var(--tikkitte-ink-soft)]">Platform fee (estimate{data.currentFeePercent === null ? '' : `, ${data.currentFeePercent}%`})</dt><dd className="mt-1 font-semibold tabular-nums">{feeCents === null ? 'Not configured' : formatCents(feeCents)}</dd></div>
           <div><dt className="text-xs text-[var(--tikkitte-ink-soft)]">Organizer net (estimate)</dt><dd className="mt-1 font-semibold tabular-nums">{feeCents === null ? '—' : formatCents(data.grossCents - feeCents)}</dd></div>
         </dl>
-        <p className="mt-2 text-xs leading-5 text-[var(--tikkitte-ink-soft)]">Lifetime successful payments, before refunds. Fee and net apply today’s rate to that gross; settled payouts may use older rates. These estimates are not the outstanding payout balance.</p>
+        <p className="mt-2 text-xs leading-5 text-[var(--tikkitte-ink-soft)]">Lifetime successful payments, before refunds, excluding the customer service fee. Fee and net apply today’s rate to that gross; settled payouts may use older rates. These estimates are not the outstanding payout balance.</p>
+      </div>
+
+      <div className="rounded-xl bg-white p-4 text-sm">
+        <dl>
+          <dt className="text-xs text-[var(--tikkitte-ink-soft)]">Service fees collected</dt>
+          <dd className="mt-1 font-semibold tabular-nums">{formatCents(data.serviceFeeCents ?? 0)}</dd>
+        </dl>
+        <p className="mt-1 text-xs leading-5 text-[var(--tikkitte-ink-soft)]">Tikkitte revenue from the customer service fee on successful payments, before refunds. Never part of organizer gross or payouts.</p>
       </div>
 
       <div className="rounded-xl bg-white p-4 text-sm">
