@@ -1,4 +1,5 @@
 import PosterFrame from '@/components/PosterFrame'
+import PosterPlaceholder from '@/components/PosterPlaceholder'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -178,11 +179,7 @@ export default async function OrganizerPage({ params }: { params: Promise<{ slug
                           <PosterFrame src={poster} alt={event.name} sizes="(max-width: 1024px) 100vw, 33vw" className="h-full w-full" />
                         </div>
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#C8C3B2]" aria-hidden="true">
-                            <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
-                          </svg>
-                        </div>
+                        <PosterPlaceholder className="h-full w-full" />
                       )}
                     </div>
                     <div className="p-5">

@@ -98,6 +98,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: '/organizers',
+        destination: '/',
+        permanent: true,
+      },
+      {
         source: '/scan/iphone',
         destination: '/scan',
         permanent: true,

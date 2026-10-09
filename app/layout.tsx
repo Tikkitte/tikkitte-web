@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "@/lib/env";
 import "tikkitte-ui/styles.css";
 import "./globals.css";
+import "./site.css";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -54,7 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased tkh-scrollport" data-scroll-behavior="smooth">
       <body className={`${roboto.variable} ${poppins.variable} ${anton.variable} ${spaceGrotesk.variable} font-sans min-h-full flex flex-col bg-white text-gray-900`}>
         {children}
         <Analytics />

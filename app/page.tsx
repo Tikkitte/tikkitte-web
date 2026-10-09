@@ -1,26 +1,28 @@
-import Hero from '@/components/landing/Hero'
-import Marquee from '@/components/landing/Marquee'
-import AttendeeFeatures from '@/components/landing/AttendeeFeatures'
-import Trending from '@/components/landing/Trending'
-import OrganizerPitch from '@/components/landing/OrganizerPitch'
-import FinalCTA from '@/components/landing/FinalCTA'
-import Footer from '@/components/landing/Footer'
-import { getUpcomingEvents } from '@/lib/events'
-
-export const revalidate = 30
-
-export default async function HomePage() {
-  const events = await getUpcomingEvents(3)
-
+import type { Metadata } from "next";
+import SitePage from "@/components/site/SitePage";
+import Hero from "@/components/home/Hero";
+import LineupWall from "@/components/home/LineupWall";
+import HowItWorks from "@/components/home/HowItWorks";
+import Features from "@/components/home/Features";
+import SellItOut from "@/components/home/SellItOut";
+const title = "Tikkitte | Sell tickets to your events in Ghana";
+const description =
+  "Tickets, check-in and payouts in one place. Built in Ghana for the promoters, venues and artists behind the night. List your event for free.";
+export const metadata: Metadata = {
+  title,
+  description,
+  openGraph: { type: "website", title, description },
+};
+export default function Home() {
   return (
-    <main className="flex min-h-full flex-col bg-[#F4F2EC] font-grotesk">
-      <Hero events={events} />
-      <Marquee />
-      <AttendeeFeatures events={events} />
-      <Trending events={events} />
-      <OrganizerPitch />
-      <FinalCTA headline={<>Your next night out<br />is one tap away</>} ctaLabel="Browse events" ctaHref="/events" />
-      <Footer />
-    </main>
-  )
+    <SitePage showLiquidBackground={false}>
+      <Hero />
+      <main className="tkh-home-content">
+        <LineupWall />
+        <HowItWorks />
+        <Features />
+        <SellItOut />
+      </main>
+    </SitePage>
+  );
 }

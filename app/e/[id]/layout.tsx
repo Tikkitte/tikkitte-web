@@ -55,7 +55,7 @@ export default function EventLayout({ children }: { children: React.ReactNode })
           <span>Powered by Tikkitte &middot; Event Ticketing for Ghana</span>
           <div className="flex gap-4">
             <Link href="/events" className="transition-colors hover:text-[#191917]">Events</Link>
-            <Link href="/organizers" className="transition-colors hover:text-[#191917]">Sell tickets</Link>
+            <Link href="/" className="transition-colors hover:text-[#191917]">Sell tickets</Link>
             <a href="mailto:admin@tikkitte.com" className="transition-colors hover:text-[#191917]">Contact</a>
           </div>
         </div>

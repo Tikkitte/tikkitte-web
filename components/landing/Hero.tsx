@@ -3,16 +3,11 @@ import Image from 'next/image'
 import Nav from './Nav'
 import type { EventWithPrice } from '@/lib/events'
 import { formatDateShort, formatTime } from '@/lib/format'
+import PosterPlaceholder from '@/components/PosterPlaceholder'
 
 type Props = {
   events: EventWithPrice[]
 }
-
-const fallbackFlyers = [
-  '/images/claude-design-assets/flyer-palmwine.png',
-  '/images/claude-design-assets/flyer-neon.png',
-  '/images/claude-design-assets/flyer-vinyl.png',
-]
 
 const fallbackRows = [
   {
@@ -42,10 +37,10 @@ const fallbackRows = [
 ]
 
 export default function Hero({ events }: Props) {
-  const eventRows = events.slice(0, 3).map((event, index) => ({
+  const eventRows = events.slice(0, 3).map((event) => ({
     id: event.id,
     href: `/e/${event.slug ?? event.id}`,
-    poster: event.image?.[0] ?? fallbackFlyers[index % fallbackFlyers.length],
+    poster: event.image?.[0] ?? null,
     dateLabel: [formatDateShort(event.date), formatTime(event.time)].filter(Boolean).join(' · '),
     name: event.name,
     venue: event.venue,
@@ -75,7 +70,7 @@ export default function Hero({ events }: Props) {
           <Link href="/events" className="rounded-full bg-[#2565D0] px-[34px] py-4 text-[17px] font-bold text-white transition-colors hover:bg-[#1E56B5]">
             Browse events
           </Link>
-          <Link href="/organizers" className="rounded-full border-[1.5px] border-[#C8C3B2] px-[34px] py-4 text-[17px] font-bold text-[#191917] transition-colors hover:border-[#191917]">
+          <Link href="/" className="rounded-full border-[1.5px] border-[#C8C3B2] px-[34px] py-4 text-[17px] font-bold text-[#191917] transition-colors hover:border-[#191917]">
             List your event
           </Link>
         </div>
@@ -100,7 +95,11 @@ export default function Hero({ events }: Props) {
                     className="flex items-center gap-[clamp(10px,1.6vw,20px)] border-t border-[#E7E2D4] py-[clamp(8px,1.2vw,14px)]"
                   >
                     <div className="relative h-[clamp(42px,5vw,64px)] w-[clamp(34px,4vw,52px)] flex-shrink-0 overflow-hidden rounded-lg bg-white">
-                      <Image src={event.poster} alt="" fill className="object-cover" sizes="52px" />
+                      {event.poster ? (
+                        <Image src={event.poster} alt="" fill className="object-cover" sizes="52px" />
+                      ) : (
+                        <PosterPlaceholder className="h-full w-full" />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-[clamp(9px,0.9vw,12px)] font-bold uppercase tracking-[0.1em] text-[#2565D0]">

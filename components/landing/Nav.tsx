@@ -11,7 +11,6 @@ type Props = {
 const links = [
   { label: 'Home', href: '/' },
   { label: 'Browse events', href: '/events' },
-  { label: 'Organizers', href: '/organizers' },
 ]
 
 function HomeIcon() {
@@ -32,26 +31,13 @@ function TicketIcon() {
   )
 }
 
-function CalendarPlusIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="6" width="16" height="14" rx="2" />
-      <path d="M8 4v3" />
-      <path d="M16 4v3" />
-      <path d="M4 11h16" />
-      <path d="M12 13.5v4" />
-      <path d="M10 15.5h4" />
-    </svg>
-  )
-}
 
 const mobileLinks = [
   { href: '/', label: 'Home', Icon: HomeIcon },
   { href: '/events', label: 'Browse events', Icon: TicketIcon },
-  { href: '/organizers', label: 'Organizers', Icon: CalendarPlusIcon },
 ]
 
-export default function Nav({ listEventHref = '/organizers' }: Props) {
+export default function Nav({ listEventHref = '/signup' }: Props) {
   const pathname = usePathname()
 
   return (

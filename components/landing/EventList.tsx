@@ -3,17 +3,7 @@ import type { EventWithPrice } from '@/lib/events'
 import { formatEventPrice } from '@/lib/events'
 import { formatDateShort, formatTime } from '@/lib/format'
 import PosterFrame from '@/components/PosterFrame'
-
-const fallbackFlyers = [
-  '/images/claude-design-assets/flyer-1.png',
-  '/images/claude-design-assets/flyer-2.png',
-  '/images/claude-design-assets/flyer-3.png',
-  '/images/claude-design-assets/flyer-4.png',
-  '/images/claude-design-assets/flyer-5.png',
-  '/images/claude-design-assets/flyer-6.png',
-  '/images/claude-design-assets/flyer-7.png',
-  '/images/claude-design-assets/flyer-8.png',
-]
+import PosterPlaceholder from '@/components/PosterPlaceholder'
 
 export default function EventList({ events }: { events: EventWithPrice[] }) {
   if (events.length === 0) {
@@ -29,7 +19,7 @@ export default function EventList({ events }: { events: EventWithPrice[] }) {
     <div className="flex flex-col">
       {events.map((event, i) => {
         const eventDateTime = [formatDateShort(event.date), formatTime(event.time)].filter(Boolean).join(' · ')
-        const poster = event.image?.[0] ?? fallbackFlyers[i % fallbackFlyers.length]
+        const poster = event.image?.[0]
 
         return (
           <Link
@@ -39,7 +29,11 @@ export default function EventList({ events }: { events: EventWithPrice[] }) {
               i < events.length - 1 ? 'border-b border-[#E7E2D4]' : ''
             }`}
           >
-            <PosterFrame src={poster} alt={event.name} sizes="88px" className="aspect-[4/5] w-[88px] flex-shrink-0 rounded-xl bg-[#F4F2EC]" />
+            {poster ? (
+              <PosterFrame src={poster} alt={event.name} sizes="88px" className="aspect-[4/5] w-[88px] flex-shrink-0 rounded-xl bg-[#F4F2EC]" />
+            ) : (
+              <PosterPlaceholder className="aspect-[4/5] w-[88px] flex-shrink-0 rounded-xl" />
+            )}
 
             <div className="flex min-w-[220px] flex-1 flex-col gap-1">
               <div className="text-[13px] font-bold uppercase tracking-[0.1em] text-[#2565D0]">

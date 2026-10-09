@@ -10,6 +10,7 @@ import { isValidUUID } from '@/lib/validation'
 import EventCheckout from './EventCheckout'
 import EventPreviewGallery from '@/components/EventPreviewGallery'
 import PosterFrame from '@/components/PosterFrame'
+import PosterPlaceholder from '@/components/PosterPlaceholder'
 import PosterOutlineCard from '@/components/PosterOutlineCard'
 import ExpandableText from '@/components/ExpandableText'
 import { formatDate, formatDateShort, formatTime } from '@/lib/format'
@@ -251,11 +252,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 className="aspect-[3/4] w-full bg-black"
               />
             ) : (
-              <div className="flex aspect-[3/4] w-full items-center justify-center bg-[#ECE7D8]">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-[#C8C3B2]">
-                  <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
-                </svg>
-              </div>
+              <PosterPlaceholder className="aspect-[3/4] w-full" />
             )}
             <div className="p-5">
               <div className="flex items-center gap-2 mb-2" />
