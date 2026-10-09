@@ -8,12 +8,14 @@ type AdminEvent = {
   slug: string | null
   date: string | null
   organizer_id: string | null
+  split_payments_enabled: boolean
   published: boolean
   cancelled: boolean
 }
 
 type OrganizerSummary = {
   id: string
+  paystack_subaccount_code: string | null
   display_name: string
   email: string
 }
@@ -22,7 +24,7 @@ export default async function AdminEventsPage() {
   const supabase = await createClient()
   const { data: rawEvents } = await supabase
     .from('event')
-    .select('id, name, slug, date, organizer_id, published, cancelled')
+    .select('id, name, slug, date, organizer_id, published, cancelled, split_payments_enabled')
     .order('date', { ascending: false, nullsFirst: false })
     .limit(300)
 
@@ -37,7 +39,7 @@ export default async function AdminEventsPage() {
       ? supabase.from('event_payout_terms').select('event_id, platform_fee_percent').in('event_id', eventIds)
       : Promise.resolve({ data: [] as Array<{ event_id: string; platform_fee_percent: number }> }),
     organizerIds.length
-      ? supabase.from('organizer_profile').select('id, display_name, email').in('id', organizerIds)
+      ? supabase.from('organizer_profile').select('id, display_name, email, paystack_subaccount_code').in('id', organizerIds)
       : Promise.resolve({ data: [] as OrganizerSummary[] }),
   ])
 

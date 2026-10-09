@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import SubaccountEditor from './SubaccountEditor'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
 import { approveOrganizer, setOrganizerFee } from './actions'
@@ -13,6 +14,8 @@ export type OrganizerAdminRow = {
   created_at: string
   approved: boolean
   slug: string | null
+  paystack_subaccount_code: string | null
+  paystack_subaccount_creation_started_at: string | null
   platform_fee_percent: number | null
 }
 
@@ -235,6 +238,7 @@ export default function OrganizersClient({ organizers }: Props) {
                   )}
                 </div>
               </div>
+              {organizer.approved && <SubaccountEditor organizerId={organizer.id} code={organizer.paystack_subaccount_code} creationPending={Boolean(organizer.paystack_subaccount_creation_started_at)} />}
             </div>
           ))}
         </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import SplitPaymentToggle from './SplitPaymentToggle'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import type { EventOutstandingPayout } from '@/lib/types'
@@ -14,11 +15,13 @@ export type EventFeeAdminRow = {
   slug: string | null
   date: string | null
   organizer_id: string | null
+  split_payments_enabled: boolean
   published: boolean
   cancelled: boolean
   fee_percent: number | null
   organizer?: {
     id: string
+    paystack_subaccount_code: string | null
     display_name: string
     email: string
   }
@@ -228,6 +231,7 @@ export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
                     </button>
                   </div>
                 </div>
+                <SplitPaymentToggle eventId={event.id} enabled={event.split_payments_enabled} ready={Boolean(event.organizer?.paystack_subaccount_code) && event.fee_percent !== null} />
                 {expanded && <FeeEditor event={event} onSaved={() => setFinancialsVersion((v) => ({ ...v, [event.id]: (v[event.id] ?? 0) + 1 }))} />}
                 {financialsEventId === event.id && (
                   <div id={`financials-${event.id}`}>

@@ -148,3 +148,14 @@ export async function setEventFee(eventId: string, feePercent: number, reason: s
   revalidatePath('/dashboard')
   return { ok: true }
 }
+
+export async function setEventSplitEnabled(eventId: string, enabled: boolean): Promise<UpdateResult> {
+  if (!validEventId(eventId) || typeof enabled !== 'boolean') return { ok: false, message: 'Invalid event.' }
+  const supabase = await getAdminClient()
+  if (!supabase) return { ok: false, message: 'Not authorized.' }
+  const { error } = await supabase.rpc('admin_set_event_split_enabled', { p_event_id: eventId.trim(), p_enabled: enabled })
+  if (error) return { ok: false, message: error.message.includes('ERR_SPLIT_NOT_CONFIGURED')
+    ? 'Create the organizer’s subaccount and configure the event fee first.' : 'Unable to change split payments.' }
+  revalidatePath('/admin/events')
+  return { ok: true }
+}
