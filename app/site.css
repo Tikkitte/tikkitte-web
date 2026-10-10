@@ -668,8 +668,7 @@ body:has(.tkh-root > .tkh-hero) {
   /* Avoid WebKit's sticky/ancestor clipping-layer interaction. */
   overflow-x: visible;
 }
-.tkh-home-content,
-.tkh-root:has(> .tkh-hero) > .tk-footer {
+.tkh-home-scroll {
   position: relative;
   z-index: 3;
   background: var(--tikkitte-cream);
@@ -908,10 +907,12 @@ body:has(.tkh-root > .tkh-hero) {
     transform: translate3d(0, var(--tkh-parallax-distance, 0px), 0);
   }
 }
-@supports (animation-timeline: scroll(root block)) {
+@supports (animation-timeline: scroll(root block)) and (animation-range-start: 1px) {
   .tkh-liquid-inner[data-parallax="native"] {
     animation: tkh-liquid-scroll linear both;
     animation-timeline: scroll(root block);
+    animation-range-start: var(--tkh-parallax-start, 0px);
+    animation-range-end: 100%;
   }
 }
 @media (prefers-reduced-motion: reduce) {

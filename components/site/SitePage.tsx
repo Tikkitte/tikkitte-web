@@ -2,16 +2,29 @@ import LiquidBackground from "./LiquidBackground";
 import SiteFooter from "./SiteFooter";
 export default function SitePage({
   children,
-  showLiquidBackground = true,
+  hero,
 }: {
   children: React.ReactNode;
-  showLiquidBackground?: boolean;
+  hero?: React.ReactNode;
 }) {
   return (
     <div className="tkh-root">
-      {showLiquidBackground && <LiquidBackground />}
-      {children}
-      <SiteFooter />
+      {hero ? (
+        <>
+          {hero}
+          <div className="tkh-home-scroll">
+            <LiquidBackground />
+            {children}
+            <SiteFooter />
+          </div>
+        </>
+      ) : (
+        <>
+          <LiquidBackground />
+          {children}
+          <SiteFooter />
+        </>
+      )}
     </div>
   );
 }

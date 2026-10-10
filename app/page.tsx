@@ -15,9 +15,8 @@ export const metadata: Metadata = {
 };
 export default function Home() {
   return (
-    <SitePage showLiquidBackground={false}>
-      <Hero />
-      <main className="tkh-home-content">
+    <SitePage hero={<Hero />}>
+      <main>
         <LineupWall />
         <HowItWorks />
         <Features />

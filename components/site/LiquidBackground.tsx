@@ -11,11 +11,12 @@ export default function LiquidBackground() {
     const nativeTimeline = CSS.supports(
       "animation-timeline",
       "scroll(root block)",
-    );
+    ) && CSS.supports("animation-range-start", "1px");
     let frame = 0;
     let rootTop = 0;
     let previous = -1;
     let distance = -1;
+    let start = -1;
 
     const paint = () => {
       frame = 0;
@@ -36,7 +37,11 @@ export default function LiquidBackground() {
       if (nativeTimeline) {
         const scroller = document.scrollingElement!;
         const next =
-          Math.max(0, scroller.scrollHeight - scroller.clientHeight) * 0.4;
+          Math.max(0, scroller.scrollHeight - scroller.clientHeight - rootTop) * 0.4;
+        if (start !== rootTop) {
+          inner.style.setProperty("--tkh-parallax-start", `${rootTop}px`);
+          start = rootTop;
+        }
         if (distance !== next) {
           inner.style.setProperty("--tkh-parallax-distance", `${next}px`);
           distance = next;
@@ -62,6 +67,7 @@ export default function LiquidBackground() {
 
     const observer = new ResizeObserver(measure);
     observer.observe(root);
+    if (root.parentElement) observer.observe(root.parentElement);
     observer.observe(document.documentElement);
     window.addEventListener("resize", measure, { passive: true });
     reduced.addEventListener("change", preferenceChanged);
