@@ -898,21 +898,23 @@ body:has(.tkh-root > .tkh-hero) {
   }
 }
 
-/* The browser synchronizes this transform with vertical document scrolling. */
+/* The browser synchronizes this transform with vertical document scrolling.
+   The timeline always spans the whole page from 0, on every page. A layer that
+   starts lower down (the homepage, below the hero) begins at a negative offset
+   instead of using animation-range: iOS Safari drew offset-range texture frames
+   up to 9pt out of place while scrolling slowed down. */
 @keyframes tkh-liquid-scroll {
   from {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, var(--tkh-parallax-from, 0px), 0);
   }
   to {
     transform: translate3d(0, var(--tkh-parallax-distance, 0px), 0);
   }
 }
-@supports (animation-timeline: scroll(root block)) and (animation-range-start: 1px) {
+@supports (animation-timeline: scroll(root block)) {
   .tkh-liquid-inner[data-parallax="native"] {
     animation: tkh-liquid-scroll linear both;
     animation-timeline: scroll(root block);
-    animation-range-start: var(--tkh-parallax-start, 0px);
-    animation-range-end: 100%;
   }
 }
 @media (prefers-reduced-motion: reduce) {

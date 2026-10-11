@@ -11,18 +11,18 @@ export default function LiquidBackground() {
     const nativeTimeline = CSS.supports(
       "animation-timeline",
       "scroll(root block)",
-    ) && CSS.supports("animation-range-start", "1px");
+    );
     let frame = 0;
     let rootTop = 0;
     let previous = -1;
     let distance = -1;
-    let start = -1;
+    let from = Number.NaN;
 
     const paint = () => {
       frame = 0;
       const y = reduced.matches
         ? 0
-        : Math.max(0, window.scrollY - rootTop) * 0.4;
+        : (window.scrollY - rootTop) * 0.4;
       if (previous !== y) {
         inner.style.transform = `translate3d(0,${y}px,0)`;
         previous = y;
@@ -35,12 +35,16 @@ export default function LiquidBackground() {
       // Read layout only when dimensions change, never during a scroll frame.
       rootTop = root.getBoundingClientRect().top + window.scrollY;
       if (nativeTimeline) {
+        // Both ends of a timeline that spans the whole page, chosen so the
+        // offset is 0.4 * (scrollY - rootTop) at every scroll position, which
+        // matches the fallback below.
         const scroller = document.scrollingElement!;
-        const next =
-          Math.max(0, scroller.scrollHeight - scroller.clientHeight - rootTop) * 0.4;
-        if (start !== rootTop) {
-          inner.style.setProperty("--tkh-parallax-start", `${rootTop}px`);
-          start = rootTop;
+        const maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+        const nextFrom = -rootTop * 0.4;
+        const next = (maxScroll - rootTop) * 0.4;
+        if (from !== nextFrom) {
+          inner.style.setProperty("--tkh-parallax-from", `${nextFrom}px`);
+          from = nextFrom;
         }
         if (distance !== next) {
           inner.style.setProperty("--tkh-parallax-distance", `${next}px`);
