@@ -407,6 +407,13 @@
     grid-column: auto;
   }
 }
+/* SnapCarousel's looping copies are only for the phone carousels; above 640px
+   these sections are grids that show each card once. */
+@media (min-width: 641px) {
+  .tkh-loop-copy {
+    display: none !important;
+  }
+}
 @media (max-width: 640px) {
   .tkh-ph-hide {
     display: none;
