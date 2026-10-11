@@ -23,3 +23,22 @@ export function formatTime(timeStr: string | null | undefined) {
   const h12 = ((hh + 11) % 12) + 1
   return `${h12}:${String(mm).padStart(2, '0')} ${am ? 'AM' : 'PM'}`
 }
+
+// Small joining words stay lowercase unless they start the name.
+const TITLE_CASE_MINOR_WORDS = new Set(['a', 'an', 'and', 'at', 'by', 'de', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with'])
+
+// Venue names are typed freely by organizers ("AFIENYA AIR FIELD", "Velvet luxury
+// lodge apartments"). Show them in title case. When the name is not entirely
+// capitals, all-caps words (VIP, KFC) and mixed-case words (McDonald's) are kept
+// as typed, since they were written that way on purpose.
+export function toTitleCase(value: string): string {
+  const shouting = !/[a-z]/.test(value)
+  let wordIndex = 0
+  return value.replace(/[\p{L}\p{N}'’]+/gu, (word) => {
+    const first = wordIndex++ === 0
+    if (!shouting && word.length > 1 && (word === word.toUpperCase() || /[A-Z]/.test(word.slice(1)))) return word
+    const lower = word.toLowerCase()
+    if (!first && TITLE_CASE_MINOR_WORDS.has(lower)) return lower
+    return lower.charAt(0).toUpperCase() + lower.slice(1)
+  })
+}

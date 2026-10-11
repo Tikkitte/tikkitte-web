@@ -13,7 +13,7 @@ import PosterFrame from '@/components/PosterFrame'
 import PosterPlaceholder from '@/components/PosterPlaceholder'
 import PosterOutlineCard from '@/components/PosterOutlineCard'
 import ExpandableText from '@/components/ExpandableText'
-import { formatDate, formatDateShort, formatTime } from '@/lib/format'
+import { formatDate, formatDateShort, formatTime, toTitleCase } from '@/lib/format'
 
 type OrganizerSummary = {
   id: string
@@ -188,6 +188,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+function MapPinIcon() {
+  return (
+    <svg className="mt-0.5 shrink-0 text-[#2565D0]" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  )
+}
+
+// Only approved organizers are shown on event pages, so every organizer here is verified.
+function VerifiedBadge() {
+  return (
+    <svg className="shrink-0" width="15" height="15" viewBox="0 0 24 24" role="img" aria-label="Verified organizer">
+      <title>Verified organizer</title>
+      <path fill="#2565D0" d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+      <path d="m9 12 2 2 4-4" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default async function PublicEventPage({ params, searchParams }: Props) {
   const { id } = await params
   const data = await getEventData(id)
@@ -264,12 +284,16 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                     href={event.maps_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-[#5F5D54] transition-colors hover:text-[#2565D0]"
+                    className="mt-1 inline-flex items-start gap-1.5 text-sm text-[#5F5D54] transition-colors hover:text-[#2565D0]"
                   >
-                    {event.venue}
+                    <MapPinIcon />
+                    <span>{toTitleCase(event.venue)}</span>
                   </a>
                 ) : (
-                  <p className="text-sm text-[#5F5D54]">{event.venue}</p>
+                  <p className="mt-1 flex items-start gap-1.5 text-sm text-[#5F5D54]">
+                    <MapPinIcon />
+                    <span>{toTitleCase(event.venue)}</span>
+                  </p>
                 )
               )}
               {event.description && (
@@ -290,8 +314,9 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                   )}
                   <div>
                     <p className="text-xs text-[#8a887c]">Hosted by</p>
-                    <p className="text-sm font-semibold text-[#191917] transition-colors group-hover:text-[#2565D0]">
+                    <p className="flex items-center gap-1 text-sm font-semibold text-[#191917] transition-colors group-hover:text-[#2565D0]">
                       {organizer.display_name}
+                      <VerifiedBadge />
                     </p>
                   </div>
                   <svg className="ml-auto text-[#C8C3B2] transition-colors group-hover:text-[#2565D0]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
