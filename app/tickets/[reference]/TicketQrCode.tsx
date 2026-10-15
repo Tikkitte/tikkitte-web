@@ -1,17 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 type Props = {
   ticketId: string
   initialQrCode: string | null
 }
 
+const FIRST_POLL_DELAY_MS = 500
 const POLL_INTERVAL_MS = 1500
-const MAX_ATTEMPTS = 10 // ~15s — generateAndAttachQrCodes runs after verify-payment
-// responds (runAfterResponse/EdgeRuntime.waitUntil), so the QR code can still be
-// null for a short window right after landing here straight from checkout.
+const MAX_ATTEMPTS = 11
+// First check at 500ms, then every 1.5s for a ~15.5s polling budget.
+// generateAndAttachQrCodes runs after verify-payment responds, so the QR
+// can still be null briefly when landing here straight from checkout.
 
 export default function TicketQrCode({ ticketId, initialQrCode }: Props) {
   const [qrCode, setQrCode] = useState(initialQrCode)
@@ -20,18 +21,24 @@ export default function TicketQrCode({ ticketId, initialQrCode }: Props) {
   useEffect(() => {
     if (qrCode || attempts >= MAX_ATTEMPTS) return
     const timer = setTimeout(async () => {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('user_ticket')
-        .select('qr_code')
-        .eq('id', ticketId)
-        .maybeSingle()
-      if (data?.qr_code) {
-        setQrCode(data.qr_code)
-      } else {
+      try {
+        const { createClient } = await import('@/lib/supabase/client')
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('user_ticket')
+          .select('qr_code')
+          .eq('id', ticketId)
+          .maybeSingle()
+        if (error) throw error
+        if (data?.qr_code) {
+          setQrCode(data.qr_code)
+        } else {
+          setAttempts((n) => n + 1)
+        }
+      } catch {
         setAttempts((n) => n + 1)
       }
-    }, POLL_INTERVAL_MS)
+    }, attempts === 0 ? FIRST_POLL_DELAY_MS : POLL_INTERVAL_MS)
     return () => clearTimeout(timer)
   }, [qrCode, attempts, ticketId])
 

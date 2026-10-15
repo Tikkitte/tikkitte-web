@@ -22,6 +22,12 @@ export default function ConfirmationContent({ eventId, reference }: Props) {
   useEffect(() => {
     if (invalidReference) return
 
+    // Warm the ticket route's shell (layout, loading state, client JS) while
+    // verification runs, so the redirect below paints the skeleton immediately.
+    // For a dynamic route this stops at loading.tsx and does not fetch page
+    // data, so it can't cache a not-found result before payment is verified.
+    router.prefetch(`/tickets/${reference}`)
+
     const verify = async () => {
       try {
         const supabase = createClient()
@@ -92,7 +98,7 @@ export default function ConfirmationContent({ eventId, reference }: Props) {
     )
   }
 
-  // Loading and post-verification-redirect both show this — there's no
+  // Loading and post-verification-redirect both show this; there's no
   // separate receipt screen to render on success, verify() above navigates
   // away as soon as it has a reference.
   return (
