@@ -7,12 +7,23 @@
 // Golden vectors (base pesewas -> fee pesewas at 200 bps):
 //   15000 -> 300, 20000 -> 400, 27000 -> 540, 24 -> 0, 25 -> 1, 74 -> 1, 75 -> 2
 
-// Service fee rate in basis points (200 = 2%). Stays off (0) unless
-// NEXT_PUBLIC_SERVICE_FEE_BPS is set at build time, so shipping this UI ahead of
-// the server cannot show customers a fee that is not charged.
+// Golden vectors at 300 bps:
+//   15000 -> 450, 20000 -> 600, 27000 -> 810, 16 -> 0, 17 -> 1, 49 -> 1, 50 -> 2, 0 -> 0
+
+// Build-time fallback in basis points (200 = 2%) when the live rate cannot
+// be loaded. Defaults to 0 unless NEXT_PUBLIC_SERVICE_FEE_BPS is set.
 const configuredBps = Number(process.env.NEXT_PUBLIC_SERVICE_FEE_BPS)
 export const SERVICE_FEE_BPS =
   Number.isInteger(configuredBps) && configuredBps > 0 && configuredBps <= 1000 ? configuredBps : 0
+
+export function serviceFeeBpsFromPercent(value: unknown): number {
+  if (value === null || value === undefined || value === "") return 0;
+  const percent = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(percent)) return 0;
+  const bps = Math.round(percent * 100);
+  if (Math.abs(percent * 100 - bps) > 1e-9) return 0;
+  return bps >= 1 && bps <= 1000 ? bps : 0;
+}
 
 // Charged once per order on the post-discount ticket subtotal, half up.
 export function computeServiceFeeMinor(baseMinor: number, bps: number = SERVICE_FEE_BPS): number {
@@ -35,7 +46,7 @@ export type OrderPricing = {
   totalMinor: number
 }
 
-export function priceOrder(lines: PricedLine[], promo: PricingPromo | null): OrderPricing {
+export function priceOrder(lines: PricedLine[], promo: PricingPromo | null, bps: number = SERVICE_FEE_BPS): OrderPricing {
   const lineSubtotals = lines.map((line) => ({
     id: line.id,
     subtotalMinor: Math.round(line.price * 100) * line.quantity,
@@ -57,7 +68,7 @@ export function priceOrder(lines: PricedLine[], promo: PricingPromo | null): Ord
   }
 
   const baseMinor = Math.max(0, subtotalMinor - discountMinor)
-  const serviceFeeMinor = computeServiceFeeMinor(baseMinor)
+  const serviceFeeMinor = computeServiceFeeMinor(baseMinor, bps)
   return { subtotalMinor, discountMinor, serviceFeeMinor, totalMinor: baseMinor + serviceFeeMinor }
 }
 

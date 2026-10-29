@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
-import { approveOrganizer, setOrganizerFee } from './actions'
+import { approveOrganizer, setOrganizerFee, setOrganizerServiceFee } from './actions'
 
 export type OrganizerAdminRow = {
   id: string
@@ -14,20 +14,28 @@ export type OrganizerAdminRow = {
   approved: boolean
   slug: string | null
   platform_fee_percent: number | null
+  service_fee_percent: number | null
 }
 
-const DEFAULT_FEE_LABEL = 'Default (12.5%)'
+type FeeEditorProps = {
+  organizer: OrganizerAdminRow
+  label: string
+  feePercent: number | null
+  saveAction: typeof setOrganizerFee
+  placeholder: string
+  helperText: string
+}
 
-function FeeEditor({ organizer }: { organizer: OrganizerAdminRow }) {
+function FeeEditor({ organizer, label, feePercent, saveAction, placeholder, helperText }: FeeEditorProps) {
   const router = useRouter()
-  const [value, setValue] = useState(organizer.platform_fee_percent === null ? '' : String(organizer.platform_fee_percent))
+  const [value, setValue] = useState(feePercent === null ? '' : String(feePercent))
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const save = (nextFeePercent: number | null) => {
     setError(null)
     startTransition(async () => {
-      const result = await setOrganizerFee(organizer.id, nextFeePercent)
+      const result = await saveAction(organizer.id, nextFeePercent)
       if (!result.ok) {
         setError(result.message)
         return
@@ -40,23 +48,24 @@ function FeeEditor({ organizer }: { organizer: OrganizerAdminRow }) {
     const trimmed = value.trim()
     if (trimmed === '') { save(null); return }
     const parsed = Number(trimmed)
-    if (!Number.isFinite(parsed) || parsed < 0 || parsed > 100) {
-      setError('Enter a number between 0 and 100.')
+    if (!Number.isFinite(parsed)) {
+      setError('Enter a valid number.')
       return
     }
     save(parsed)
   }
 
   return (
-    <div className="flex shrink-0 flex-col items-end gap-1">
+    <div className="flex w-full max-w-sm flex-col items-end gap-1">
+      <span className="text-xs text-[var(--tikkitte-ink-faint)]">{label}</span>
       <div className="flex items-center gap-2">
-        <div className="create-input flex min-h-9 w-24 items-center gap-1 rounded-full px-3 py-0">
+        <div className="create-input flex min-h-9 w-44 items-center gap-1 rounded-full px-3 py-0">
           <input
             value={value}
             onChange={(event) => setValue(event.target.value)}
-            placeholder={DEFAULT_FEE_LABEL}
+            placeholder={placeholder}
             inputMode="decimal"
-            aria-label={`Platform fee percent for ${organizer.display_name}`}
+            aria-label={`${label} percent for ${organizer.display_name}`}
             className="w-full bg-transparent text-sm outline-none placeholder:text-[11px] placeholder:text-[var(--tikkitte-ink-faint)]"
           />
           <span className="text-xs text-[var(--tikkitte-ink-faint)]">%</span>
@@ -70,8 +79,8 @@ function FeeEditor({ organizer }: { organizer: OrganizerAdminRow }) {
           {isPending ? 'Saving…' : 'Save'}
         </button>
       </div>
-      <p className="text-[11px] text-[var(--tikkitte-ink-faint)]">
-        {organizer.platform_fee_percent === null ? `${DEFAULT_FEE_LABEL} for new events` : `New-event default: ${organizer.platform_fee_percent}%`}
+      <p className="text-right text-[11px] text-[var(--tikkitte-ink-faint)]">
+        {helperText}
       </p>
       {error && <p role="alert" className="text-[11px] text-red-600">{error}</p>}
     </div>
@@ -80,6 +89,8 @@ function FeeEditor({ organizer }: { organizer: OrganizerAdminRow }) {
 
 type Props = {
   organizers: OrganizerAdminRow[]
+  platformFeePercentDefault: number | null
+  serviceFeePercent: number | null
 }
 
 type Tab = 'pending' | 'approved' | 'all'
@@ -98,7 +109,7 @@ function formatDate(value: string) {
   })
 }
 
-export default function OrganizersClient({ organizers }: Props) {
+export default function OrganizersClient({ organizers, platformFeePercentDefault, serviceFeePercent }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('pending')
   const [error, setError] = useState<string | null>(null)
@@ -222,7 +233,30 @@ export default function OrganizersClient({ organizers }: Props) {
                 </div>
 
                 <div className="flex flex-wrap items-start justify-end gap-3">
-                  <FeeEditor organizer={organizer} />
+                  <div className="flex flex-col gap-3">
+                    <FeeEditor
+                      key={`platform-${organizer.platform_fee_percent}`}
+                      organizer={organizer}
+                      label="Platform fee"
+                      feePercent={organizer.platform_fee_percent}
+                      saveAction={setOrganizerFee}
+                      placeholder={platformFeePercentDefault === null ? 'Default' : `Default (${platformFeePercentDefault}%)`}
+                      helperText={organizer.platform_fee_percent === null
+                        ? `${platformFeePercentDefault === null ? 'Default' : `Default (${platformFeePercentDefault}%)`} for new events`
+                        : `New-event default: ${organizer.platform_fee_percent}%`}
+                    />
+                    <FeeEditor
+                      key={`service-${organizer.service_fee_percent}`}
+                      organizer={organizer}
+                      label="Customer service fee"
+                      feePercent={organizer.service_fee_percent}
+                      saveAction={setOrganizerServiceFee}
+                      placeholder={serviceFeePercent === null ? 'Platform default' : `Platform default (${serviceFeePercent}%)`}
+                      helperText={organizer.service_fee_percent === null
+                        ? 'Platform default on every checkout'
+                        : `${organizer.service_fee_percent}% on every new checkout for this organizer's events, starting now.`}
+                    />
+                  </div>
                   {!organizer.approved && (
                     <button
                       type="button"

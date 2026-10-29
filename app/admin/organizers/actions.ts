@@ -80,3 +80,33 @@ export async function setOrganizerFee(organizerId: string, feePercent: number | 
   revalidatePath('/admin/organizers')
   return { ok: true }
 }
+
+export async function setOrganizerServiceFee(organizerId: string, feePercent: number | null): Promise<SetOrganizerFeeResult> {
+  if (!uuidPattern.test(organizerId)) {
+    return { ok: false, message: 'Invalid organizer.' }
+  }
+  if (feePercent !== null && (!Number.isFinite(feePercent) || feePercent < 0 || feePercent > 10 || Math.abs(feePercent * 100 - Math.round(feePercent * 100)) > 1e-9)) {
+    return { ok: false, message: 'Service fee must be between 0 and 10%, in steps of 0.01.' }
+  }
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'You must be signed in.' }
+
+  const { data: adminRow } = await supabase
+    .from('admin_user')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!adminRow) return { ok: false, message: 'Not authorized.' }
+
+  const { error } = await supabase.rpc('admin_set_organizer_service_fee', {
+    target_organizer_id: organizerId,
+    fee_percent: feePercent,
+  })
+  if (error) return { ok: false, message: 'Failed to update fee.' }
+
+  revalidatePath('/admin/organizers')
+  return { ok: true }
+}

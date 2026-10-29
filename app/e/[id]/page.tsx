@@ -8,6 +8,7 @@ import type { Event, Ticket } from '@/lib/types'
 import { createPublicClient } from '@/lib/supabase/server-public'
 import { isValidUUID } from '@/lib/validation'
 import EventCheckout from './EventCheckout'
+import { serviceFeeBpsFromPercent } from '@/lib/checkout-pricing'
 import EventPreviewGallery from '@/components/EventPreviewGallery'
 import PosterFrame from '@/components/PosterFrame'
 import PosterPlaceholder from '@/components/PosterPlaceholder'
@@ -87,7 +88,11 @@ async function fetchEventCore(idOrSlug: string) {
     console.error('[event-page] failed to load organizer:', organizerError.message)
   }
 
+  const { data: feePercent, error: feeError } = await supabase.rpc('get_event_service_fee_percent', { p_event_id: event.id })
+  if (feeError) console.error('[event-page] failed to load service fee:', feeError.message)
+
   return {
+    serviceFeeBps: feeError ? null : serviceFeeBpsFromPercent(feePercent),
     event: event as EventCore,
     organizer: organizer as OrganizerSummary | null,
   }
@@ -213,7 +218,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
   const data = await getEventData(id)
   if (!data) notFound()
 
-  const { event, tickets, organizer, hasTableReservations, cancelled } = data
+  const { event, tickets, organizer, hasTableReservations, cancelled, serviceFeeBps } = data
   const ref = (await searchParams)?.ref?.trim().toLowerCase()
   if (ref && refPattern.test(ref)) {
     const eventId = event.id
@@ -358,7 +363,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 </Link>
               </div>
             )}
-            <EventCheckout eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} />
+            <EventCheckout serviceFeeBps={serviceFeeBps} eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} />
           </div>
 
           {/* Back link */}

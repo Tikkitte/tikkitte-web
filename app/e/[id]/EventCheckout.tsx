@@ -4,13 +4,14 @@ import { useState, useMemo, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatSaleDate, saleDateTime, ticketSaleStatus } from '@/lib/ticketAvailability'
 import { validateEmail, sanitizeName, suggestEmailDomain } from '@/lib/validation'
-import { formatMinor, priceOrder, pricingFromBreakdown, type OrderPricing } from '@/lib/checkout-pricing'
+import { SERVICE_FEE_BPS, formatMinor, priceOrder, pricingFromBreakdown, type OrderPricing } from '@/lib/checkout-pricing'
 import type { PromoCode, Ticket } from '@/lib/types'
 import OrderSummary from './OrderSummary'
 
 const SUPABASE_FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/functions/v1'
 
 type Props = {
+  serviceFeeBps: number | null
   eventId: string
   eventSlug: string
   tickets: Ticket[]
@@ -22,7 +23,7 @@ function promoDescription(promoCode: PromoCode) {
     : `GH₵ ${promoCode.discount_value} off`
 }
 
-export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
+export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeBps }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>(() =>
     Object.fromEntries(tickets.map((t) => [t.id, 0]))
   )
@@ -77,8 +78,8 @@ export default function EventCheckout({ eventId, eventSlug, tickets }: Props) {
 
   const totalTickets = useMemo(() => Object.values(counts).reduce((s, n) => s + n, 0), [counts])
   const clientPricing = useMemo(
-    () => priceOrder(tickets.map((t) => ({ id: t.id, price: t.price, quantity: counts[t.id] ?? 0 })), appliedPromo),
-    [tickets, counts, appliedPromo],
+    () => priceOrder(tickets.map((t) => ({ id: t.id, price: t.price, quantity: counts[t.id] ?? 0 })), appliedPromo, serviceFeeBps ?? SERVICE_FEE_BPS),
+    [tickets, counts, appliedPromo, serviceFeeBps],
   )
   const pricing = serverPricing ?? clientPricing
   // A suggestion the buyer hasn't explicitly resolved yet (via Use/Keep
