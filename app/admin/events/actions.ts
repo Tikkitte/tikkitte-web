@@ -210,6 +210,25 @@ export async function addPresaleEmails(eventId: string, rawText: string) {
   return { ok: true as const, data: total }
 }
 
+// Emails the event link to every list entry not emailed yet. Publishing the
+// event does this automatically; this covers emails added after publishing
+// and retries after a failed send.
+export async function sendPresaleInvites(eventId: string): Promise<{ ok: true; queued: number } | { ok: false; message: string }> {
+  if (!validEventId(eventId)) return { ok: false, message: 'Invalid event.' }
+  try {
+    const supabase = await getAdminClient()
+    if (!supabase) return { ok: false, message: 'Not authorized.' }
+    const { data, error } = await supabase.functions.invoke('send-presale-invites', { body: { event_id: eventId.trim() } })
+    if (error) {
+      const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
+      return { ok: false, message: typeof body?.message === 'string' ? body.message : 'Could not send the emails. Please try again.' }
+    }
+    return { ok: true, queued: Number(data?.queued ?? 0) }
+  } catch {
+    return { ok: false, message: 'Could not send the emails. Please try again.' }
+  }
+}
+
 export async function removePresaleEmail(eventId: string, email: string) {
   if (typeof email !== 'string' || email.length > 254) return { ok: false as const, message: 'Invalid email.' }
   return presaleRpc<'removed' | 'not_found' | 'in_use'>(eventId, 'admin_remove_presale_email', { p_email: email })

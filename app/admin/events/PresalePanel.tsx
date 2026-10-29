@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { addPresaleEmails, getEventPresale, listPresaleEntries, removePresaleEmail, saveEventPresale } from './actions'
+import { addPresaleEmails, getEventPresale, listPresaleEntries, removePresaleEmail, saveEventPresale, sendPresaleInvites } from './actions'
 import type { EventPresale, PresaleEntry } from './presale-types'
 
 const buttonClass = 'create-focus min-h-11 rounded-full border border-[var(--tikkitte-cream-border)] px-4 text-xs font-semibold hover:bg-white disabled:opacity-45'
@@ -95,6 +95,20 @@ export default function PresalePanel({ eventId }: { eventId: string }) {
     })
   }
 
+  const sendInvites = () => {
+    setError(null)
+    setNotice(null)
+    startTransition(async () => {
+      const result = await sendPresaleInvites(eventId)
+      if (!result.ok) { setError(result.message); return }
+      setNotice(result.queued === 0
+        ? 'Everyone on the list has already been emailed.'
+        : `Sending the link to ${result.queued} ${result.queued === 1 ? 'email' : 'emails'}. Refresh in a minute to see them marked as emailed.`)
+      await reload()
+    })
+  }
+
+  const notInvited = data ? data.entryCount - data.invitedCount : 0
   const shareLink = `https://tikkitte.com/e/${data?.slug ?? eventId}`
   return (
     <section aria-label="Early bird settings" className="create-card mt-4 space-y-5 rounded-2xl bg-[var(--tikkitte-cream)] p-4 text-sm">
@@ -124,6 +138,19 @@ export default function PresalePanel({ eventId }: { eventId: string }) {
           <button type="button" onClick={save} className={`${buttonClass} bg-[#191917] text-white hover:bg-black`}>{pending ? 'Saving…' : 'Save early bird settings'}</button>
         </fieldset>
         <p>{data.entryCount} emails on the list · {data.usedCount} bought · {data.pendingCount} checkouts open</p>
+        <div className="space-y-2">
+          <p>{data.invitedCount} emailed the link · {notInvited} not emailed yet{data.inviteFailedCount > 0 ? ` (${data.inviteFailedCount} failed)` : ''}</p>
+          <p className="text-xs text-[var(--tikkitte-ink-soft)]">
+            {data.published
+              ? 'Everyone on the list was emailed the link when the event was published. Use the button for emails added since then, or to retry failed ones.'
+              : 'Everyone on the list is emailed the link automatically when the event is published.'}
+          </p>
+          {data.published && !data.cancelled && notInvited > 0 && (
+            <button type="button" disabled={pending} onClick={sendInvites} className={buttonClass}>
+              Email the link to {notInvited} {notInvited === 1 ? 'person' : 'people'}
+            </button>
+          )}
+        </div>
         {ticketIds.length > 0 && data.entryCount === 0 && <p className="font-medium text-[#765400]">No one can buy early bird tickets until you add emails.</p>}
         <div>
           <label className="block"><span className="mb-2 block font-semibold">Paste emails (one per line, or a CSV column)</span><textarea value={rawText} onChange={(e) => setRawText(e.target.value)} rows={4} className="create-input create-focus w-full rounded-xl p-3" /></label>
@@ -131,9 +158,9 @@ export default function PresalePanel({ eventId }: { eventId: string }) {
         </div>
         <label className="block"><span className="mb-2 block font-semibold">Search emails</span><input type="search" maxLength={254} value={search} onChange={(e) => setSearch(e.target.value)} className="create-input create-focus min-h-11 w-full rounded-xl px-3" /></label>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs"><thead><tr>{['Email', 'Status', 'Reference', ''].map((heading) => <th key={heading} className="px-2 py-2">{heading}</th>)}</tr></thead>
+          <table className="w-full text-left text-xs"><thead><tr>{['Email', 'Status', 'Emailed', 'Reference', ''].map((heading) => <th key={heading} className="px-2 py-2">{heading}</th>)}</tr></thead>
             <tbody>{entries.map((entry) => <tr key={entry.email} className="border-t border-[var(--tikkitte-cream-border)]">
-              <td className="px-2 py-2">{entry.email}</td><td className="px-2 py-2">{{ available: 'Available', pending: 'Checkout open', used: 'Bought' }[entry.status]}</td><td className="px-2 py-2">{entry.reference ?? ''}</td>
+              <td className="px-2 py-2">{entry.email}</td><td className="px-2 py-2">{{ available: 'Available', pending: 'Checkout open', used: 'Bought' }[entry.status]}</td><td className="px-2 py-2" title={entry.inviteError ?? undefined}>{entry.invitedAt ? new Date(entry.invitedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : entry.inviteError ? 'Failed' : 'Not yet'}</td><td className="px-2 py-2">{entry.reference ?? ''}</td>
               <td className="px-2 py-2">{entry.status === 'available' ? <button type="button" disabled={pending} onClick={() => remove(entry.email)} className={buttonClass} aria-label={`Remove ${entry.email}`}>Remove</button> : <span className="text-[var(--tikkitte-ink-soft)]">In use, cannot remove</span>}</td>
             </tr>)}</tbody>
           </table>

@@ -6,6 +6,10 @@ export type EventPresale = {
   entryCount: number
   usedCount: number
   pendingCount: number
+  invitedCount: number
+  inviteFailedCount: number
+  published: boolean
+  cancelled: boolean
 }
 export type PresaleEntry = {
   email: string
@@ -13,6 +17,8 @@ export type PresaleEntry = {
   reference: string | null
   quantity: number | null
   paidAt: string | null
+  invitedAt: string | null
+  inviteError: string | null
 }
 export type PresaleImport = { added: number; alreadyListed: number; invalidCount: number; invalid: string[] }
 export type PresaleSettings = { listed: boolean; maxPerEmail: number; presaleTicketIds: string[] }
