@@ -1,6 +1,7 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
+import type { EventPresale, PresaleEntry, PresaleImport, PresaleSettings } from './presale-types'
 import { createClient } from '@/lib/supabase/server'
 import type { EventFinancials, EventOutstandingPayout } from '@/lib/types'
 
@@ -147,4 +148,69 @@ export async function setEventFee(eventId: string, feePercent: number, reason: s
   revalidatePath(`/dashboard/events/${eventId.trim()}`)
   revalidatePath('/dashboard')
   return { ok: true }
+}
+
+
+async function presaleRpc<T>(eventId: string, name: string, args: Record<string, unknown> = {}): Promise<
+  { ok: true; data: T } | { ok: false; message: string }
+> {
+  if (!validEventId(eventId)) return { ok: false, message: 'Invalid event.' }
+  try {
+    const supabase = await getAdminClient()
+    if (!supabase) return { ok: false, message: 'Not authorized.' }
+    const { data, error } = await supabase.rpc(name, { ...args, p_event_id: eventId.trim() })
+    if (error) return { ok: false, message: error.code === 'P0002' ? 'Event not found.' : 'Could not update or load the early bird list. Please try again.' }
+    return { ok: true, data: data as T }
+  } catch {
+    return { ok: false, message: 'Early bird lists are temporarily unavailable. Please try again.' }
+  }
+}
+
+export async function getEventPresale(eventId: string) {
+  return presaleRpc<EventPresale>(eventId, 'admin_get_event_presale')
+}
+
+export async function listPresaleEntries(eventId: string, search: string = '') {
+  if (typeof search !== 'string' || search.length > 254) return { ok: false as const, message: 'Keep the search under 254 characters.' }
+  return presaleRpc<PresaleEntry[]>(eventId, 'admin_list_presale_entries', { p_search: search.trim() || null })
+}
+
+export async function saveEventPresale(eventId: string, settings: PresaleSettings): Promise<UpdateResult> {
+  if (!settings || typeof settings.listed !== 'boolean' || !Number.isInteger(settings.maxPerEmail)
+    || settings.maxPerEmail < 1 || settings.maxPerEmail > 10 || !Array.isArray(settings.presaleTicketIds)
+    || settings.presaleTicketIds.length > 1000
+    || settings.presaleTicketIds.some((id) => typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))) {
+    return { ok: false, message: 'Choose valid tickets and a limit from 1 to 10.' }
+  }
+  const result = await presaleRpc<null>(eventId, 'admin_set_event_presale', {
+    p_listed: settings.listed, p_max_per_email: settings.maxPerEmail, p_presale_ticket_ids: settings.presaleTicketIds,
+  })
+  if (!result.ok) return result
+  revalidatePath('/admin/events')
+  revalidatePath(`/dashboard/events/${eventId.trim()}`)
+  revalidateTag('events-listing', { expire: 0 })
+  revalidateTag('event-core', { expire: 0 })
+  return { ok: true }
+}
+
+export async function addPresaleEmails(eventId: string, rawText: string) {
+  if (typeof rawText !== 'string' || rawText.length > 10_000_000) return { ok: false as const, message: 'Paste at most 20,000 emails at a time.' }
+  const emails = rawText.match(/[^\s,;<>"'()]+@[^\s,;<>"'()]+/g) ?? []
+  if (!emails.length) return { ok: false as const, message: 'No email addresses found.' }
+  if (emails.length > 20_000) return { ok: false as const, message: 'Paste at most 20,000 emails at a time.' }
+  const total: PresaleImport = { added: 0, alreadyListed: 0, invalidCount: 0, invalid: [] }
+  for (let offset = 0; offset < emails.length; offset += 1000) {
+    const result = await presaleRpc<PresaleImport>(eventId, 'admin_add_presale_emails', { p_emails: emails.slice(offset, offset + 1000) })
+    if (!result.ok) return { ok: false as const, message: `${result.message} ${total.added} emails were added before this stopped. You can paste the same list again safely.` }
+    total.added += result.data.added
+    total.alreadyListed += result.data.alreadyListed
+    total.invalidCount += result.data.invalidCount
+    total.invalid = [...total.invalid, ...result.data.invalid].slice(0, 20)
+  }
+  return { ok: true as const, data: total }
+}
+
+export async function removePresaleEmail(eventId: string, email: string) {
+  if (typeof email !== 'string' || email.length > 254) return { ok: false as const, message: 'Invalid email.' }
+  return presaleRpc<'removed' | 'not_found' | 'in_use'>(eventId, 'admin_remove_presale_email', { p_email: email })
 }

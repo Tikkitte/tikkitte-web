@@ -39,10 +39,12 @@ type EventCore = Pick<
   | 'preview_images'
   | 'preview_videos'
   | 'organizer_id'
+  | 'listed'
+  | 'presale_max_per_email'
 >
 
 const EVENT_CORE_COLUMNS =
-  'id, name, slug, date, time, end_date, end_time, venue, maps_link, description, image, preview_images, preview_videos, organizer_id'
+  'id, name, slug, date, time, end_date, end_time, venue, maps_link, description, image, preview_images, preview_videos, organizer_id, listed, presale_max_per_email'
 
 const refPattern = /^[a-z0-9-]{2,20}$/
 
@@ -127,7 +129,7 @@ async function getEventInventory(eventId: string) {
   const [ticketResult, tableResult] = await Promise.all([
     supabase
       .from('ticket')
-      .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity, min_per_order, max_per_order, sale_start_date, sale_start_time, sale_end_date, sale_end_time, is_table_ticket')
+      .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity, min_per_order, max_per_order, sale_start_date, sale_start_time, sale_end_date, sale_end_time, is_table_ticket, presale_only')
       .eq('event_id', eventId)
       .eq('is_table_ticket', false)
       .order('price', { ascending: true }),
@@ -178,6 +180,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    ...(!event.listed ? { robots: { index: false, follow: false } } : {}),
     openGraph: {
       title,
       description,
@@ -363,7 +366,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 </Link>
               </div>
             )}
-            <EventCheckout serviceFeeBps={serviceFeeBps} eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} />
+            <EventCheckout presaleMaxPerEmail={event.presale_max_per_email} serviceFeeBps={serviceFeeBps} eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} />
           </div>
 
           {/* Back link */}

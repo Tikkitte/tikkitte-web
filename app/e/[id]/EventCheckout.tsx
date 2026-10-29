@@ -11,6 +11,7 @@ import OrderSummary from './OrderSummary'
 const SUPABASE_FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/functions/v1'
 
 type Props = {
+  presaleMaxPerEmail: number
   serviceFeeBps: number | null
   eventId: string
   eventSlug: string
@@ -23,7 +24,7 @@ function promoDescription(promoCode: PromoCode) {
     : `GH₵ ${promoCode.discount_value} off`
 }
 
-export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeBps }: Props) {
+export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeBps, presaleMaxPerEmail }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>(() =>
     Object.fromEntries(tickets.map((t) => [t.id, 0]))
   )
@@ -77,6 +78,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
   })
 
   const totalTickets = useMemo(() => Object.values(counts).reduce((s, n) => s + n, 0), [counts])
+  const presaleTotal = tickets.reduce((sum, ticket) => sum + (ticket.presale_only ? (counts[ticket.id] ?? 0) : 0), 0)
   const clientPricing = useMemo(
     () => priceOrder(tickets.map((t) => ({ id: t.id, price: t.price, quantity: counts[t.id] ?? 0 })), appliedPromo, serviceFeeBps ?? SERVICE_FEE_BPS),
     [tickets, counts, appliedPromo, serviceFeeBps],
@@ -128,6 +130,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
     const ticket = tickets.find((t) => t.id === ticketId)
     if (!ticket) return
     if (!ticketSaleStatus(ticket).available) return
+    if (ticket.presale_only && presaleTotal >= presaleMaxPerEmail) return
     const current = counts[ticketId] ?? 0
     if (ticket.available_quantity !== null && current >= ticket.available_quantity) return
     if (ticket.max_per_order !== null && current >= ticket.max_per_order) return
@@ -392,7 +395,8 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
           const saleStatus = ticketSaleStatus(ticket)
           const unavailable = soldOut || !saleStatus.available
           const isLow = available !== null && available > 0 && available <= 10
-          const atMax =
+          const atPresaleMax = ticket.presale_only && presaleTotal >= presaleMaxPerEmail
+          const atMax = atPresaleMax ||
             (available !== null && count >= available) ||
             (ticket.max_per_order !== null && count >= ticket.max_per_order)
 
@@ -410,6 +414,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <span className="font-bold text-[#191917]">{ticket.label}</span>
+                  {ticket.presale_only && <span className="ml-2 rounded-full bg-[#2565D0]/10 px-2 py-1 text-xs font-semibold text-[#2565D0]">Early bird list</span>}
                   <span className="ml-2 font-medium text-[#5F5D54]">
                     {ticket.price === 0 ? 'Free' : `GH₵ ${ticket.price}`}
                   </span>
@@ -463,6 +468,12 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
                     </button>
                   </div>
                 </>
+              )}
+              {ticket.presale_only && (
+                <div className="mt-2 text-xs text-[#5F5D54]">
+                  <p>Only for emails on the early bird list. Use the email you signed up with.</p>
+                  {atPresaleMax && <p className="mt-1 font-semibold">Max {presaleMaxPerEmail} early bird tickets per person</p>}
+                </div>
               )}
             </div>
           )

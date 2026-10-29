@@ -26,6 +26,7 @@ async function fetchUpcomingEvents(limit: number): Promise<EventWithPrice[]> {
     .from('event')
     .select('id, name, slug, date, time, venue, image, description, cancelled, organizer_id, published, end_date, end_time')
     .eq('cancelled', false)
+    .eq('listed', true)
     .eq('published', true)
     .gte('date', today)
     .order('date', { ascending: true })

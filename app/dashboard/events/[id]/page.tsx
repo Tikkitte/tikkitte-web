@@ -346,6 +346,7 @@ export default async function EventDetailPage({
         </div>
         <div className="min-w-0 flex-1">
           <span className="mb-2 inline-flex items-center gap-2 rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-3 py-1.5 text-xs font-semibold"><span className={`h-1.5 w-1.5 rounded-full ${event.cancelled ? 'bg-red-500' : event.published ? 'bg-[#2e6fe6]' : 'bg-amber-500'}`} />{event.cancelled ? 'Cancelled' : event.published ? 'On sale' : 'Draft'}</span>
+          {!event.listed && <span title="Hidden from browse. People need the link to find it." className="mb-2 ml-2 inline-flex items-center rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-3 py-1.5 text-xs font-semibold">Unlisted</span>}
           <h1 className="create-display truncate text-[30px]">{event.name}</h1>
           <div className="mt-1 flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#2565d0]">{formatEventDateRange(event)} · {event.venue ?? 'Venue TBA'}</p>

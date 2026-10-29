@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState, useTransition } from 'react'
+import { useId, useMemo, useState, useTransition } from 'react'
 import { approveOrganizer, setOrganizerFee, setOrganizerServiceFee } from './actions'
 
 export type OrganizerAdminRow = {
@@ -21,16 +21,19 @@ type FeeEditorProps = {
   organizer: OrganizerAdminRow
   label: string
   feePercent: number | null
+  defaultPercent: number | null
   saveAction: typeof setOrganizerFee
-  placeholder: string
   helperText: string
 }
 
-function FeeEditor({ organizer, label, feePercent, saveAction, placeholder, helperText }: FeeEditorProps) {
+function FeeEditor({ organizer, label, feePercent, defaultPercent, saveAction, helperText }: FeeEditorProps) {
   const router = useRouter()
-  const [value, setValue] = useState(feePercent === null ? '' : String(feePercent))
+  const inputId = useId()
+  const initialValue = feePercent === null ? '' : String(feePercent)
+  const [value, setValue] = useState(initialValue)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const isDirty = value.trim() !== initialValue
 
   const save = (nextFeePercent: number | null) => {
     setError(null)
@@ -44,7 +47,9 @@ function FeeEditor({ organizer, label, feePercent, saveAction, placeholder, help
     })
   }
 
-  const handleSave = () => {
+  const handleSave = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!isDirty) return
     const trimmed = value.trim()
     if (trimmed === '') { save(null); return }
     const parsed = Number(trimmed)
@@ -56,34 +61,32 @@ function FeeEditor({ organizer, label, feePercent, saveAction, placeholder, help
   }
 
   return (
-    <div className="flex w-full max-w-sm flex-col items-end gap-1">
-      <span className="text-xs text-[var(--tikkitte-ink-faint)]">{label}</span>
+    <form onSubmit={handleSave} className="flex w-48 flex-col gap-1.5">
+      <label htmlFor={inputId} className="text-xs font-semibold text-[var(--tikkitte-ink-soft)]">{label}</label>
       <div className="flex items-center gap-2">
-        <div className="create-input flex min-h-9 w-44 items-center gap-1 rounded-full px-3 py-0">
+        <div className="create-input flex h-9 w-24 items-center gap-1 rounded-full px-3 py-0">
           <input
+            id={inputId}
             value={value}
             onChange={(event) => setValue(event.target.value)}
-            placeholder={placeholder}
+            placeholder={defaultPercent === null ? '' : String(defaultPercent)}
             inputMode="decimal"
             aria-label={`${label} percent for ${organizer.display_name}`}
-            className="w-full bg-transparent text-sm outline-none placeholder:text-[11px] placeholder:text-[var(--tikkitte-ink-faint)]"
+            className="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-[var(--tikkitte-ink-faint)]"
           />
           <span className="text-xs text-[var(--tikkitte-ink-faint)]">%</span>
         </div>
         <button
-          type="button"
-          onClick={handleSave}
-          disabled={isPending}
-          className="create-focus min-h-9 shrink-0 rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-4 text-xs font-semibold transition-colors hover:bg-[var(--tikkitte-cream)] disabled:opacity-60"
+          type="submit"
+          disabled={isPending || !isDirty}
+          className="create-focus h-9 shrink-0 rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-4 text-xs font-semibold transition-colors enabled:hover:bg-[var(--tikkitte-cream)] disabled:opacity-40"
         >
           {isPending ? 'Saving…' : 'Save'}
         </button>
       </div>
-      <p className="text-right text-[11px] text-[var(--tikkitte-ink-faint)]">
-        {helperText}
-      </p>
-      {error && <p role="alert" className="text-[11px] text-red-600">{error}</p>}
-    </div>
+      <p className="text-[11px] leading-snug text-[var(--tikkitte-ink-faint)]">{helperText}</p>
+      {error && <p role="alert" className="text-[11px] leading-snug text-red-600">{error}</p>}
+    </form>
   )
 }
 
@@ -195,9 +198,9 @@ export default function OrganizersClient({ organizers, platformFeePercentDefault
       ) : (
         <div className="divide-y divide-[var(--tikkitte-cream-border)]">
           {visibleOrganizers.map((organizer) => (
-            <div key={organizer.id} className="px-5 py-4 transition-colors hover:bg-[var(--tikkitte-cream)]">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-start gap-3">
+            <div key={organizer.id} className="px-5 py-5 transition-colors hover:bg-[var(--tikkitte-cream)]">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between xl:gap-8">
+                <div className="flex min-w-0 items-center gap-3 xl:flex-1">
                   {organizer.logo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={organizer.logo_url} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
@@ -232,37 +235,37 @@ export default function OrganizersClient({ organizers, platformFeePercentDefault
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-start justify-end gap-3">
-                  <div className="flex flex-col gap-3">
-                    <FeeEditor
-                      key={`platform-${organizer.platform_fee_percent}`}
-                      organizer={organizer}
-                      label="Platform fee"
-                      feePercent={organizer.platform_fee_percent}
-                      saveAction={setOrganizerFee}
-                      placeholder={platformFeePercentDefault === null ? 'Default' : `Default (${platformFeePercentDefault}%)`}
-                      helperText={organizer.platform_fee_percent === null
-                        ? `${platformFeePercentDefault === null ? 'Default' : `Default (${platformFeePercentDefault}%)`} for new events`
-                        : `New-event default: ${organizer.platform_fee_percent}%`}
-                    />
-                    <FeeEditor
-                      key={`service-${organizer.service_fee_percent}`}
-                      organizer={organizer}
-                      label="Customer service fee"
-                      feePercent={organizer.service_fee_percent}
-                      saveAction={setOrganizerServiceFee}
-                      placeholder={serviceFeePercent === null ? 'Platform default' : `Platform default (${serviceFeePercent}%)`}
-                      helperText={organizer.service_fee_percent === null
-                        ? 'Platform default on every checkout'
-                        : `${organizer.service_fee_percent}% on every new checkout for this organizer's events, starting now.`}
-                    />
-                  </div>
-                  {!organizer.approved && (
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-4 sm:pl-[52px] xl:shrink-0 xl:flex-nowrap xl:pl-0">
+                  <FeeEditor
+                    key={`platform-${organizer.platform_fee_percent}`}
+                    organizer={organizer}
+                    label="Platform fee"
+                    feePercent={organizer.platform_fee_percent}
+                    defaultPercent={platformFeePercentDefault}
+                    saveAction={setOrganizerFee}
+                    helperText={organizer.platform_fee_percent === null
+                      ? `${platformFeePercentDefault === null ? 'Platform default' : `Default (${platformFeePercentDefault}%)`} for new events`
+                      : 'Custom rate for new events'}
+                  />
+                  <FeeEditor
+                    key={`service-${organizer.service_fee_percent}`}
+                    organizer={organizer}
+                    label="Customer service fee"
+                    feePercent={organizer.service_fee_percent}
+                    defaultPercent={serviceFeePercent}
+                    saveAction={setOrganizerServiceFee}
+                    helperText={organizer.service_fee_percent === null
+                      ? `${serviceFeePercent === null ? 'Platform default' : `Default (${serviceFeePercent}%)`} on every checkout`
+                      : 'Custom rate on new checkouts'}
+                  />
+                  {organizer.approved ? (
+                    <div className="hidden w-28 xl:block" aria-hidden="true" />
+                  ) : (
                     <button
                       type="button"
                       onClick={() => runApprove(organizer.id)}
                       disabled={isPending && activeId === organizer.id}
-                      className="create-focus min-h-11 shrink-0 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60"
+                      className="create-focus min-h-11 w-28 shrink-0 rounded-full bg-[#2e6fe6] text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60"
                     >
                       {isPending && activeId === organizer.id ? 'Approving...' : 'Approve'}
                     </button>

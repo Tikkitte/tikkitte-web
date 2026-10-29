@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useTransition } from 'react'
 import type { EventOutstandingPayout } from '@/lib/types'
 import { previewEventFee, setEventFee } from './actions'
 import EventFinancials from './EventFinancials'
+import PresalePanel from './PresalePanel'
 import { formatCents } from './format'
 
 export type EventFeeAdminRow = {
@@ -16,6 +17,7 @@ export type EventFeeAdminRow = {
   organizer_id: string | null
   published: boolean
   cancelled: boolean
+  listed: boolean
   fee_percent: number | null
   organizer?: {
     id: string
@@ -181,6 +183,7 @@ function FeeEditor({ event, onSaved }: { event: EventFeeAdminRow; onSaved: () =>
 export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
   const [financialsEventId, setFinancialsEventId] = useState<string | null>(null)
+  const [presaleEventId, setPresaleEventId] = useState<string | null>(null)
   const [financialsVersion, setFinancialsVersion] = useState<Record<string, number>>({})
 
   return (
@@ -202,6 +205,7 @@ export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="font-semibold">{event.name}</h2>
                       <span className="rounded-full bg-[#d9e4fa] px-2.5 py-1 text-[10px] font-bold uppercase text-[#2565d0]">{event.fee_percent ?? '—'}% fee</span>
+                      {!event.listed && <span className="rounded-full bg-[#d9e4fa] px-2.5 py-1 text-[10px] font-bold uppercase text-[#2565d0]">Unlisted</span>}
                       {event.cancelled && <span className="rounded-full bg-[#fde9e7] px-2.5 py-1 text-[10px] font-bold uppercase text-[#a8322d]">Cancelled</span>}
                     </div>
                     <p className="mt-1 text-sm text-[var(--tikkitte-ink-soft)]">{event.organizer?.display_name ?? 'Unknown organizer'} · {formatDate(event.date)}</p>
@@ -218,6 +222,9 @@ export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
                     >
                       {financialsEventId === event.id ? 'Close financials' : 'Financials'}
                     </button>
+                    <button type="button" onClick={() => setPresaleEventId(presaleEventId === event.id ? null : event.id)} aria-expanded={presaleEventId === event.id} aria-controls={`presale-${event.id}`} className="create-focus min-h-11 rounded-full border border-[var(--tikkitte-cream-border)] px-4 text-xs font-semibold hover:bg-[var(--tikkitte-cream)]">
+                      {presaleEventId === event.id ? 'Close early bird' : 'Early bird'}
+                    </button>
                     <button
                       type="button"
                       onClick={() => setExpandedEventId(expanded ? null : event.id)}
@@ -228,6 +235,7 @@ export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
                     </button>
                   </div>
                 </div>
+                {presaleEventId === event.id && <div id={`presale-${event.id}`}><PresalePanel eventId={event.id} /></div>}
                 {expanded && <FeeEditor event={event} onSaved={() => setFinancialsVersion((v) => ({ ...v, [event.id]: (v[event.id] ?? 0) + 1 }))} />}
                 {financialsEventId === event.id && (
                   <div id={`financials-${event.id}`}>

@@ -9,6 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from('event')
     .select('id, date')
     .eq('cancelled', false)
+    .eq('listed', true)
     .order('date', { ascending: true })
 
   const staticRoutes: MetadataRoute.Sitemap = [

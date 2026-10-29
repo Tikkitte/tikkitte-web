@@ -32,6 +32,8 @@ export type Event = {
   preview_videos: string[] | null
   scanner_pin: string | null
   published: boolean
+  listed: boolean
+  presale_max_per_email: number
   ever_published: boolean
   end_date: string | null
   end_time: string | null
@@ -54,6 +56,7 @@ export type Ticket = {
   sale_end_date: string | null
   sale_end_time: string | null
   is_table_ticket: boolean
+  presale_only: boolean
 }
 
 export type TablePackage = {

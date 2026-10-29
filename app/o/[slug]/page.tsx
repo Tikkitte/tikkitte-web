@@ -80,6 +80,7 @@ export default async function OrganizerPage({ params }: { params: Promise<{ slug
     .eq('organizer_id', organizer.id)
     .eq('published', true)
     .eq('cancelled', false)
+    .eq('listed', true)
     .gte('date', today)
     .order('date', { ascending: true })
 

@@ -10,6 +10,7 @@ type AdminEvent = {
   organizer_id: string | null
   published: boolean
   cancelled: boolean
+  listed: boolean
 }
 
 type OrganizerSummary = {
@@ -22,7 +23,7 @@ export default async function AdminEventsPage() {
   const supabase = await createClient()
   const { data: rawEvents } = await supabase
     .from('event')
-    .select('id, name, slug, date, organizer_id, published, cancelled')
+    .select('id, name, slug, date, organizer_id, published, cancelled, listed')
     .order('date', { ascending: false, nullsFirst: false })
     .limit(300)
 
