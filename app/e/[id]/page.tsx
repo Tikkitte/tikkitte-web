@@ -126,7 +126,7 @@ async function fetchEventLiveState(eventId: string) {
 
 async function getEventInventory(eventId: string) {
   const supabase = createPublicClient()
-  const [ticketResult, tableResult] = await Promise.all([
+  const [ticketResult, tableResult, sellingFastResult] = await Promise.all([
     supabase
       .from('ticket')
       .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity, min_per_order, max_per_order, sale_start_date, sale_start_time, sale_end_date, sale_end_time, is_table_ticket, presale_only')
@@ -134,6 +134,7 @@ async function getEventInventory(eventId: string) {
       .eq('is_table_ticket', false)
       .order('price', { ascending: true }),
     supabase.rpc('get_public_event_tables', { p_event_id: eventId }),
+    supabase.rpc('get_event_selling_fast', { p_event_id: eventId }),
   ])
 
   if (ticketResult.error) {
@@ -142,10 +143,14 @@ async function getEventInventory(eventId: string) {
   if (tableResult.error) {
     console.error('[event-page] failed to load table availability:', tableResult.error.message)
   }
+  if (sellingFastResult.error) {
+    console.error('[event-page] failed to load selling-fast status:', sellingFastResult.error.message)
+  }
 
   return {
     tickets: (ticketResult.data ?? []) as Ticket[],
     hasTableReservations: (tableResult.data?.length ?? 0) > 0,
+    sellingFast: sellingFastResult.data === true,
   }
 }
 
@@ -221,7 +226,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
   const data = await getEventData(id)
   if (!data) notFound()
 
-  const { event, tickets, organizer, hasTableReservations, cancelled, serviceFeeBps } = data
+  const { event, tickets, organizer, hasTableReservations, cancelled, serviceFeeBps, sellingFast } = data
   const ref = (await searchParams)?.ref?.trim().toLowerCase()
   if (ref && refPattern.test(ref)) {
     const eventId = event.id
@@ -366,7 +371,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 </Link>
               </div>
             )}
-            <EventCheckout presaleMaxPerEmail={event.presale_max_per_email} serviceFeeBps={serviceFeeBps} eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} />
+            <EventCheckout presaleMaxPerEmail={event.presale_max_per_email} serviceFeeBps={serviceFeeBps} eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} sellingFast={sellingFast} />
           </div>
 
           {/* Back link */}

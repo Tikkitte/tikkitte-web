@@ -7,6 +7,7 @@ import { validateEmail, sanitizeName, suggestEmailDomain } from '@/lib/validatio
 import { SERVICE_FEE_BPS, formatMinor, priceOrder, pricingFromBreakdown, type OrderPricing } from '@/lib/checkout-pricing'
 import type { PromoCode, Ticket } from '@/lib/types'
 import OrderSummary from './OrderSummary'
+import HypeBadge, { type Hype } from './HypeBadge'
 
 const SUPABASE_FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/functions/v1'
 
@@ -16,6 +17,7 @@ type Props = {
   eventId: string
   eventSlug: string
   tickets: Ticket[]
+  sellingFast: boolean
 }
 
 function promoDescription(promoCode: PromoCode) {
@@ -24,7 +26,7 @@ function promoDescription(promoCode: PromoCode) {
     : `GH₵ ${promoCode.discount_value} off`
 }
 
-export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeBps, presaleMaxPerEmail }: Props) {
+export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeBps, presaleMaxPerEmail, sellingFast }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>(() =>
     Object.fromEntries(tickets.map((t) => [t.id, 0]))
   )
@@ -364,6 +366,16 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
     .filter((d): d is string => !!d)
     .sort()[0]
 
+  // "Almost sold out" only when every on-sale tier has a known capacity, so
+  // scarcity is never claimed for tiers without a limit.
+  const onSaleTickets = visibleTickets.filter((t) => ticketSaleStatus(t).available)
+  const capacityKnown = onSaleTickets.length > 0 &&
+    onSaleTickets.every((t) => t.total_quantity !== null && t.available_quantity !== null)
+  const totalCapacity = onSaleTickets.reduce((s, t) => s + (t.total_quantity ?? 0), 0)
+  const remaining = onSaleTickets.reduce((s, t) => s + Math.max(t.available_quantity ?? 0, 0), 0)
+  const almostSoldOut = capacityKnown && totalCapacity > 0 && remaining > 0 && remaining <= totalCapacity * 0.25
+  const hype: Hype | null = allUnavailable ? null : almostSoldOut ? 'almost-sold-out' : sellingFast ? 'selling-fast' : null
+
   if (tickets.length === 0) {
     return (
       <div className="py-8 text-center text-[#8a887c]">
@@ -383,9 +395,12 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
   return (
     <div>
       {/* Ticket selection */}
-      <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-[#2565D0]">
-        Tickets
-      </h2>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-[#2565D0]">
+          Tickets
+        </h2>
+        {hype && <HypeBadge hype={hype} />}
+      </div>
 
       <div className="space-y-3 mb-8">
         {visibleTickets.map((ticket) => {
