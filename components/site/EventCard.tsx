@@ -24,7 +24,7 @@ export default function EventCard({ event }: { event: EventWithPrice }) {
                 alt=""
                 fill
                 className="object-cover"
-                sizes="(max-width: 640px) 116px, (max-width: 1080px) 50vw, 33vw"
+                sizes="(max-width: 640px) 40vw, (max-width: 1080px) 50vw, 33vw"
               />
             ) : (
               <PosterPlaceholder className="h-full w-full" />
@@ -48,8 +48,22 @@ export default function EventCard({ event }: { event: EventWithPrice }) {
               <strong>{price === 0 ? "Free" : "TBA"}</strong>
             )}
           </span>
-          <span className="tk-button tk-button--primary tk-button--md">
+          <span className="tkh-ev-cta">
             Get tickets
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14" />
+              <path d="M13 6l6 6-6 6" />
+            </svg>
           </span>
         </div>
       </TicketCard>

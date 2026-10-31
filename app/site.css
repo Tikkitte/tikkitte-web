@@ -959,8 +959,11 @@ body:has(.tkh-root > .tkh-hero) {
   }
 }
 
-/* One native link covers the entire event ticket, including the white stub. */
+/* One native link covers the entire event card. */
 .tkh-event-link {
+  --tkh-ev-title-size: 32px;
+  --tkh-ev-title-lh: 1;
+  --tkh-ev-title-lines: 2;
   display: block;
   height: 100%;
   color: inherit;
@@ -969,14 +972,19 @@ body:has(.tkh-root > .tkh-hero) {
 }
 .tkh-event-link .tkh-ev {
   height: 100%;
+  background: #ffffff;
+}
+/* Event cards are plain rounded cards: no ticket notches or perforations. */
+.tkh-event-link .tkh-ev-poster,
+.tkh-event-link .tkh-ev-stub {
+  border: 0;
+  -webkit-mask: none;
+  mask: none;
 }
 .tkh-event-link .tkh-ev-poster {
   flex: 0 0 auto;
 }
 .tkh-event-link .tkh-ev-stub {
-  flex: 0 0 auto;
-  display: grid;
-  grid-template-rows: 20px 64px 44px;
   min-width: 0;
 }
 .tkh-event-link .tkh-ev-date {
@@ -985,52 +993,97 @@ body:has(.tkh-root > .tkh-hero) {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.tkh-event-link .tkh-ev-title {
+/* The title box always reserves its full line clamp, so card heights stay
+   identical whether a name takes one line or three. */
+.tkh-event-link .tkh-ev-title,
+.tkh-root .tkh-event-link h2.tkh-ev-title {
+  font-size: var(--tkh-ev-title-size);
+  line-height: var(--tkh-ev-title-lh);
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: var(--tkh-ev-title-lines);
   overflow: hidden;
-  height: 64px;
+  height: calc(
+    var(--tkh-ev-title-size) * var(--tkh-ev-title-lh) *
+      var(--tkh-ev-title-lines)
+  );
 }
 .tkh-event-link .tkh-ev-bottom {
   margin: 0;
-  padding: 0;
+  padding: 6px 0 0;
   flex-wrap: nowrap;
   min-width: 0;
 }
 .tkh-event-link .tkh-ev-bottom > span:first-child {
   min-width: 0;
+  max-width: 100%;
+  line-height: 20px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.tkh-event-link .tkh-ev-bottom .tk-button {
+.tkh-ev-cta {
+  display: inline-flex;
   flex-shrink: 0;
-  padding-inline: 14px;
-  font-size: 14px;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px 0 14px;
+  border-radius: 999px;
+  background: #d9e4fa;
+  color: #2565d0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+.tkh-ev-cta svg {
+  transition: transform 0.15s ease;
+}
+.tkh-event-link:hover .tkh-ev-cta {
+  background: #2565d0;
+  color: #ffffff;
+}
+.tkh-event-link:hover .tkh-ev-cta svg {
+  transform: translateX(2px);
 }
 @media (max-width: 640px) {
   .tkh-event-link {
+    --tkh-ev-title-size: clamp(18px, 5vw, 21px);
+    --tkh-ev-title-lh: 1.05;
+    --tkh-ev-title-lines: 3;
     border-radius: 16px;
   }
-  .tkh-event-link .tkh-ev-title {
-    height: 66px;
+  .tkh-event-link .tkh-ev {
+    grid-template-columns: 38% minmax(0, 1fr);
+  }
+  .tkh-event-link .tkh-ev-poster {
     min-height: 0;
-    -webkit-line-clamp: 3;
   }
   .tkh-event-link .tkh-ev-stub {
-    grid-template-rows: 32px 66px 68px;
+    padding: 14px 14px 14px 16px;
+    gap: 6px;
   }
   .tkh-event-link .tkh-ev-date {
     font-size: 11px;
-    line-height: 16px;
-    white-space: normal;
+    line-height: 14px;
   }
   .tkh-event-link .tkh-ev-bottom {
     flex-direction: column;
     align-items: flex-start;
-    justify-content: space-between;
-    gap: 4px;
+    gap: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tkh-ev-cta,
+  .tkh-ev-cta svg {
+    transition: none;
+  }
+  .tkh-event-link:hover .tkh-ev-cta svg {
+    transform: none;
   }
 }
 

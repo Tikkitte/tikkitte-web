@@ -31,7 +31,7 @@ export default function Loading() {
                     </div>
                     <div className="tkh-ev-bottom">
                       <Sk className="h-4 w-20" />
-                      <Sk className="h-11 w-28 rounded-full" />
+                      <Sk className="h-8 w-28 rounded-full" />
                     </div>
                   </div>
                 </div>
