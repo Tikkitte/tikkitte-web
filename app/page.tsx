@@ -3,6 +3,7 @@ import SitePage from "@/components/site/SitePage";
 import Hero from "@/components/home/Hero";
 import LineupWall from "@/components/home/LineupWall";
 import HowItWorks from "@/components/home/HowItWorks";
+import TrustedBy from "@/components/home/TrustedBy";
 import Features from "@/components/home/Features";
 import SellItOut from "@/components/home/SellItOut";
 const title = "Tikkitte | Sell tickets to your events in Ghana";
@@ -19,6 +20,7 @@ export default function Home() {
       <main>
         <LineupWall />
         <HowItWorks />
+        <TrustedBy />
         <Features />
         <SellItOut />
       </main>

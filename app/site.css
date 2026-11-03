@@ -1154,3 +1154,63 @@ body:has(.tkh-root > .tkh-hero) {
     animation-play-state: paused;
   }
 }
+
+/* Trusted-by row: single-ink brand marks drifting past, faded at both edges.
+   Equal groups include the seam gap, so translating by half the track loops exactly. */
+.tkh-brands {
+  width: 100%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.tkh-brands-track {
+  display: flex;
+  width: max-content;
+  animation: tkh-brands-drift 50s linear infinite;
+}
+.tkh-brands-group {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: clamp(48px, 6vw, 88px);
+  margin: 0;
+  padding: 0 clamp(48px, 6vw, 88px) 0 0;
+  list-style: none;
+}
+.tkh-brands img {
+  display: block;
+  width: auto;
+  height: var(--tkh-brand-h);
+  opacity: 0.62;
+}
+@keyframes tkh-brands-drift {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (max-width: 640px) {
+  .tkh-brands img {
+    height: calc(var(--tkh-brand-h) * 0.8);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tkh-brands {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .tkh-brands-track {
+    width: auto;
+    justify-content: center;
+    animation: none;
+  }
+  .tkh-brands-group {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 28px clamp(28px, 3.2vw, 48px);
+    padding: 0;
+  }
+  .tkh-brands-group[aria-hidden] {
+    display: none;
+  }
+}
