@@ -46,17 +46,6 @@ export default function SiteHeader({
           </li>
         </ul>
         <div className="tkh-nav-actions">
-          <span className="tkh-signin tkh-ondark">
-            <Link
-              href="/login"
-              className="tk-button tk-button--secondary tk-button--md"
-            >
-              Sign in
-            </Link>
-          </span>
-          <Link className="tkh-signin-text tkh-textlink" href="/login">
-            Sign in
-          </Link>
           <Link
             href="/signup"
             className="tk-button tk-button--primary tk-button--md"

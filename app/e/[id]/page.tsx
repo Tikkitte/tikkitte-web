@@ -374,16 +374,6 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
             <EventCheckout presaleMaxPerEmail={event.presale_max_per_email} serviceFeeBps={serviceFeeBps} eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} sellingFast={sellingFast} />
           </div>
 
-          {/* Back link */}
-          <div className="mt-8 border-t border-[#E7E2D4] pt-6">
-            <Link
-              href="/events"
-              className="text-sm font-semibold text-[#2565D0] transition-colors hover:text-[#1E56B5]"
-            >
-              ← All events
-            </Link>
-          </div>
-
         </div>
       </div>
     </div>

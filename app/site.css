@@ -35,17 +35,11 @@
 .tkh-nexttile:hover {
   background: #1e56b5;
 }
-.tkh-signin {
-  display: inline-flex;
-}
 .tkh-navlinks {
   display: flex;
 }
 .tkh-hero-cta {
   display: flex;
-}
-.tkh-signin-text {
-  display: none;
 }
 .tkh-dots {
   display: none;
@@ -424,16 +418,6 @@
     display: flex;
   }
 }
-@media (max-width: 520px) {
-  .tkh-signin {
-    display: none;
-  }
-}
-@media (max-width: 520px) {
-  .tkh-signin-text {
-    display: inline-flex;
-  }
-}
 @media (max-width: 640px) {
   .tkh-ev {
     display: grid;
@@ -578,16 +562,6 @@
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
-}
-
-.tkh-signin-text {
-  align-items: center;
-  min-height: 44px;
-  padding: 0 6px;
-  color: rgba(255, 255, 255, 0.88);
-  text-decoration: none;
-  font-size: 15px;
-  font-weight: 700;
 }
 .tkh-band {
   background: #0d0c0b;

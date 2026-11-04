@@ -9,18 +9,12 @@ export default function EventLayout({ children }: { children: React.ReactNode })
       <header className="sticky top-0 z-50 border-b border-[#E7E2D4] bg-[#F4F2EC]/95 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-6 lg:px-12">
 
-          {/* Back → events list */}
+          {/* Logo → home */}
           <Link
-            href="/events"
-            className="group flex items-center gap-2 text-[#8a887c] transition-colors duration-150 hover:text-[#191917]"
+            href="/"
+            aria-label="Tikkitte home"
+            className="flex items-center gap-2"
           >
-            <svg
-              width="16" height="16" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-              className="group-hover:-translate-x-0.5 transition-transform duration-150 flex-shrink-0"
-            >
-              <path d="m15 18-6-6 6-6" />
-            </svg>
             <Image
               src="/images/logo.png"
               alt=""
