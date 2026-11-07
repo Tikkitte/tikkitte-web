@@ -2,11 +2,15 @@ import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import RefreshButton from './RefreshButton'
+import CompleteOrganizerProfile from './CompleteOrganizerProfile'
 
 export default async function PendingPage() {
   const supabase = await createClient()
   const user = await getAuthedUser()
   if (!user) redirect('/login')
+  // Guest checkout signs buyers in anonymously. They have no organizer
+  // account to review or finish, so send them to sign in.
+  if (user.is_anonymous) redirect('/login')
 
   // If already approved, send straight to dashboard
   const { data: profile, error: profileError } = await supabase
@@ -23,6 +27,54 @@ export default async function PendingPage() {
 
   if (profile?.approved) redirect('/dashboard')
 
+  // No row at all is not "under review": admins cannot see this account yet.
+  // Finish creating the profile here instead of dead-ending.
+  if (!profile) {
+    return (
+      <PendingShell>
+        <h1 className="text-2xl font-bold text-gray-900 mb-3">
+          Finish setting up your account
+        </h1>
+
+        <p className="text-gray-500 text-[15px] leading-relaxed mb-8">
+          We need a few details before we can review your organizer request.
+        </p>
+
+        <CompleteOrganizerProfile
+          userId={user.id}
+          email={user.email ?? ''}
+          initialDisplayName={String(user.user_metadata?.display_name ?? '').trim()}
+        />
+      </PendingShell>
+    )
+  }
+
+  return (
+    <PendingShell>
+      <h1 className="text-2xl font-bold text-gray-900 mb-3">
+        Application under review
+      </h1>
+
+      <p className="text-gray-500 text-[15px] leading-relaxed mb-1">
+        We&apos;re reviewing your organizer request.
+      </p>
+      <p className="text-gray-500 text-[15px] leading-relaxed mb-1">
+        We&apos;ll notify you at
+      </p>
+      <p className="font-semibold text-gray-900 text-[15px] mb-6">
+        {user.email}
+      </p>
+
+      <p className="text-gray-400 text-sm mb-8">
+        This usually takes less than 24 hours.
+      </p>
+
+      <RefreshButton />
+    </PendingShell>
+  )
+}
+
+function PendingShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4">
       <div className="max-w-sm w-full mx-auto text-center">
@@ -33,26 +85,7 @@ export default async function PendingPage() {
           height={44}
           className="mx-auto mb-10"
         />
-
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">
-          Application under review
-        </h1>
-
-        <p className="text-gray-500 text-[15px] leading-relaxed mb-1">
-          We&apos;re reviewing your organizer request.
-        </p>
-        <p className="text-gray-500 text-[15px] leading-relaxed mb-1">
-          We&apos;ll notify you at
-        </p>
-        <p className="font-semibold text-gray-900 text-[15px] mb-6">
-          {user.email}
-        </p>
-
-        <p className="text-gray-400 text-sm mb-8">
-          This usually takes less than 24 hours.
-        </p>
-
-        <RefreshButton />
+        {children}
       </div>
     </div>
   )

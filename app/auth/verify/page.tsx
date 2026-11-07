@@ -4,57 +4,9 @@ import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { ensureOrganizerProfile } from '@/lib/organizer-profile'
 
 const RESEND_SECONDS = 30
-
-function slugify(input: string): string {
-  return input
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/[\s-]+/g, '-')
-}
-
-const SUPABASE_FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/functions/v1'
-
-async function notifyOrganizerWelcome(supabase: ReturnType<typeof createClient>) {
-  try {
-    const { data: { session } } = await supabase.auth.getSession()
-    const accessToken = session?.access_token
-    if (!accessToken) return
-    const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/send-organizer-welcome`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-    if (!res.ok) {
-      console.error('[auth/verify] send-organizer-welcome failed', res.status, await res.text())
-    }
-  } catch (err) {
-    console.error('[auth/verify] send-organizer-welcome invoke failed', err)
-  }
-}
-
-// Matches the slugify pattern used in the one-time DB backfill
-// (20260703_organizer_profile_slug.sql): base slug from display_name,
-// short id suffix if that base is already taken by someone else.
-async function resolveOrganizerSlug(
-  supabase: ReturnType<typeof createClient>,
-  displayName: string,
-  userId: string
-): Promise<string | null> {
-  const base = slugify(displayName)
-  if (!base) return null
-  const { data: existing } = await supabase
-    .from('organizer_profile')
-    .select('id')
-    .eq('slug', base)
-    .maybeSingle()
-  if (!existing || existing.id === userId) return base
-  return `${base}-${userId.slice(0, 6)}`
-}
 
 function VerifyForm() {
   const router = useRouter()
@@ -85,55 +37,35 @@ function VerifyForm() {
     const supabase = createClient()
     const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'signup' })
 
+    let user = data.user
     // If OTP failed, check if user is already confirmed (token already consumed)
     if (error) {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      const { data: { user: confirmedUser } } = await supabase.auth.getUser()
+      if (!confirmedUser) {
         setLoading(false)
         setError(error.message)
         return
       }
-      // User is already confirmed — continue with profile creation
-      const display_name = user.user_metadata?.display_name ?? ''
-      const slug = await resolveOrganizerSlug(supabase, display_name, user.id)
-      const { error: profileError } = await supabase.from('organizer_profile').upsert({
+      user = confirmedUser
+    }
+
+    // Create organizer profile (pending approval). With no name on the
+    // account, the pending page asks for one and creates the profile there.
+    const displayName = String(user?.user_metadata?.display_name ?? '').trim()
+    if (user && displayName) {
+      const { error: profileError } = await ensureOrganizerProfile(supabase, {
         id: user.id,
-        display_name,
-        email,
-        slug,
-      }, { onConflict: 'id', ignoreDuplicates: true })
-      setLoading(false)
+        displayName,
+        email: user.email ?? email,
+      })
       if (profileError) {
-        console.error('[auth/verify] organizer_profile upsert failed', profileError)
+        setLoading(false)
         setError('Your email was verified, but we could not finish setting up your account. Please contact support.')
         return
       }
-      // Idempotent server-side (welcome_email_sent_at marker), so it's safe
-      // to call on every successful verify, not just the first insert.
-      await notifyOrganizerWelcome(supabase)
-      router.push('/dashboard')
-      router.refresh()
-      return
     }
 
     setLoading(false)
-    // Create organizer profile (pending approval)
-    if (data.user) {
-      const display_name = data.user.user_metadata?.display_name ?? ''
-      const slug = await resolveOrganizerSlug(supabase, display_name, data.user.id)
-      const { error: profileError } = await supabase.from('organizer_profile').upsert({
-        id: data.user.id,
-        display_name,
-        email,
-        slug,
-      }, { onConflict: 'id', ignoreDuplicates: true })
-      if (profileError) {
-        console.error('[auth/verify] organizer_profile upsert failed', profileError)
-        setError('Your email was verified, but we could not finish setting up your account. Please contact support.')
-        return
-      }
-      await notifyOrganizerWelcome(supabase)
-    }
     router.push('/dashboard')
     router.refresh()
   }, [email, router])
