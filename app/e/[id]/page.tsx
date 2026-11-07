@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { after } from 'next/server'
+import { headers } from 'next/headers'
 import { unstable_cache } from 'next/cache'
 import { cache } from 'react'
 import type { Metadata } from 'next'
@@ -228,6 +229,8 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
 
   const { event, tickets, organizer, hasTableReservations, cancelled, serviceFeeBps, sellingFast } = data
   const ref = (await searchParams)?.ref?.trim().toLowerCase()
+  // Set by Vercel from the visitor's IP; the phone picker's default country.
+  const visitorCountry = (await headers()).get('x-vercel-ip-country')
   if (ref && refPattern.test(ref)) {
     const eventId = event.id
     after(async () => {
@@ -371,7 +374,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 </Link>
               </div>
             )}
-            <EventCheckout presaleMaxPerEmail={event.presale_max_per_email} serviceFeeBps={serviceFeeBps} eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} sellingFast={sellingFast} />
+            <EventCheckout presaleMaxPerEmail={event.presale_max_per_email} serviceFeeBps={serviceFeeBps} eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} sellingFast={sellingFast} visitorCountry={visitorCountry} />
           </div>
 
         </div>

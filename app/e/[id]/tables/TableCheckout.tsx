@@ -10,6 +10,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { sanitizeName, validateEmail } from '@/lib/validation'
+import { normalizePhoneNumber, phoneErrorMessage, DEFAULT_PHONE_COUNTRY } from '@/lib/phone'
 import type { TablePackage } from '@/lib/types'
 
 const FUNCTIONS_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1`
@@ -33,10 +34,10 @@ export default function TableCheckout({ eventId, eventSlug, table, onUnavailable
     setError(null)
     const validEmail = validateEmail(email)
     const cleanName = sanitizeName(name)
-    const cleanPhone = phone.trim()
+    const cleanPhone = normalizePhoneNumber(phone)
     if (!cleanName) return setError('Please enter your name.')
     if (!validEmail) return setError('Please enter a valid email address.')
-    if (!/^\+?[0-9 ()-]{7,20}$/.test(cleanPhone)) return setError('Please enter a valid phone number.')
+    if (!cleanPhone) return setError(phoneErrorMessage(phone, DEFAULT_PHONE_COUNTRY))
 
     setLoading(true)
     try {
@@ -84,6 +85,7 @@ export default function TableCheckout({ eventId, eventSlug, table, onUnavailable
           table_package_id: table.id,
           quote_id: quote.quote_id,
           callback_url: callbackUrl,
+          phone: cleanPhone,
         }),
       })
       const payment = await paymentResponse.json()

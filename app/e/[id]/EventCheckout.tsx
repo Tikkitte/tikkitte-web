@@ -4,6 +4,18 @@ import { useState, useMemo, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatSaleDate, saleDateTime, ticketSaleStatus } from '@/lib/ticketAvailability'
 import { validateEmail, sanitizeName, suggestEmailDomain } from '@/lib/validation'
+import {
+  DEFAULT_PHONE_COUNTRY,
+  flagEmoji,
+  isPhoneCountry,
+  normalizePhoneNumber,
+  phoneCountryDial,
+  phoneCountryFromInput,
+  phoneCountryName,
+  phoneErrorMessage,
+  type CountryCode,
+} from '@/lib/phone'
+import { PHONE_COUNTRIES } from '@/lib/phoneCountries'
 import { SERVICE_FEE_BPS, formatMinor, priceOrder, pricingFromBreakdown, type OrderPricing } from '@/lib/checkout-pricing'
 import type { PromoCode, Ticket } from '@/lib/types'
 import OrderSummary from './OrderSummary'
@@ -18,6 +30,8 @@ type Props = {
   eventSlug: string
   tickets: Ticket[]
   sellingFast: boolean
+  // Buyer's country from their IP (Vercel), used as the phone picker default.
+  visitorCountry: string | null
 }
 
 function promoDescription(promoCode: PromoCode) {
@@ -26,7 +40,7 @@ function promoDescription(promoCode: PromoCode) {
     : `GH₵ ${promoCode.discount_value} off`
 }
 
-export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeBps, presaleMaxPerEmail, sellingFast }: Props) {
+export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeBps, presaleMaxPerEmail, sellingFast, visitorCountry }: Props) {
   const [counts, setCounts] = useState<Record<string, number>>(() =>
     Object.fromEntries(tickets.map((t) => [t.id, 0]))
   )
@@ -37,6 +51,10 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
   // suggestion, via the "Keep" button below. Cleared implicitly whenever
   // email no longer equals it (i.e. they edit the address again).
   const [keptEmail, setKeptEmail] = useState<string | null>(null)
+  const [phone, setPhone] = useState('')
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>(
+    isPhoneCountry(visitorCountry) ? visitorCountry : DEFAULT_PHONE_COUNTRY
+  )
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -175,6 +193,12 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
       return
     }
 
+    const validPhone = normalizePhoneNumber(phone, phoneCountry)
+    if (!validPhone) {
+      setError(phoneErrorMessage(phone, phoneCountry))
+      return
+    }
+
     if (totalTickets === 0) {
       setError('Please select at least one ticket.')
       return
@@ -299,6 +323,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
           callback_url: callbackUrl,
           promo_code: appliedPromo?.code ?? null,
           expected_total: pricing.totalMinor / 100,
+          phone: validPhone,
         }),
       })
 
@@ -571,6 +596,58 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
               autoComplete="off"
               className="w-full rounded-lg border border-[#E4DFD1] bg-white px-4 py-2.5 text-sm text-[#191917] placeholder:text-[#8a887c] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#2565D0]"
             />
+          </div>
+          <div>
+            <label htmlFor="phone" className="mb-1 block text-sm font-semibold text-[#191917]">
+              Phone number <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-2">
+              {/* A native select keeps the country list accessible and uses
+                  the phone's own picker; the box on top shows flag and code. */}
+              <div className="relative shrink-0 rounded-lg focus-within:ring-2 focus-within:ring-[#2565D0]">
+                <div
+                  aria-hidden="true"
+                  className="flex h-full items-center gap-1.5 rounded-lg border border-[#E4DFD1] bg-white px-3 text-sm text-[#191917]"
+                >
+                  <span className="text-lg leading-none">{flagEmoji(phoneCountry)}</span>
+                  <span className="tabular-nums">+{phoneCountryDial(phoneCountry)}</span>
+                  <svg className="h-3 w-3 text-[#8a887c]" viewBox="0 0 12 12" fill="none">
+                    <path d="M3 4.5 6 7.5 9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <select
+                  aria-label={`Country code: ${phoneCountryName(phoneCountry)}`}
+                  value={phoneCountry}
+                  onChange={(e) => {
+                    if (isPhoneCountry(e.target.value)) setPhoneCountry(e.target.value)
+                  }}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                >
+                  {PHONE_COUNTRIES.map(([code, name, dial]) => (
+                    <option key={code} value={code}>
+                      {`${flagEmoji(code)} ${name} (+${dial})`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <input
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel-national"
+                required
+                maxLength={32}
+                placeholder={phoneCountry === 'GH' ? '024 123 4567' : 'Phone number'}
+                value={phone}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setPhone(value)
+                  const typedCountry = phoneCountryFromInput(value, phoneCountry)
+                  if (typedCountry) setPhoneCountry(typedCountry)
+                }}
+                className="min-w-0 flex-1 rounded-lg border border-[#E4DFD1] bg-white px-4 py-2.5 text-sm text-[#191917] placeholder:text-[#8a887c] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#2565D0]"
+              />
+            </div>
           </div>
           <div>
             <label htmlFor="name" className="mb-1 block text-sm font-semibold text-[#191917]">
