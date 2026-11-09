@@ -28,14 +28,32 @@ export function normalizePhoneNumber(raw: unknown, country: CountryCode = DEFAUL
   return parsed?.isValid() ? parsed.number : null
 }
 
-// For a number typed or pasted with + and a country code different from
-// `current`, the country it belongs to, so the picker can follow it.
-export function phoneCountryFromInput(raw: string, current: CountryCode): CountryCode | null {
+// For a number typed, pasted or autofilled with +, what the field should
+// change to: `country` for the picker, and once the number is complete,
+// `national`, the number as written locally (053 951 1236) so the field
+// doesn't repeat the code the picker shows. `national` is null while the
+// number is incomplete. Null when nothing should change.
+export function splitInternationalInput(
+  raw: string,
+  current: CountryCode,
+): { country: CountryCode; national: string | null } | null {
   const trimmed = raw.trim()
   if (!trimmed.startsWith('+')) return null
-  const parsed = parsePhoneNumberFromString(trimmed)
-  if (!parsed?.country || parsed.countryCallingCode === phoneCountryDial(current)) return null
-  return parsed.country
+  const e164 = normalizePhoneNumber(trimmed, current)
+  const parsed = parsePhoneNumberFromString(e164 ?? trimmed)
+  if (!parsed?.country) return null
+  // Keep the picker where it is when the code is shared (US and Canada, UK
+  // and Guernsey).
+  const country = parsed.countryCallingCode === phoneCountryDial(current) ? current : parsed.country
+  if (e164) {
+    const national = parsed.formatNational()
+    // Only rewrite the field if the local form still checks out as the same number.
+    if (normalizePhoneNumber(national, country) === e164) return { country, national }
+    if (parsed.country !== current && normalizePhoneNumber(national, parsed.country) === e164) {
+      return { country: parsed.country, national }
+    }
+  }
+  return country === current ? null : { country, national: null }
 }
 
 export function phoneCountryName(code: string): string {

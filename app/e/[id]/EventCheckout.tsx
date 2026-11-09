@@ -10,9 +10,9 @@ import {
   isPhoneCountry,
   normalizePhoneNumber,
   phoneCountryDial,
-  phoneCountryFromInput,
   phoneCountryName,
   phoneErrorMessage,
+  splitInternationalInput,
   type CountryCode,
 } from '@/lib/phone'
 import { PHONE_COUNTRIES } from '@/lib/phoneCountries'
@@ -640,10 +640,9 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
                 placeholder={phoneCountry === 'GH' ? '024 123 4567' : 'Phone number'}
                 value={phone}
                 onChange={(e) => {
-                  const value = e.target.value
-                  setPhone(value)
-                  const typedCountry = phoneCountryFromInput(value, phoneCountry)
-                  if (typedCountry) setPhoneCountry(typedCountry)
+                  const split = splitInternationalInput(e.target.value, phoneCountry)
+                  if (split) setPhoneCountry(split.country)
+                  setPhone(split?.national ?? e.target.value)
                 }}
                 className="min-w-0 flex-1 rounded-lg border border-[#E4DFD1] bg-white px-4 py-2.5 text-sm text-[#191917] placeholder:text-[#8a887c] focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#2565D0]"
               />
