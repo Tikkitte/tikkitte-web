@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Payout, PayoutAccount } from '@/lib/types'
-import PayoutsClient, { type PayoutAdminRow } from './PayoutsClient'
+import PayoutsClient, { type PendingPayoutCheck, type PayoutAdminRow } from './PayoutsClient'
 import AdminPageHeader from '../AdminPageHeader'
 
 type OrganizerSummary = {
@@ -16,6 +16,9 @@ export default async function AdminPayoutsPage() {
     .from('payout')
     .select('*')
     .order('created_at', { ascending: false })
+
+  const { data: checks, error: checksError } = await supabase.rpc('admin_get_pending_payout_checks')
+  if (checksError) throw new Error('Could not load payout warnings. Refresh before sending money.')
 
   const payouts = (rawPayouts ?? []) as Payout[]
   const organizerIds = Array.from(new Set(payouts.map((payout) => payout.organizer_id)))
@@ -54,7 +57,7 @@ export default async function AdminPayoutsPage() {
   return (
     <div>
       <AdminPageHeader title="Payouts" description="Review payout destinations and confirm transfers after they have been sent." />
-      <PayoutsClient rows={rows} />
+      <PayoutsClient rows={rows} checks={(checks ?? []) as PendingPayoutCheck[]} />
     </div>
   )
 }

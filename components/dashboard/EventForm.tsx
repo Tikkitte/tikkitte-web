@@ -1,5 +1,6 @@
 'use client'
 
+import { isCancelledForOrganizer } from '@/lib/event-cancellation'
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -159,6 +160,7 @@ function EventPreviewCard({
 export default function EventForm({ event, tickets, organizerId, showPreview = false }: Props) {
   const router = useRouter()
   const isEdit = !!event
+  const cancelledForOrganizer = event ? isCancelledForOrganizer(event) : false
   const fileRef = useRef<HTMLInputElement>(null)
   const allowNavigationRef = useRef(false)
 
@@ -521,7 +523,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
   useEffect(() => {
     if (!isEdit) return
 
-    const visibleSections = event?.cancelled
+    const visibleSections = cancelledForOrganizer
       ? EDIT_SECTIONS.filter(([id]) => id !== 'status')
       : EDIT_SECTIONS
     const firstSection = document.getElementById(visibleSections[0][0])
@@ -557,7 +559,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
       scrollRoot.removeEventListener('scroll', scheduleUpdate)
       window.removeEventListener('resize', scheduleUpdate)
     }
-  }, [event?.cancelled, isEdit])
+  }, [cancelledForOrganizer, isEdit])
 
   const slugPreview = resolvedSlug ? 'tikkitte.com/e/' + resolvedSlug : ''
 
@@ -962,7 +964,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
         </button>
       </div>
 
-      {isEdit && !event.cancelled && (
+      {isEdit && !cancelledForOrganizer && (
         <section id="status" className="create-card scroll-mt-8 overflow-hidden" aria-labelledby="status-title">
           <div className="p-6">
             <h2 id="status-title" className="font-semibold text-[#25251f]">Event status</h2>
@@ -1028,7 +1030,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
   )
 
   if (!showPreview && isEdit) {
-    const sections = event?.cancelled ? EDIT_SECTIONS.filter(([id]) => id !== 'status') : EDIT_SECTIONS
+    const sections = cancelledForOrganizer ? EDIT_SECTIONS.filter(([id]) => id !== 'status') : EDIT_SECTIONS
     return (
       <div className="grid items-start gap-8 lg:grid-cols-[180px_minmax(0,1fr)]">
         <nav className="sticky top-8 hidden rounded-[22px] border border-[#ded8c9] bg-white p-3 lg:block" aria-label="Event form sections">

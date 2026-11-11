@@ -47,3 +47,29 @@ export async function retryEventRefunds(eventId: string): Promise<RetryResult> {
   revalidatePath('/admin/refunds')
   return { ok: true }
 }
+
+export async function reviewEventCancellation(eventId: string, decision: 'approve' | 'decline'): Promise<RetryResult> {
+  if (typeof eventId !== 'string' || !eventId.trim() || eventId.length > 200 || !['approve', 'decline'].includes(decision)) {
+    return { ok: false, message: 'Invalid cancellation request.' }
+  }
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, message: 'You must be signed in.' }
+  const { data: admin } = await supabase.from('admin_user').select('user_id').eq('user_id', user.id).maybeSingle()
+  if (!admin) return { ok: false, message: 'Not authorized.' }
+  const rpc = decision === 'approve' ? 'admin_approve_event_cancellation' : 'admin_decline_event_cancellation'
+  const { error } = await supabase.rpc(rpc, { p_event_id: eventId.trim() })
+  if (error) {
+    return { ok: false, message: error.message.includes('pending payout') ? 'Resolve the pending payout first.'
+      : error.message.includes('already cancelled') ? 'This event is already cancelled.'
+      : error.message.includes('no open cancellation') ? 'This request is no longer open. Refresh the page.'
+      : 'Could not review this cancellation. Please try again.' }
+  }
+  revalidatePath('/admin/refunds')
+  revalidatePath('/admin/events')
+  revalidatePath('/admin/payouts')
+  revalidatePath('/dashboard')
+  revalidatePath(`/dashboard/events/${eventId.trim()}`)
+  revalidatePath('/e', 'layout')
+  return { ok: true }
+}

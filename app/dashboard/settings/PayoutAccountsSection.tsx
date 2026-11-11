@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import type { PayoutAccount } from '@/lib/types'
 import AddPayoutAccountModal from './AddPayoutAccountModal'
 import ProviderLogo from './ProviderLogo'
@@ -24,6 +24,14 @@ export default function PayoutAccountsSection({ accounts }: { accounts: PayoutAc
   const primary = accounts.find((account) => account.is_primary) ?? null
   const alternatives = accounts.filter((account) => !account.is_primary)
 
+  // The event payout card links here with #payout-account. The page streams in
+  // after navigation, so scroll once this section has actually rendered.
+  useEffect(() => {
+    if (window.location.hash === '#payout-account') {
+      document.getElementById('payout-account')?.scrollIntoView({ block: 'start' })
+    }
+  }, [])
+
   const runAction = (accountId: string, action: 'primary' | 'delete') => {
     setError(null)
     setActiveId(accountId)
@@ -36,9 +44,9 @@ export default function PayoutAccountsSection({ accounts }: { accounts: PayoutAc
   }
 
   return (
-    <section className="create-card border-[1.5px] border-[#bcd2f7] p-6">
+    <section id="payout-account" className="create-card scroll-mt-8 border-[1.5px] border-[#bcd2f7] p-6">
       <div className="mb-6 flex items-center justify-between gap-3">
-        <div><h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#2565d0]">Payout account</h2><p className="mt-1 text-xs text-[var(--tikkitte-ink-faint)]">New destinations replace the primary account without rewriting payout history.</p></div>
+        <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#2565d0]">Payout account</h2>
         {primary && <span className="rounded-full bg-[#d9e4fa] px-3 py-1 text-[10px] font-bold uppercase text-[#2565d0]">Primary</span>}
       </div>
 

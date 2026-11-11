@@ -1,4 +1,7 @@
+'use client'
+
 import Image from 'next/image'
+import { useState } from 'react'
 
 const PROVIDER_LOGOS: Record<string, string> = {
   'MTN': '/images/providers/mtn.svg',
@@ -37,15 +40,39 @@ function BankFallbackIcon({ className }: { className?: string }) {
   )
 }
 
-export default function ProviderLogo({ provider }: { provider: string }) {
-  const logo = PROVIDER_LOGOS[provider]
+// Square artwork with a solid background. In the round size these fill the
+// circle; fitted inside it they read as a square floating in a white disc.
+// Every other logo is fitted inside the circle and never cropped, which keeps
+// wide wordmarks (Societe Generale is about 5:1, UBA 3:1) and tall marks
+// (Access is 3:4) intact.
+const FULL_BLEED_LOGOS = new Set([
+  'Consolidated Bank Ghana',
+  'First Atlantic Bank',
+  'GT Bank',
+  'Republic Bank',
+  'Universal Merchant Bank',
+])
+
+export default function ProviderLogo({ provider, size = 'md' }: { provider: string; size?: 'sm' | 'md' }) {
+  const key = Object.keys(PROVIDER_LOGOS).find((name) => name.toLowerCase() === provider.trim().toLowerCase())
+  const logo = key ? PROVIDER_LOGOS[key] : undefined
+  const [failed, setFailed] = useState(false)
+  const small = size === 'sm'
+  const fill = small && key !== undefined && FULL_BLEED_LOGOS.has(key)
 
   return (
-    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white">
-      {logo ? (
-        <Image src={logo} alt="" fill sizes="40px" className="object-contain p-1.5" />
+    <div className={`relative flex shrink-0 items-center justify-center overflow-hidden border border-gray-100 bg-white ${small ? 'h-8 w-8 rounded-full' : 'h-10 w-10 rounded-lg'}`}>
+      {logo && !failed ? (
+        <Image
+          src={logo}
+          alt=""
+          fill
+          sizes={small ? '32px' : '40px'}
+          onError={() => setFailed(true)}
+          className={fill ? 'object-cover' : `object-contain ${small ? 'p-[3px]' : 'p-1.5'}`}
+        />
       ) : (
-        <BankFallbackIcon className="text-gray-300" />
+        <BankFallbackIcon className={small ? 'h-4 w-4 text-gray-400' : 'text-gray-300'} />
       )}
     </div>
   )

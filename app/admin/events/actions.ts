@@ -112,9 +112,11 @@ export async function previewEventFee(eventId: string, feePercent: number): Prom
       fee_cents: Number(current.fee_cents),
       unconsumed_adjustments_cents: adjustmentsCents,
       net_cents: Number(current.net_cents),
+      partial_paid_cents: Number(current.partial_paid_cents),
+      partial_pending_cents: Number(current.partial_pending_cents),
       proposed_fee_percent: feePercent,
       proposed_fee_cents: proposedFeeCents,
-      proposed_net_cents: outstandingGrossCents - proposedFeeCents + adjustmentsCents,
+      proposed_net_cents: outstandingGrossCents - proposedFeeCents + adjustmentsCents - Number(current.partial_pending_cents),
     },
   }
 }

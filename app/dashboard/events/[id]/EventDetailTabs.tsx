@@ -138,8 +138,7 @@ export default function EventDetailTabs({ payments, attendees, fixedTab }: Props
               <div className="space-y-4">
                 <div className="flex flex-col gap-3 border-b border-[var(--tikkitte-cream-border)] pb-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Payment history</p>
-                    <h2 className="create-display mt-1 text-[22px]">Transactions</h2>
+                    <h2 className="create-display text-[28px]">Transactions</h2>
                   </div>
                   <button type="button" onClick={exportTransactions} className={exportButtonClass}>
                     Export CSV

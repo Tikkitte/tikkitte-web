@@ -9,6 +9,7 @@ type AdminEvent = {
   date: string | null
   organizer_id: string | null
   published: boolean
+  cancellation_requested_at: string | null
   cancelled: boolean
   listed: boolean
 }
@@ -23,7 +24,7 @@ export default async function AdminEventsPage() {
   const supabase = await createClient()
   const { data: rawEvents } = await supabase
     .from('event')
-    .select('id, name, slug, date, organizer_id, published, cancelled, listed')
+    .select('id, name, slug, date, organizer_id, published, cancelled, cancellation_requested_at, listed')
     .order('date', { ascending: false, nullsFirst: false })
     .limit(300)
 

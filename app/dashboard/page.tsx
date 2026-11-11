@@ -1,3 +1,4 @@
+import { isCancelledForOrganizer } from '@/lib/event-cancellation'
 import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -90,7 +91,7 @@ export default async function DashboardHomePage() {
 
   const today = new Date().toISOString().slice(0, 10)
   const upcomingEvents = events
-    .filter((e) => e.published && !e.cancelled && e.date >= today)
+    .filter((e) => e.published && !isCancelledForOrganizer(e) && e.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 4)
 
@@ -132,7 +133,7 @@ export default async function DashboardHomePage() {
             <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Revenue</h2>
             <Link href="/dashboard/transactions" className="create-focus text-xs font-semibold text-[#2565d0]">All transactions →</Link>
           </div>
-          <DashboardRevenueChart payments={payments} />
+          <DashboardRevenueChart payments={payments.map((p) => ({ amount: ticketRevenueCents(p), paid_at: p.paid_at }))} />
         </div>
 
         <div className="flex min-h-[300px] flex-col rounded-[18px] bg-[#191917] p-6 text-white">

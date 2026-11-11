@@ -26,6 +26,7 @@ export type Event = {
   floor_plan_venue: 'aria' | null
   aria_tables_live: boolean
   image: string[] | null
+  cancellation_requested_at: string | null
   cancelled: boolean
   organizer_id: string | null
   preview_images: string[] | null
@@ -162,6 +163,8 @@ export type EventOutstandingPayout = {
   fee_cents: number
   unconsumed_adjustments_cents: number
   net_cents: number
+  partial_paid_cents: number
+  partial_pending_cents: number
 }
 
 export type EventFinancials = {
@@ -182,6 +185,8 @@ export type EventFinancials = {
 }
 
 export type Payout = {
+  kind: 'settlement' | 'partial'
+  balance_at_request_cents: number | null
   id: string
   organizer_id: string
   event_id: string | null

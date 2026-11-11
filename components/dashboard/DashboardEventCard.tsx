@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { isCancelledForOrganizer } from '@/lib/event-cancellation'
 import type { Event, Ticket } from '@/lib/types'
 import PosterFrame from '@/components/PosterFrame'
 
@@ -14,7 +15,7 @@ function formatDate(dateStr: string | null | undefined) {
 
 function eventStatus(event: Event): { label: string; color: string } {
   if (!event.published) return { label: 'Draft', color: 'text-purple-700 bg-purple-50' }
-  if (event.cancelled) return { label: 'Cancelled', color: 'text-red-600 bg-red-50' }
+  if (isCancelledForOrganizer(event)) return { label: 'Cancelled', color: 'text-red-600 bg-red-50' }
   const today = new Date().toISOString().slice(0, 10)
   if (event.date < today) return { label: 'Past', color: 'text-gray-500 bg-gray-100' }
   return { label: 'Upcoming', color: 'text-green-700 bg-green-50' }

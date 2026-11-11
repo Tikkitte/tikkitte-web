@@ -362,7 +362,7 @@ export default function OrganizerProfileForm({
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Email</p>
           <p className="mt-1 text-sm text-gray-700">{email}</p>
-          <p className="mt-2 text-xs text-gray-400">This email cannot be changed here.</p>
+          <p className="mt-2 text-xs text-gray-400">This email cannot be changed.</p>
         </div>
       </section>
     </div>

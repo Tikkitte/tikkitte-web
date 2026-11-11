@@ -1,9 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import RefundsClient, { type RefundAdminRow, type RefundPayment } from './RefundsClient'
+import CancellationRequests, { type CancellationRequest } from './CancellationRequests'
 import AdminPageHeader from '../AdminPageHeader'
 
 export default async function AdminRefundsPage() {
   const supabase = await createClient()
+
+  const { data: requests, error: requestsError } = await supabase.rpc('admin_list_cancellation_requests')
+  if (requestsError) throw new Error('Could not load cancellation requests.')
 
   const { data: rawPayments } = await supabase
     .from('payments')
@@ -28,7 +32,8 @@ export default async function AdminRefundsPage() {
 
   return (
     <div>
-      <AdminPageHeader title="Refunds" description="Monitor pending Paystack refunds and retry failed event cancellations after verifying their status." />
+      <AdminPageHeader title="Refunds" description="Review cancellation requests, monitor pending Paystack refunds and retry failed refunds." />
+      <CancellationRequests requests={(requests ?? []) as CancellationRequest[]} />
       <RefundsClient rows={rows} />
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import ConfirmDialog from '@/components/dashboard/ConfirmDialog'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
 import type { Payout, PayoutAccount } from '@/lib/types'
@@ -17,7 +18,17 @@ export type PayoutAdminRow = {
   event?: { id: string; name: string; slug: string | null }
 }
 
+export type PendingPayoutCheck = {
+  payoutId: string
+  eventCancelled: boolean
+  cancellationRequested: boolean
+  coveredCents: number | null
+  refundedOrders: number
+  refundedNetCents: number
+}
+
 type Props = {
+  checks: PendingPayoutCheck[]
   rows: PayoutAdminRow[]
 }
 
@@ -50,8 +61,9 @@ const statusStyles: Record<Payout['status'], string> = {
   rejected: 'bg-[#fde9e7] text-[#a8322d]',
 }
 
-export default function PayoutsClient({ rows }: Props) {
+export default function PayoutsClient({ rows, checks }: Props) {
   const router = useRouter()
+  const [transfer, setTransfer] = useState<PayoutAdminRow | null>(null)
   const [tab, setTab] = useState<Tab>('pending')
   const [error, setError] = useState<string | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -83,6 +95,7 @@ export default function PayoutsClient({ rows }: Props) {
         return
       }
 
+      setTransfer(null)
       router.refresh()
       setActiveId(null)
     })
@@ -167,7 +180,8 @@ export default function PayoutsClient({ rows }: Props) {
                   <div className="grid gap-4 text-sm text-[var(--tikkitte-ink-soft)] sm:grid-cols-2 xl:grid-cols-4">
                     <div>
                       <p className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[var(--tikkitte-ink-faint)]">Amount</p>
-                      <p className="create-display mt-1 text-xl text-[var(--tikkitte-ink)]">{formatMoney(Number(payout.amount), 2)}</p>
+                      <p className="create-display mt-1 text-xl text-[var(--tikkitte-ink)]">{formatMoney(Number(payout.amount), 2)}{payout.kind === 'partial' && <span className="ml-2 rounded-full bg-[#fff2c7] px-2 py-1 text-[10px]">Partial</span>}</p>
+                      {payout.kind === 'partial' && <p className="mt-1 text-xs">of {formatMoney(Number(payout.balance_at_request_cents) / 100)} available when requested</p>}
                     </div>
                     <div>
                       <p className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[var(--tikkitte-ink-faint)]">Event</p>
@@ -179,6 +193,7 @@ export default function PayoutsClient({ rows }: Props) {
                         <p className="mt-1 text-[var(--tikkitte-ink-faint)]">Event unavailable</p>
                       )}
                       {payout.gross_amount_cents !== null && <p className="mt-1 text-xs">Gross {formatMoney(payout.gross_amount_cents / 100)} · {payout.fee_percent_applied}% fee</p>}
+                      {payout.kind === 'settlement' && payout.gross_amount_cents !== null && payout.fee_amount_cents !== null && Math.round(Number(payout.amount) * 100) !== payout.gross_amount_cents - payout.fee_amount_cents && <p className="text-xs text-[var(--tikkitte-ink-soft)]">Adjustments {formatMoney(Number(payout.amount) - (payout.gross_amount_cents - payout.fee_amount_cents) / 100)}</p>}
                     </div>
                     <div>
                       <p className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-[var(--tikkitte-ink-faint)]">Destination</p>
@@ -205,7 +220,12 @@ export default function PayoutsClient({ rows }: Props) {
 
                 {payout.status === 'pending' && (
                   <div className="flex shrink-0 flex-wrap gap-2 lg:max-w-[250px] lg:justify-end">
-                    <button type="button" onClick={() => runMarkPaid(payout.id)} disabled={isPending && activeId === payout.id} className="create-focus min-h-11 rounded-full bg-[#2e6fe6] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60">
+                    {checks.filter((check) => check.payoutId === payout.id).map((check) => <div key={check.payoutId} className="w-full text-xs leading-5">
+                      {(check.eventCancelled || check.cancellationRequested) && <p className="font-semibold text-red-700">{check.eventCancelled ? "Event cancelled. Don't send." : "Cancellation requested. Don't send."}</p>}
+                      {payout.kind === 'partial' && check.coveredCents !== null && Number(check.coveredCents) < Math.round(Number(payout.amount) * 100) && <p className="text-[#765400]">Balance now covers {formatMoney(Number(check.coveredCents) / 100)} of {formatMoney(Number(payout.amount))}.</p>}
+                      {Number(check.refundedOrders) > 0 && <p className="text-[#765400]">{check.refundedOrders} orders refunded ({formatMoney(Number(check.refundedNetCents) / 100)}). Marking paid records them as organizer debt.</p>}
+                    </div>)}
+                    <button type="button" onClick={() => { setError(null); setTransfer({ payout, organizer, account, event }) }} disabled={isPending && activeId === payout.id} className="create-focus min-h-11 rounded-full bg-[#2e6fe6] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#2565d0] disabled:opacity-60">
                       {isPending && activeId === payout.id ? 'Updating…' : 'Mark paid'}
                     </button>
                     <button type="button" onClick={() => { setDecision({ payoutId: payout.id, status: 'rejected' }); setReason('') }} className="create-focus min-h-11 rounded-full border border-red-200 px-4 text-sm font-semibold text-red-700 hover:bg-red-50">Reject</button>
@@ -219,6 +239,7 @@ export default function PayoutsClient({ rows }: Props) {
       )}
       </section>
 
+      <ConfirmDialog open={transfer !== null} title="Record bank transfer" description={transfer ? `Only mark this paid after the transfer has left your bank. This records ${formatMoney(Number(transfer.payout.amount))} as paid to ${transfer.organizer?.display_name ?? 'the organizer'}.` : ''} confirmLabel="Mark paid" loading={isPending} error={error} onCancel={() => { setTransfer(null); setError(null) }} onConfirm={() => { if (transfer) runMarkPaid(transfer.payout.id) }} />
       {decision && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4" onMouseDown={(mouseEvent) => {
           if (mouseEvent.target === mouseEvent.currentTarget && !isPending) setDecision(null)
@@ -226,7 +247,7 @@ export default function PayoutsClient({ rows }: Props) {
           <div role="dialog" aria-modal="true" aria-labelledby="payout-decision-title" className="create-card w-full max-w-md p-6 shadow-2xl">
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Payout decision</p>
             <h2 id="payout-decision-title" className="create-display mt-1 text-[26px]">{decision.status === 'rejected' ? 'Reject payout' : 'Cancel payout'}</h2>
-            <p className="mt-2 text-sm leading-6 text-[var(--tikkitte-ink-soft)]">The reserved payments and adjustments will be released so the organizer can request a replacement payout.</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--tikkitte-ink-soft)]">Only reject or cancel if the money was not sent. The reserved balance will be released so the organizer can request a replacement payout.</p>
             <label className="mt-5 block">
               <span className="mb-1.5 block text-xs font-semibold">Reason</span>
               <textarea value={reason} onChange={(changeEvent) => setReason(changeEvent.target.value)} maxLength={500} rows={3} autoFocus className="create-input w-full resize-y rounded-xl px-3 py-2.5 text-sm outline-none" placeholder="Explain this decision" />

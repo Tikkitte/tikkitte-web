@@ -1,16 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import RequestPayoutModal from './RequestPayoutModal'
+import RequestPayoutModal, { type PayoutDestination } from './RequestPayoutModal'
 import type { EventOutstandingPayout } from '@/lib/types'
 
 type Props = {
   eventId: string
+  eventName: string
+  eventDate: string | null
   breakdown: EventOutstandingPayout
-  hasPayoutAccount: boolean
+  payoutAccount: PayoutDestination | null
 }
 
-export default function RequestPayoutButton({ eventId, breakdown, hasPayoutAccount }: Props) {
+export default function RequestPayoutButton({ eventId, eventName, eventDate, breakdown, payoutAccount }: Props) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -25,8 +27,10 @@ export default function RequestPayoutButton({ eventId, breakdown, hasPayoutAccou
       {open && (
         <RequestPayoutModal
           eventId={eventId}
+          eventName={eventName}
+          eventDate={eventDate}
           breakdown={breakdown}
-          hasPayoutAccount={hasPayoutAccount}
+          payoutAccount={payoutAccount}
           onClose={() => setOpen(false)}
         />
       )}

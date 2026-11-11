@@ -1,5 +1,6 @@
 'use client'
 
+import { isCancelledForOrganizer } from '@/lib/event-cancellation'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import type { Event, Ticket } from '@/lib/types'
@@ -48,10 +49,10 @@ export default function DashboardEventsClient({ events: allEvents, tickets, gros
   const { eventsByFilter, tabCounts } = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
     const upcoming = allEvents
-      .filter((event) => event.published === true && event.date >= today && !event.cancelled)
+      .filter((event) => event.published === true && event.date >= today && !isCancelledForOrganizer(event))
       .sort((a, b) => a.date.localeCompare(b.date))
     const past = allEvents
-      .filter((event) => event.published === true && (event.date < today || event.cancelled))
+      .filter((event) => event.published === true && (event.date < today || isCancelledForOrganizer(event)))
       .sort((a, b) => b.date.localeCompare(a.date))
     const drafts = allEvents
       .filter((event) => event.published === false)

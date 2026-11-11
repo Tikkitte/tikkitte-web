@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { requestEventCancellation } from './cancellation-actions'
 import { useRouter } from 'next/navigation'
 import ConfirmDialog from '@/components/dashboard/ConfirmDialog'
 
@@ -14,15 +14,20 @@ export default function CancelButton({ eventId }: { eventId: string }) {
   const handleCancel = async () => {
     setLoading(true)
     setError(null)
-    const supabase = createClient()
-    const { error: updateError } = await supabase.from('event').update({ cancelled: true }).eq('id', eventId)
-    setLoading(false)
-    if (updateError) {
-      setError('Could not cancel this event. Please try again.')
-      return
+    try {
+      const result = await requestEventCancellation(eventId)
+      if (!result.ok) {
+        setError(result.message)
+        return
+      }
+      setConfirming(false)
+      router.refresh()
+    } catch {
+      // The server action itself can fail to reach the server (offline phone).
+      setError('We couldn’t reach Tikkitte. Check your connection and try again.')
+    } finally {
+      setLoading(false)
     }
-    setConfirming(false)
-    router.refresh()
   }
 
   return (
@@ -38,7 +43,7 @@ export default function CancelButton({ eventId }: { eventId: string }) {
       <ConfirmDialog
         open={confirming}
         title="Cancel this event?"
-        description="Ticket holders will be notified and automatically refunded in full via Paystack. This can't be undone."
+        description="Ticket sales stop now. Tikkitte will confirm the cancellation, then notify ticket holders and refund them in full. This can't be undone."
         confirmLabel="Yes, cancel event"
         confirmingLabel="Cancelling…"
         cancelLabel="Keep event"

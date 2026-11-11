@@ -110,7 +110,7 @@ async function fetchEventLiveState(eventId: string) {
   const supabase = createPublicClient()
   const { data, error } = await supabase
     .from('event')
-    .select('published, cancelled')
+    .select('published, cancelled, cancellation_requested_at')
     .eq('id', eventId)
     .maybeSingle()
 
@@ -122,6 +122,7 @@ async function fetchEventLiveState(eventId: string) {
   return {
     published: data?.published ?? false,
     cancelled: data?.cancelled ?? true,
+    cancellationRequested: data?.cancellation_requested_at != null,
   }
 }
 
@@ -170,6 +171,7 @@ const getEventData = cache(async (idOrSlug: string) => {
   return {
     ...core,
     cancelled: liveState.cancelled,
+    cancellationRequested: liveState.cancellationRequested,
     ...inventory,
   }
 })
@@ -227,7 +229,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
   const data = await getEventData(id)
   if (!data) notFound()
 
-  const { event, tickets, organizer, hasTableReservations, cancelled, serviceFeeBps, sellingFast } = data
+  const { event, tickets, organizer, hasTableReservations, cancelled, cancellationRequested, serviceFeeBps, sellingFast } = data
   const ref = (await searchParams)?.ref?.trim().toLowerCase()
   // Set by Vercel from the visitor's IP; the phone picker's default country.
   const visitorCountry = (await headers()).get('x-vercel-ip-country')
@@ -360,6 +362,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
 
           {/* Ticket checkout */}
           <div className="rounded-[24px] border border-[#E4DFD1] bg-white p-5 shadow-[0_24px_70px_rgba(25,25,23,0.08)]">
+            {cancellationRequested ? <p className="text-sm text-[#5F5D54]">Ticket sales for this event are paused.</p> : <>
             {hasTableReservations && (
               <div className="mb-5 border-b border-[#E7E2D4] pb-5">
                 <Link
@@ -375,6 +378,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
               </div>
             )}
             <EventCheckout presaleMaxPerEmail={event.presale_max_per_email} serviceFeeBps={serviceFeeBps} eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} sellingFast={sellingFast} visitorCountry={visitorCountry} />
+            </>}
           </div>
 
         </div>

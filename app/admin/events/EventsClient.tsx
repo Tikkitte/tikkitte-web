@@ -16,6 +16,7 @@ export type EventFeeAdminRow = {
   date: string | null
   organizer_id: string | null
   published: boolean
+  cancellation_requested_at: string | null
   cancelled: boolean
   listed: boolean
   fee_percent: number | null
@@ -206,6 +207,7 @@ export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
                       <h2 className="font-semibold">{event.name}</h2>
                       <span className="rounded-full bg-[#d9e4fa] px-2.5 py-1 text-[10px] font-bold uppercase text-[#2565d0]">{event.fee_percent ?? '—'}% fee</span>
                       {!event.listed && <span className="rounded-full bg-[#d9e4fa] px-2.5 py-1 text-[10px] font-bold uppercase text-[#2565d0]">Unlisted</span>}
+                      {event.cancellation_requested_at && !event.cancelled && <span className="rounded-full bg-[#fff2c7] px-2.5 py-1 text-[10px] font-bold">Cancellation requested</span>}
                       {event.cancelled && <span className="rounded-full bg-[#fde9e7] px-2.5 py-1 text-[10px] font-bold uppercase text-[#a8322d]">Cancelled</span>}
                     </div>
                     <p className="mt-1 text-sm text-[var(--tikkitte-ink-soft)]">{event.organizer?.display_name ?? 'Unknown organizer'} · {formatDate(event.date)}</p>

@@ -1,8 +1,9 @@
+import { isCancelledForOrganizer } from '@/lib/event-cancellation'
 import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment, Payout, TablePackage, EventOutstandingPayout } from '@/lib/types'
+import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment, Payout, PayoutAccount, TablePackage, EventOutstandingPayout } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/LazyTicketChart'
 import ShareLiveModal from './ShareLiveModal'
 import PromoCodeManager from './PromoCodeManager'
@@ -170,7 +171,7 @@ export default async function EventDetailPage({
       .single(),
     supabase
       .from('payout_account')
-      .select('id')
+      .select('method, provider, account_number')
       .eq('organizer_id', user.id)
       .eq('is_primary', true)
       .maybeSingle(),
@@ -212,6 +213,8 @@ export default async function EventDetailPage({
     fee_cents: Number(payoutBreakdownRaw.fee_cents),
     unconsumed_adjustments_cents: Number(payoutBreakdownRaw.unconsumed_adjustments_cents),
     net_cents: Number(payoutBreakdownRaw.net_cents),
+    partial_paid_cents: Number(payoutBreakdownRaw.partial_paid_cents),
+    partial_pending_cents: Number(payoutBreakdownRaw.partial_pending_cents),
   }
   const collectedByTicketType = eligiblePayments.reduce((acc: Record<string, number>, payment: Payment) => {
     for (const allocation of paymentRevenueAllocations(payment)) {
@@ -328,9 +331,12 @@ export default async function EventDetailPage({
 
   const payoutPanel = (
     <PayoutSummary
+      cancelled={isCancelledForOrganizer(event)}
       eventId={id}
+      eventName={event.name}
+      eventDate={event.date ?? null}
       breakdown={payoutBreakdown}
-      hasPayoutAccount={Boolean(primaryPayoutAccount)}
+      payoutAccount={(primaryPayoutAccount ?? null) as Pick<PayoutAccount, 'method' | 'provider' | 'account_number'> | null}
       payouts={(payouts ?? []) as Payout[]}
     />
   )
@@ -345,14 +351,14 @@ export default async function EventDetailPage({
           {poster ? <Image src={poster} alt={event.name} width={172} height={216} className="h-full w-full object-cover" priority /> : <div className="create-display flex h-full items-center justify-center text-xl text-white">{event.name.split(/\s+/).slice(0, 3).map((part: string) => part[0]).join('').toUpperCase()}</div>}
         </div>
         <div className="min-w-0 flex-1">
-          <span className="mb-2 inline-flex items-center gap-2 rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-3 py-1.5 text-xs font-semibold"><span className={`h-1.5 w-1.5 rounded-full ${event.cancelled ? 'bg-red-500' : event.published ? 'bg-[#2e6fe6]' : 'bg-amber-500'}`} />{event.cancelled ? 'Cancelled' : event.published ? 'On sale' : 'Draft'}</span>
+          <span className="mb-2 inline-flex items-center gap-2 rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-3 py-1.5 text-xs font-semibold"><span className={`h-1.5 w-1.5 rounded-full ${isCancelledForOrganizer(event) ? 'bg-red-500' : event.published ? 'bg-[#2e6fe6]' : 'bg-amber-500'}`} />{isCancelledForOrganizer(event) ? 'Cancelled' : event.published ? 'On sale' : 'Draft'}</span>
           {!event.listed && <span title="Hidden from browse. People need the link to find it." className="mb-2 ml-2 inline-flex items-center rounded-full border border-[var(--tikkitte-cream-border)] bg-white px-3 py-1.5 text-xs font-semibold">Unlisted</span>}
           <h1 className="create-display truncate text-[30px]">{event.name}</h1>
           <div className="mt-1 flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#2565d0]">{formatEventDateRange(event)} · {event.venue ?? 'Venue TBA'}</p>
             <a href={eventUrl} className="create-focus truncate text-xs text-[var(--tikkitte-ink-faint)]" target="_blank" rel="noreferrer">{eventUrl.replace('https://', '')} ↗</a>
           </div>
-          {!event.cancelled && <Link href={`/dashboard/events/${id}/edit`} className="create-focus mt-3 inline-flex min-h-10 items-center rounded-full border border-[var(--tikkitte-cream-border)] px-5 text-sm font-semibold hover:border-[var(--tikkitte-ink)]">Edit event</Link>}
+          {!isCancelledForOrganizer(event) && <Link href={`/dashboard/events/${id}/edit`} className="create-focus mt-3 inline-flex min-h-10 items-center rounded-full border border-[var(--tikkitte-cream-border)] px-5 text-sm font-semibold hover:border-[var(--tikkitte-ink)]">Edit event</Link>}
         </div>
       </header>
 
@@ -377,16 +383,14 @@ export default async function EventDetailPage({
             {ordinaryTickets.length > 0 && <section className="grid gap-5 xl:grid-cols-2" aria-label="Sales analytics">
               <div className="create-card flex min-h-0 flex-col overflow-hidden">
                 <header className="border-b border-[var(--tikkitte-cream-border)] px-5 py-4 sm:px-6">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Ticket performance</p>
-                  <h2 className="create-display mt-1 text-[22px]">Sales by ticket type</h2>
+                  <h2 className="create-display text-[28px]">Sales by ticket type</h2>
                   <p className="mt-1 text-xs text-[var(--tikkitte-ink-faint)]">Admissions issued across each ticket type.</p>
                 </header>
                 <div className="min-h-80 flex-1 p-4 sm:p-6"><TicketBarChart data={chartData} /></div>
               </div>
               <div className="create-card overflow-hidden">
                 <header className="border-b border-[var(--tikkitte-cream-border)] px-5 py-4 sm:px-6">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#2565d0]">Revenue mix</p>
-                  <h2 className="create-display mt-1 text-[22px]">Revenue breakdown</h2>
+                  <h2 className="create-display text-[28px]">Revenue breakdown</h2>
                   <p className="mt-1 text-xs text-[var(--tikkitte-ink-faint)]">Share of non-refunded collections by ticket type.</p>
                 </header>
                 <div className="p-5 sm:p-6"><RevenueBreakdown data={chartData} /></div>

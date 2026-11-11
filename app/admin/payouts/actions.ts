@@ -27,9 +27,6 @@ export async function markPayoutPaid(payoutId: string): Promise<MarkPaidResult> 
 
   const { error } = await supabase.rpc('mark_payout_paid', { target_payout_id: payoutId })
   if (error) {
-    if (error.message.includes('refund has invalidated')) {
-      return { ok: false, message: 'A refunded payment invalidated this payout. Cancel or reject it before creating a replacement.' }
-    }
     if (error.message.includes('not pending')) {
       return { ok: false, message: 'This payout is no longer pending.' }
     }
@@ -38,6 +35,8 @@ export async function markPayoutPaid(payoutId: string): Promise<MarkPaidResult> 
 
   revalidatePath('/admin/payouts')
   revalidatePath('/dashboard')
+  revalidatePath('/dashboard/events', 'layout')
+  revalidatePath('/admin/refunds')
   return { ok: true }
 }
 
@@ -75,5 +74,7 @@ export async function setPayoutStatus(
 
   revalidatePath('/admin/payouts')
   revalidatePath('/dashboard')
+  revalidatePath('/dashboard/events', 'layout')
+  revalidatePath('/admin/refunds')
   return { ok: true }
 }

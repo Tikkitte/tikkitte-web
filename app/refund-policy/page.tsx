@@ -46,8 +46,8 @@ export default function Page() {
             }}
             className="m-0"
           >
-            If an event organizer cancels an event, Tikkitte automatically
-            refunds every ticket holder in full, to the original payment method
+            When an organizer requests cancellation, Tikkitte confirms the
+            cancellation first, then automatically refunds every ticket holder in full, to the original payment method
             used at checkout, via Paystack. The refund covers everything you
             paid, including the service fee. You don&apos;t need to request
             anything: the refund is initiated as soon as the event is marked
