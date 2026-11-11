@@ -1,19 +1,8 @@
-import { createClient, getAuthedUser } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import AdminNav from './AdminNav'
+import { requireAdmin } from './require-admin'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const user = await getAuthedUser()
-  if (!user) redirect('/login')
-
-  const { data: adminRow } = await supabase
-    .from('admin_user')
-    .select('user_id')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  if (!adminRow) redirect('/dashboard')
+  const { user } = await requireAdmin()
 
   return (
     <div className="create-shell flex min-h-dvh flex-col bg-[var(--tikkitte-cream)] md:flex-row">

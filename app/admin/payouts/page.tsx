@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
 import type { Payout, PayoutAccount } from '@/lib/types'
+import { requireAdmin } from '../require-admin'
 import PayoutsClient, { type PendingPayoutCheck, type PayoutAdminRow } from './PayoutsClient'
 import AdminPageHeader from '../AdminPageHeader'
 
@@ -10,7 +10,7 @@ type OrganizerSummary = {
 }
 
 export default async function AdminPayoutsPage() {
-  const supabase = await createClient()
+  const { supabase } = await requireAdmin()
 
   const { data: rawPayouts } = await supabase
     .from('payout')

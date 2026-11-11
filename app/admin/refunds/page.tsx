@@ -1,10 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '../require-admin'
 import RefundsClient, { type RefundAdminRow, type RefundPayment } from './RefundsClient'
 import CancellationRequests, { type CancellationRequest } from './CancellationRequests'
 import AdminPageHeader from '../AdminPageHeader'
 
 export default async function AdminRefundsPage() {
-  const supabase = await createClient()
+  const { supabase } = await requireAdmin()
 
   const { data: requests, error: requestsError } = await supabase.rpc('admin_list_cancellation_requests')
   if (requestsError) throw new Error('Could not load cancellation requests.')
