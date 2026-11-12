@@ -17,6 +17,7 @@ import {
 } from '@/lib/phone'
 import { PHONE_COUNTRIES } from '@/lib/phoneCountries'
 import { SERVICE_FEE_BPS, formatMinor, priceOrder, pricingFromBreakdown, type OrderPricing } from '@/lib/checkout-pricing'
+import { displayFeeGhs, displayTicketPrice } from '@/lib/display-price'
 import type { PromoCode, Ticket } from '@/lib/types'
 import OrderSummary from './OrderSummary'
 import HypeBadge, { type Hype } from './HypeBadge'
@@ -104,6 +105,12 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
     [tickets, counts, appliedPromo, serviceFeeBps],
   )
   const pricing = serverPricing ?? clientPricing
+  // Display-only: part of some ticket prices is shown as fees (lib/display-price.ts).
+  // Moves money between the ticket and fee lines; the total is untouched.
+  const displayFeeMinor = tickets.reduce(
+    (sum, t) => sum + Math.round(displayFeeGhs(t.id, t.price) * 100) * (counts[t.id] ?? 0),
+    0,
+  )
   // A suggestion the buyer hasn't explicitly resolved yet (via Use/Keep
   // below) — gates the Pay button. Re-typing back to a previously-kept
   // value still counts as resolved; typing anything else doesn't.
@@ -456,7 +463,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
                   <span className="font-bold text-[#191917]">{ticket.label}</span>
                   {ticket.presale_only && <span className="ml-2 rounded-full bg-[#2565D0]/10 px-2 py-1 text-xs font-semibold text-[#2565D0]">Early bird list</span>}
                   <span className="ml-2 font-medium text-[#5F5D54]">
-                    {ticket.price === 0 ? 'Free' : `GH₵ ${ticket.price}`}
+                    {ticket.price === 0 ? 'Free' : `GH₵ ${displayTicketPrice(ticket.id, ticket.price)}`}
                   </span>
                 </div>
                 {soldOut && (
@@ -710,10 +717,10 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
       <div className="sticky bottom-4">
         <OrderSummary
           ticketCount={totalTickets}
-          subtotalMinor={pricing.subtotalMinor}
+          subtotalMinor={pricing.subtotalMinor - displayFeeMinor}
           discountMinor={pricing.discountMinor}
           promoCode={appliedPromo?.code ?? null}
-          serviceFeeMinor={pricing.serviceFeeMinor}
+          serviceFeeMinor={pricing.serviceFeeMinor + displayFeeMinor}
           totalMinor={pricing.totalMinor}
         />
         {totalTickets > 0 && email && (
