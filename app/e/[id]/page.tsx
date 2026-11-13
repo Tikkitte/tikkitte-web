@@ -9,6 +9,7 @@ import type { Metadata } from 'next'
 import type { Event, Ticket } from '@/lib/types'
 import { createPublicClient } from '@/lib/supabase/server-public'
 import { isValidUUID } from '@/lib/validation'
+import { getFloorPlanVenue } from '@/lib/floor-plan-venues'
 import EventCheckout from './EventCheckout'
 import { serviceFeeBpsFromPercent } from '@/lib/checkout-pricing'
 import EventPreviewGallery from '@/components/EventPreviewGallery'
@@ -36,6 +37,7 @@ type EventCore = Pick<
   | 'end_time'
   | 'venue'
   | 'maps_link'
+  | 'floor_plan_venue'
   | 'description'
   | 'image'
   | 'preview_images'
@@ -46,7 +48,7 @@ type EventCore = Pick<
 >
 
 const EVENT_CORE_COLUMNS =
-  'id, name, slug, date, time, end_date, end_time, venue, maps_link, description, image, preview_images, preview_videos, organizer_id, listed, presale_max_per_email'
+  'id, name, slug, date, time, end_date, end_time, venue, maps_link, floor_plan_venue, description, image, preview_images, preview_videos, organizer_id, listed, presale_max_per_email'
 
 function formatEventDateRange(event: Pick<EventCore, 'date' | 'time' | 'end_date' | 'end_time'>) {
   const start = [formatDateShort(event.date), formatTime(event.time)].filter(Boolean).join(' · ')
@@ -369,7 +371,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                   className="flex w-full items-center justify-between rounded-2xl bg-[#191917] px-5 py-4 text-white transition-colors hover:bg-black"
                 >
                   <span>
-                    <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-white/55">ARIA tables</span>
+                    <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-white/55">{[getFloorPlanVenue(event.floor_plan_venue)?.name, 'tables'].filter(Boolean).join(' ')}</span>
                     <span className="mt-1 block text-base font-semibold">Reserve a table</span>
                   </span>
                   <span aria-hidden="true">→</span>

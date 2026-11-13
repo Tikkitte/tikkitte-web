@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { FLOOR_PLAN_VENUES, getFloorPlanVenue, type FloorPlanVenueKey } from '@/lib/floor-plan-venues'
 
 type TicketDraft = {
   label: string
@@ -11,7 +12,6 @@ type TicketDraft = {
   capacity: string
 }
 
-const ARIA_MAPS_LINK = 'https://maps.app.goo.gl/vUpGGgAAwqAgAEkP9?g_st=ipc'
 const blankTicket: TicketDraft = { label: 'General admission', price: '', capacity: '' }
 const fieldClass = 'create-input min-h-14 w-full rounded-[18px] border border-[#ded8c9] bg-white px-4 text-base text-[#25251f] outline-none placeholder:text-[#9a978d]'
 
@@ -36,7 +36,8 @@ export default function MobileEventWizard({ organizerId }: { organizerId: string
   const [description, setDescription] = useState('')
   const [image, setImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [venueType, setVenueType] = useState<'aria' | 'other'>('aria')
+  const [venueType, setVenueType] = useState<FloorPlanVenueKey | 'other'>('aria')
+  const presetVenue = getFloorPlanVenue(venueType)
   const [venue, setVenue] = useState('')
   const [mapsLink, setMapsLink] = useState('')
   const [tickets, setTickets] = useState<TicketDraft[]>([{ ...blankTicket }])
@@ -103,9 +104,9 @@ export default function MobileEventWizard({ organizerId }: { organizerId: string
         time: `${time}:00`,
         end_date: null,
         end_time: null,
-        venue: venueType === 'aria' ? 'Aria' : venue.trim(),
-        maps_link: venueType === 'aria' ? ARIA_MAPS_LINK : mapsLink.trim() || null,
-        floor_plan_venue: venueType === 'aria' ? 'aria' : null,
+        venue: presetVenue ? presetVenue.name : venue.trim(),
+        maps_link: presetVenue ? presetVenue.mapsLink : mapsLink.trim() || null,
+        floor_plan_venue: presetVenue ? presetVenue.key : null,
         description: description.trim() || null,
         image: imageUrl ? [imageUrl] : null,
         preview_images: null,
@@ -197,10 +198,12 @@ export default function MobileEventWizard({ organizerId }: { organizerId: string
             <p className="text-sm font-semibold text-[#2766d2]">Set the scene</p>
             <h1 id="wizard-heading" className="create-display mt-2 text-5xl leading-[0.98] text-[#25251f]">Where is it happening?</h1>
             <div className="mt-8 space-y-3" role="radiogroup" aria-label="Venue type">
-              <button type="button" role="radio" aria-checked={venueType === 'aria'} onClick={() => setVenueType('aria')} className={`create-focus w-full rounded-[22px] border p-5 text-left ${venueType === 'aria' ? 'border-[#2766d2] bg-[#eaf0fb]' : 'border-[#ded8c9] bg-white'}`}>
-                <span className="flex items-center justify-between"><strong>Aria</strong><span className="rounded-full bg-[#d2e1fb] px-3 py-1 text-xs font-semibold text-[#2766d2]">Verified venue</span></span>
-                <span className="mt-2 block text-sm leading-6 text-[#77746b]">Includes Aria’s verified location and interactive table plan.</span>
-              </button>
+              {FLOOR_PLAN_VENUES.map((preset) => (
+                <button key={preset.key} type="button" role="radio" aria-checked={venueType === preset.key} onClick={() => setVenueType(preset.key)} className={`create-focus w-full rounded-[22px] border p-5 text-left ${venueType === preset.key ? 'border-[#2766d2] bg-[#eaf0fb]' : 'border-[#ded8c9] bg-white'}`}>
+                  <span className="flex items-center justify-between"><strong>{preset.name}</strong><span className="rounded-full bg-[#d2e1fb] px-3 py-1 text-xs font-semibold text-[#2766d2]">Verified venue</span></span>
+                  <span className="mt-2 block text-sm leading-6 text-[#77746b]">Includes {preset.name}’s verified location and interactive table plan.</span>
+                </button>
+              ))}
               <button type="button" role="radio" aria-checked={venueType === 'other'} onClick={() => setVenueType('other')} className={`create-focus w-full rounded-[22px] border p-5 text-left ${venueType === 'other' ? 'border-[#2766d2] bg-[#eaf0fb]' : 'border-[#ded8c9] bg-white'}`}>
                 <strong>Another venue</strong>
                 <span className="mt-2 block text-sm text-[#77746b]">Enter a custom place and optional Maps link.</span>

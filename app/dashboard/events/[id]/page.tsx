@@ -160,7 +160,7 @@ export default async function EventDetailPage({
       .eq('event_id', id)
       .order('created_at', { ascending: false }),
     supabase.rpc('get_event_attendee_profiles', { p_event_id: id }),
-    event.floor_plan_venue === 'aria'
+    event.floor_plan_venue
       ? supabase
           .from('table_package')
           .select('id, event_id, ticket_type_id, table_code, table_kind, tier_name, guest_capacity, min_spend, deposit, bottles, enabled, reservation_status, created_at, updated_at')
@@ -371,7 +371,7 @@ export default async function EventDetailPage({
       </header>
 
       <EventWorkspace
-        hasTables={event.floor_plan_venue === 'aria'}
+        hasTables={event.floor_plan_venue != null}
         counts={{ tables: (tablePackages ?? []).length, marketing: (activePromoCount ?? 0) + (trackingLinks ?? []).length + (compTickets ?? []).length, attendees: totalAdmissionsIssued }}
         panels={{
           overview: <div className="space-y-5">
@@ -406,7 +406,7 @@ export default async function EventDetailPage({
             </section>}
             <EventDetailTabs payments={formattedPayments} attendees={formattedAttendees} fixedTab="transactions" />
           </div>,
-          tables: event.floor_plan_venue === 'aria' ? <TablePackageManager eventId={id} initialPackages={(tablePackages ?? []) as TablePackage[]} initialLive={event.aria_tables_live} /> : null,
+          tables: event.floor_plan_venue ? <TablePackageManager eventId={id} venue={event.floor_plan_venue} initialPackages={(tablePackages ?? []) as TablePackage[]} initialLive={event.aria_tables_live} /> : null,
           payout: payoutPanel,
           marketing: <div className="space-y-5"><div className="create-card p-5"><h2 className="create-display text-xl">Reach your audience</h2><p className="mb-4 mt-1 text-sm text-[var(--tikkitte-ink-soft)]">Message ticket holders or create campaign tools for this event.</p><MessageAttendeesButton eventId={id} lastAlertSentAt={event.last_alert_sent_at} attendeeCount={paidAttendees.length} /></div><PromoCodeManager eventId={id} tickets={ordinaryTickets} /><TrackingLinkManager salesByLink={linkSales?.byLink ?? null} eventId={id} eventSlug={event.slug ?? event.id} initialTrackingLinks={(trackingLinks ?? []) as TrackingLink[]} /><CompTicketManager eventId={id} tickets={ordinaryTickets} initialCompTickets={(compTickets ?? []) as ComplimentaryTicket[]} /></div>,
           attendees: <EventDetailTabs payments={formattedPayments} attendees={formattedAttendees} fixedTab="attendees" />,

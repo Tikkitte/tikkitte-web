@@ -23,7 +23,7 @@ export type Event = {
   description: string | null
   venue: string | null
   maps_link: string | null
-  floor_plan_venue: 'aria' | null
+  floor_plan_venue: 'aria' | 'enzo' | null
   aria_tables_live: boolean
   image: string[] | null
   cancellation_requested_at: string | null

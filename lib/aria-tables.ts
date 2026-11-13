@@ -1,17 +1,10 @@
-import type { TablePackage } from '@/lib/types'
+import type { TableGeometry } from '@/lib/floor-plan-venues'
 
 export const ARIA_CANVAS_WIDTH = 840
 export const ARIA_CANVAS_HEIGHT = 930
 export const ARIA_ACCENT = '#2AC8EC'
 
-export type AriaTableGeometry = Pick<TablePackage, 'table_code' | 'table_kind'> & {
-  x: number
-  y: number
-  width: number
-  height: number
-}
-
-export const ARIA_TABLES: AriaTableGeometry[] = [
+export const ARIA_TABLES: TableGeometry[] = [
   { table_code: 'S1', table_kind: 'section', x: 11, y: 26, width: 60, height: 62 },
   { table_code: 'S2', table_kind: 'section', x: 11, y: 91, width: 60, height: 62 },
   { table_code: 'S3', table_kind: 'section', x: 11, y: 156, width: 60, height: 62 },

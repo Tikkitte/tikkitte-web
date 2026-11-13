@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { formatGhs } from '@/lib/aria-tables'
-import AriaFloorPlanSvg, { type TableStyle } from '@/components/AriaFloorPlanSvg'
+import { getFloorPlanVenue, type FloorPlanVenueKey } from '@/lib/floor-plan-venues'
+import FloorPlanSvg, { UNAVAILABLE_TABLE_FILL, type TableStyle } from '@/components/floor-plans/FloorPlanSvg'
 import type { TablePackage } from '@/lib/types'
 
 type Props = {
   eventId: string
+  venue: FloorPlanVenueKey
   initialPackages: TablePackage[]
   initialLive: boolean
 }
@@ -46,7 +48,7 @@ function getMapTableStyle(table: TablePackage | undefined, isSelected: boolean):
     return { fill: MAP_ACCENT, fillOpacity: 1, stroke: MAP_ACCENT, strokeOpacity: 1 }
   }
   if (!table?.enabled) {
-    return { fill: 'url(#aria-unavailable)', fillOpacity: 1, stroke: 'rgba(23,17,14,0.4)', strokeOpacity: 0.3 }
+    return { fill: UNAVAILABLE_TABLE_FILL, fillOpacity: 1, stroke: 'rgba(23,17,14,0.4)', strokeOpacity: 0.3 }
   }
   if (table.reservation_status === 'booked') {
     return { fill: '#191917', fillOpacity: 1, stroke: '#191917', strokeOpacity: 1 }
@@ -178,7 +180,9 @@ function PackageEditor({
   )
 }
 
-export default function TablePackageManager({ eventId, initialPackages, initialLive }: Props) {
+export default function TablePackageManager({ eventId, venue: venueKey, initialPackages, initialLive }: Props) {
+  const venue = getFloorPlanVenue(venueKey)
+  const venueName = venue?.name ?? 'Venue'
   const [packages, setPackages] = useState(initialPackages.map(normalizePackage))
   const [selectedCode, setSelectedCode] = useState<string | null>(initialPackages[0]?.table_code ?? null)
   const [settingUp, setSettingUp] = useState(false)
@@ -200,7 +204,7 @@ export default function TablePackageManager({ eventId, initialPackages, initialL
       ? (data as { packages?: TablePackage[] }).packages
       : null
     if (setupError || !nextPackages) {
-      setError('Could not set up ARIA tables.')
+      setError(`Could not set up ${venueName} tables.`)
       setSettingUp(false)
       return
     }
@@ -235,12 +239,12 @@ export default function TablePackageManager({ eventId, initialPackages, initialL
     <section className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">ARIA floor plan</h2>
-          <p className="mt-1 text-sm text-[var(--tikkitte-ink-faint)]">Fixed 22-table plan · select an available table to edit.</p>
+          <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">{venueName} floor plan</h2>
+          <p className="mt-1 text-sm text-[var(--tikkitte-ink-faint)]">Fixed {packages.length || venue?.standardTableCount}-table plan · select an available table to edit.</p>
         </div>
         {packages.length === 0 ? (
           <button type="button" onClick={setup} disabled={settingUp} className="create-focus min-h-11 rounded-full bg-[#2e6fe6] px-6 text-sm font-semibold text-white disabled:opacity-50">
-            {settingUp ? 'Setting up…' : 'Set up ARIA tables'}
+            {settingUp ? 'Setting up…' : `Set up ${venueName} tables`}
           </button>
         ) : live ? (
           <div className="flex items-center gap-3">
@@ -275,7 +279,8 @@ export default function TablePackageManager({ eventId, initialPackages, initialL
           <div className="grid gap-5 lg:grid-cols-2">
             <div className="create-card overflow-hidden p-4">
               <div className="p-2">
-                <AriaFloorPlanSvg
+                <FloorPlanSvg
+                  venue={venueKey}
                   packages={packages}
                   selectedCode={selectedCode}
                   onSelect={setSelectedCode}

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { formatGhs } from '@/lib/aria-tables'
-import AriaFloorPlanSvg, { type TableStyle } from '@/components/AriaFloorPlanSvg'
+import { getFloorPlanVenue, type FloorPlanVenueKey } from '@/lib/floor-plan-venues'
+import FloorPlanSvg, { UNAVAILABLE_TABLE_FILL, type TableStyle } from '@/components/floor-plans/FloorPlanSvg'
 import type { TablePackage } from '@/lib/types'
 import TableContact from './TableContact'
 
@@ -14,6 +15,7 @@ import TableContact from './TableContact'
 const ACCENT = '#1596B7'
 
 type Props = {
+  venue: FloorPlanVenueKey
   eventId: string
   eventSlug: string
   eventName: string
@@ -30,7 +32,8 @@ function normalizePackages(packages: TablePackage[]) {
   }))
 }
 
-export default function FloorPlanPicker({ eventId, eventSlug, eventName, initialPackages }: Props) {
+export default function FloorPlanPicker({ venue: venueKey, eventId, eventSlug, eventName, initialPackages }: Props) {
+  const venue = getFloorPlanVenue(venueKey)
   const [packages, setPackages] = useState(() => normalizePackages(initialPackages))
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [refreshError, setRefreshError] = useState(false)
@@ -81,14 +84,15 @@ export default function FloorPlanPicker({ eventId, eventSlug, eventName, initial
           Back to event
         </Link>
         <div className="mb-6 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#1596B7]">ARIA table reservations</p>
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#1596B7]">{venue ? `${venue.name} table reservations` : 'Table reservations'}</p>
           <h1 className="mt-2 font-anton text-3xl uppercase text-[#17110E] sm:text-5xl">{eventName}</h1>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-[rgba(23,17,14,0.62)]">Choose an available table, review its package, and message us on WhatsApp to reserve.</p>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-[rgba(23,17,14,0.62)]">Choose an available table, review its package, and contact the event organizer to reserve.</p>
         </div>
 
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="overflow-hidden rounded-3xl border border-[rgba(23,17,14,0.14)] bg-[#FDFCFA] p-2 shadow-sm sm:p-4">
-            <AriaFloorPlanSvg
+            <FloorPlanSvg
+              venue={venueKey}
               packages={packages}
               selectedCode={selected?.table_code ?? null}
               onSelect={(code) => selectTable(packageByCode.get(code))}
@@ -98,7 +102,7 @@ export default function FloorPlanPicker({ eventId, eventSlug, eventName, initial
               getTableStyle={(table, isSelected): TableStyle => {
                 const available = !!table?.enabled && table.reservation_status === 'available'
                 return {
-                  fill: isSelected ? ACCENT : available ? 'rgba(23,17,14,0.02)' : 'url(#aria-unavailable)',
+                  fill: isSelected ? ACCENT : available ? 'rgba(23,17,14,0.02)' : UNAVAILABLE_TABLE_FILL,
                   fillOpacity: 1,
                   stroke: isSelected || available ? ACCENT : 'rgba(23,17,14,0.4)',
                   strokeOpacity: isSelected ? 1 : available ? 0.55 : 0.3,
