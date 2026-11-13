@@ -7,7 +7,6 @@ import { createTrackingLink } from './actions'
 
 type Props = {
   salesByLink: Record<string, LinkSales> | null
-  unattributedSales: LinkSales | null
   eventId: string
   eventSlug: string
   initialTrackingLinks: TrackingLink[]
@@ -39,7 +38,7 @@ function formatCreatedAt(value: string) {
   })
 }
 
-export default function TrackingLinkManager({ salesByLink, unattributedSales, eventId, eventSlug, initialTrackingLinks }: Props) {
+export default function TrackingLinkManager({ salesByLink, eventId, eventSlug, initialTrackingLinks }: Props) {
   const [links, setLinks] = useState(initialTrackingLinks)
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -199,15 +198,6 @@ export default function TrackingLinkManager({ salesByLink, unattributedSales, ev
                   </tr>
                 )
               })}
-              {salesByLink !== null && unattributedSales !== null && (
-                <tr className="border-t-2 border-[var(--tikkitte-ink)] bg-[var(--tikkitte-cream)] font-bold">
-                  <td colSpan={2} className="py-3 pr-4 text-gray-900">No tracking link</td>
-                  <td />
-                  <td className="py-3 px-4 text-right text-gray-900">{unattributedSales.tickets}</td>
-                  <td className="py-3 px-4 text-right text-gray-900 whitespace-nowrap">GHS {(unattributedSales.revenueCents / 100).toLocaleString()}</td>
-                  <td />
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
