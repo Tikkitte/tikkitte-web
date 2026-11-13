@@ -1,3 +1,4 @@
+import { normalizeTrackingRef } from '@/lib/tracking-ref'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { after } from 'next/server'
@@ -46,8 +47,6 @@ type EventCore = Pick<
 
 const EVENT_CORE_COLUMNS =
   'id, name, slug, date, time, end_date, end_time, venue, maps_link, description, image, preview_images, preview_videos, organizer_id, listed, presale_max_per_email'
-
-const refPattern = /^[a-z0-9-]{2,20}$/
 
 function formatEventDateRange(event: Pick<EventCore, 'date' | 'time' | 'end_date' | 'end_time'>) {
   const start = [formatDateShort(event.date), formatTime(event.time)].filter(Boolean).join(' · ')
@@ -230,10 +229,10 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
   if (!data) notFound()
 
   const { event, tickets, organizer, hasTableReservations, cancelled, cancellationRequested, serviceFeeBps, sellingFast } = data
-  const ref = (await searchParams)?.ref?.trim().toLowerCase()
+  const ref = normalizeTrackingRef((await searchParams)?.ref)
   // Set by Vercel from the visitor's IP; the phone picker's default country.
   const visitorCountry = (await headers()).get('x-vercel-ip-country')
-  if (ref && refPattern.test(ref)) {
+  if (ref) {
     const eventId = event.id
     after(async () => {
       const supabase = createPublicClient()
@@ -377,7 +376,7 @@ export default async function PublicEventPage({ params, searchParams }: Props) {
                 </Link>
               </div>
             )}
-            <EventCheckout presaleMaxPerEmail={event.presale_max_per_email} serviceFeeBps={serviceFeeBps} eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} sellingFast={sellingFast} visitorCountry={visitorCountry} />
+            <EventCheckout trackingRef={ref} presaleMaxPerEmail={event.presale_max_per_email} serviceFeeBps={serviceFeeBps} eventId={event.id} eventSlug={event.slug ?? event.id} tickets={tickets} sellingFast={sellingFast} visitorCountry={visitorCountry} />
             </>}
           </div>
 

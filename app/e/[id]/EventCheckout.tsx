@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { rememberTrackingRef, resolveTrackingRef } from '@/lib/tracking-ref'
 import { createClient } from '@/lib/supabase/client'
 import { formatSaleDate, saleDateTime, ticketSaleStatus } from '@/lib/ticketAvailability'
 import { validateEmail, sanitizeName, suggestEmailDomain } from '@/lib/validation'
@@ -27,6 +28,7 @@ const SUPABASE_FUNCTIONS_URL = process.env.NEXT_PUBLIC_SUPABASE_URL + '/function
 type Props = {
   presaleMaxPerEmail: number
   serviceFeeBps: number | null
+  trackingRef: string | null
   eventId: string
   eventSlug: string
   tickets: Ticket[]
@@ -41,7 +43,17 @@ function promoDescription(promoCode: PromoCode) {
     : `GH₵ ${promoCode.discount_value} off`
 }
 
-export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeBps, presaleMaxPerEmail, sellingFast, visitorCountry }: Props) {
+export default function EventCheckout({ trackingRef, eventId, eventSlug, tickets, serviceFeeBps, presaleMaxPerEmail, sellingFast, visitorCountry }: Props) {
+  const pageRefSeenAt = useRef<number | null>(null)
+  useEffect(() => {
+    pageRefSeenAt.current = null
+    if (trackingRef) {
+      const seenAt = Date.now()
+      pageRefSeenAt.current = seenAt
+      rememberTrackingRef(eventId, trackingRef, seenAt)
+    }
+  }, [eventId, trackingRef])
+
   const [counts, setCounts] = useState<Record<string, number>>(() =>
     Object.fromEntries(tickets.map((t) => [t.id, 0]))
   )
@@ -331,6 +343,7 @@ export default function EventCheckout({ eventId, eventSlug, tickets, serviceFeeB
           promo_code: appliedPromo?.code ?? null,
           expected_total: pricing.totalMinor / 100,
           phone: validPhone,
+          tracking_ref: resolveTrackingRef(eventId, trackingRef, pageRefSeenAt.current),
         }),
       })
 

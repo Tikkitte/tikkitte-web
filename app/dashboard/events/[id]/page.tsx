@@ -15,6 +15,7 @@ import MessageAttendeesButton from './MessageAttendeesButton'
 import PayoutSummary from './PayoutSummary'
 import TablePackageManager from './TablePackageManager'
 import EventWorkspace from './EventWorkspace'
+import { summarizeTrackingLinkSales } from '@/lib/tracking-link-sales'
 import { ticketRevenueCents } from '@/lib/revenue'
 
 function formatDate(dateStr: string | null | undefined) {
@@ -108,6 +109,7 @@ export default async function EventDetailPage({
     { data: userTickets },
     { data: compTickets },
     { data: trackingLinks },
+    { data: attributions, error: attributionError },
     { data: payments },
     { data: freePayments },
     { data: payouts },
@@ -136,6 +138,10 @@ export default async function EventDetailPage({
       .select('*')
       .eq('event_id', id)
       .order('created_at', { ascending: false }),
+    supabase
+      .from('payment_attribution')
+      .select('payment_reference, tracking_link_id')
+      .eq('event_id', id),
     supabase
       .from('payments')
       .select('*')
@@ -198,6 +204,8 @@ export default async function EventDetailPage({
       const db = b.paid_at ? new Date(b.paid_at).getTime() : 0
       return db - da
     })
+  if (attributionError) console.error('Failed to load tracking link sales', attributionError)
+  const linkSales = attributionError ? null : summarizeTrackingLinkSales(allPayments, attributions ?? [])
   const eligiblePayments = allPayments.filter((payment) => payment.refund_status !== 'success')
 
   const ticketMap = (tickets ?? []).reduce((acc: Record<string, Ticket>, t: Ticket) => {
@@ -400,7 +408,7 @@ export default async function EventDetailPage({
           </div>,
           tables: event.floor_plan_venue === 'aria' ? <TablePackageManager eventId={id} initialPackages={(tablePackages ?? []) as TablePackage[]} initialLive={event.aria_tables_live} /> : null,
           payout: payoutPanel,
-          marketing: <div className="space-y-5"><div className="create-card p-5"><h2 className="create-display text-xl">Reach your audience</h2><p className="mb-4 mt-1 text-sm text-[var(--tikkitte-ink-soft)]">Message ticket holders or create campaign tools for this event.</p><MessageAttendeesButton eventId={id} lastAlertSentAt={event.last_alert_sent_at} attendeeCount={paidAttendees.length} /></div><PromoCodeManager eventId={id} tickets={ordinaryTickets} /><TrackingLinkManager eventId={id} eventSlug={event.slug ?? event.id} initialTrackingLinks={(trackingLinks ?? []) as TrackingLink[]} /><CompTicketManager eventId={id} tickets={ordinaryTickets} initialCompTickets={(compTickets ?? []) as ComplimentaryTicket[]} /></div>,
+          marketing: <div className="space-y-5"><div className="create-card p-5"><h2 className="create-display text-xl">Reach your audience</h2><p className="mb-4 mt-1 text-sm text-[var(--tikkitte-ink-soft)]">Message ticket holders or create campaign tools for this event.</p><MessageAttendeesButton eventId={id} lastAlertSentAt={event.last_alert_sent_at} attendeeCount={paidAttendees.length} /></div><PromoCodeManager eventId={id} tickets={ordinaryTickets} /><TrackingLinkManager salesByLink={linkSales?.byLink ?? null} unattributedSales={linkSales?.unattributed ?? null} eventId={id} eventSlug={event.slug ?? event.id} initialTrackingLinks={(trackingLinks ?? []) as TrackingLink[]} /><CompTicketManager eventId={id} tickets={ordinaryTickets} initialCompTickets={(compTickets ?? []) as ComplimentaryTicket[]} /></div>,
           attendees: <EventDetailTabs payments={formattedPayments} attendees={formattedAttendees} fixedTab="attendees" />,
         }}
       />

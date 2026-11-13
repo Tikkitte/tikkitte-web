@@ -1,10 +1,13 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
+import type { LinkSales } from '@/lib/tracking-link-sales'
 import type { TrackingLink } from '@/lib/types'
 import { createTrackingLink } from './actions'
 
 type Props = {
+  salesByLink: Record<string, LinkSales> | null
+  unattributedSales: LinkSales | null
   eventId: string
   eventSlug: string
   initialTrackingLinks: TrackingLink[]
@@ -36,7 +39,7 @@ function formatCreatedAt(value: string) {
   })
 }
 
-export default function TrackingLinkManager({ eventId, eventSlug, initialTrackingLinks }: Props) {
+export default function TrackingLinkManager({ salesByLink, unattributedSales, eventId, eventSlug, initialTrackingLinks }: Props) {
   const [links, setLinks] = useState(initialTrackingLinks)
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -101,7 +104,7 @@ export default function TrackingLinkManager({ eventId, eventSlug, initialTrackin
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Tracking links</h2>
-          <p className="mt-1 text-xs text-[var(--tikkitte-ink-faint)]">Create share URLs and monitor click volume for each channel.</p>
+          <p className="mt-1 text-xs text-[var(--tikkitte-ink-faint)]">Create share URLs and see the clicks and sales each channel brings in.</p>
         </div>
         <button
           type="button"
@@ -155,7 +158,6 @@ export default function TrackingLinkManager({ eventId, eventSlug, initialTrackin
         </div>
       )}
 
-      {/* TODO: attribute ticket sales to tracking links after checkout stores the ref on payments. */}
       {links.length === 0 ? (
         <p className="text-sm text-gray-400">No tracking links yet.</p>
       ) : (
@@ -167,12 +169,16 @@ export default function TrackingLinkManager({ eventId, eventSlug, initialTrackin
                 <th className="text-left py-3 px-4 font-medium text-gray-500">Slug</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-500">URL</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-500">Clicks</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-500">Orders</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-500">Tickets</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-500">Revenue</th>
                 <th className="text-right py-3 pl-4 font-medium text-gray-500">Created</th>
               </tr>
             </thead>
             <tbody>
               {links.map((trackingLink) => {
                 const url = `${baseUrl}?ref=${trackingLink.slug}`
+                const sales = salesByLink?.[trackingLink.id] ?? { orders: 0, tickets: 0, revenueCents: 0 }
                 return (
                   <tr key={trackingLink.id} className="border-b border-gray-50 last:border-0">
                     <td className="py-3 pr-4 font-medium text-gray-900">{trackingLink.name}</td>
@@ -190,14 +196,29 @@ export default function TrackingLinkManager({ eventId, eventSlug, initialTrackin
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right font-semibold text-gray-900">{trackingLink.clicks}</td>
+                    <td className="py-3 px-4 text-right text-gray-900">{salesByLink === null ? '-' : sales.orders}</td>
+                    <td className="py-3 px-4 text-right text-gray-900">{salesByLink === null ? '-' : sales.tickets}</td>
+                    <td className="py-3 px-4 text-right text-gray-900 whitespace-nowrap">{salesByLink === null ? '-' : `GHS ${(sales.revenueCents / 100).toLocaleString()}`}</td>
                     <td className="py-3 pl-4 text-right text-gray-500 text-xs whitespace-nowrap">{formatCreatedAt(trackingLink.created_at)}</td>
                   </tr>
                 )
               })}
+              {salesByLink !== null && unattributedSales !== null && (
+                <tr className="border-t-2 border-[var(--tikkitte-ink)] bg-[var(--tikkitte-cream)] font-bold">
+                  <td colSpan={3} className="py-3 pr-4 text-gray-900">No tracking link</td>
+                  <td />
+                  <td className="py-3 px-4 text-right text-gray-900">{unattributedSales.orders}</td>
+                  <td className="py-3 px-4 text-right text-gray-900">{unattributedSales.tickets}</td>
+                  <td className="py-3 px-4 text-right text-gray-900 whitespace-nowrap">GHS {(unattributedSales.revenueCents / 100).toLocaleString()}</td>
+                  <td />
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       )}
+      {salesByLink === null && <p className="mt-3 text-xs text-[var(--tikkitte-ink-faint)]">Sales could not be loaded. Clicks are up to date.</p>}
+      <p className="mt-3 text-xs text-[var(--tikkitte-ink-faint)]">A sale counts toward the last tracking link the buyer opened on that device in the 7 days before paying. Refunded orders are removed, and revenue excludes the customer service fee. Orders placed before sales tracking was added are not credited to any link. Clicks count every page view, including repeat visits and link previews.</p>
     </section>
   )
 }

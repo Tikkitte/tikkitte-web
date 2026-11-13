@@ -94,6 +94,7 @@ export type EventWithTickets = Event & {
 }
 
 export type Payment = {
+  provider: string
   id: string
   reference: string
   user_id: string
@@ -140,6 +141,13 @@ export type ComplimentaryTicket = {
   quantity: number
   sent_at: string
   note: string | null
+}
+
+export type PaymentAttribution = {
+  payment_reference: string
+  tracking_link_id: string
+  event_id: string
+  created_at: string
 }
 
 export type TrackingLink = {
