@@ -166,10 +166,8 @@ export default function TrackingLinkManager({ salesByLink, unattributedSales, ev
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left py-3 pr-4 font-medium text-gray-500">Link name</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-500">Slug</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-500">URL</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-500">Clicks</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-500">Orders</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-500">Tickets</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-500">Revenue</th>
                 <th className="text-right py-3 pl-4 font-medium text-gray-500">Created</th>
@@ -182,7 +180,6 @@ export default function TrackingLinkManager({ salesByLink, unattributedSales, ev
                 return (
                   <tr key={trackingLink.id} className="border-b border-gray-50 last:border-0">
                     <td className="py-3 pr-4 font-medium text-gray-900">{trackingLink.name}</td>
-                    <td className="py-3 px-4 text-gray-600 font-mono text-xs">{trackingLink.slug}</td>
                     <td className="py-3 px-4">
                       <div className="flex min-w-[260px] items-center gap-2">
                         <span className="truncate text-gray-500">{url}</span>
@@ -196,7 +193,6 @@ export default function TrackingLinkManager({ salesByLink, unattributedSales, ev
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right font-semibold text-gray-900">{trackingLink.clicks}</td>
-                    <td className="py-3 px-4 text-right text-gray-900">{salesByLink === null ? '-' : sales.orders}</td>
                     <td className="py-3 px-4 text-right text-gray-900">{salesByLink === null ? '-' : sales.tickets}</td>
                     <td className="py-3 px-4 text-right text-gray-900 whitespace-nowrap">{salesByLink === null ? '-' : `GHS ${(sales.revenueCents / 100).toLocaleString()}`}</td>
                     <td className="py-3 pl-4 text-right text-gray-500 text-xs whitespace-nowrap">{formatCreatedAt(trackingLink.created_at)}</td>
@@ -205,9 +201,8 @@ export default function TrackingLinkManager({ salesByLink, unattributedSales, ev
               })}
               {salesByLink !== null && unattributedSales !== null && (
                 <tr className="border-t-2 border-[var(--tikkitte-ink)] bg-[var(--tikkitte-cream)] font-bold">
-                  <td colSpan={3} className="py-3 pr-4 text-gray-900">No tracking link</td>
+                  <td colSpan={2} className="py-3 pr-4 text-gray-900">No tracking link</td>
                   <td />
-                  <td className="py-3 px-4 text-right text-gray-900">{unattributedSales.orders}</td>
                   <td className="py-3 px-4 text-right text-gray-900">{unattributedSales.tickets}</td>
                   <td className="py-3 px-4 text-right text-gray-900 whitespace-nowrap">GHS {(unattributedSales.revenueCents / 100).toLocaleString()}</td>
                   <td />
@@ -218,7 +213,6 @@ export default function TrackingLinkManager({ salesByLink, unattributedSales, ev
         </div>
       )}
       {salesByLink === null && <p className="mt-3 text-xs text-[var(--tikkitte-ink-faint)]">Sales could not be loaded. Clicks are up to date.</p>}
-      <p className="mt-3 text-xs text-[var(--tikkitte-ink-faint)]">A sale counts toward the last tracking link the buyer opened on that device in the 7 days before paying. Refunded orders are removed, and revenue excludes the customer service fee. Orders placed before sales tracking was added are not credited to any link. Clicks count every page view, including repeat visits and link previews.</p>
     </section>
   )
 }
