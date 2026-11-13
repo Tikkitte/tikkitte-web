@@ -25,13 +25,6 @@ const brands: Brand[] = [
     displayHeight: 34,
   },
   {
-    name: "Enzo",
-    src: "/images/site/brands/enzo.png",
-    width: 306,
-    height: 234,
-    displayHeight: 44,
-  },
-  {
     name: "GR8",
     src: "/images/site/brands/gr8.png",
     width: 159,
