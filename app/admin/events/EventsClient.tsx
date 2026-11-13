@@ -7,6 +7,7 @@ import type { EventOutstandingPayout } from '@/lib/types'
 import { previewEventFee, setEventFee } from './actions'
 import EventFinancials from './EventFinancials'
 import PresalePanel from './PresalePanel'
+import TrackingLinksPanel from './TrackingLinksPanel'
 import { formatCents } from './format'
 
 export type EventFeeAdminRow = {
@@ -185,6 +186,7 @@ export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
   const [financialsEventId, setFinancialsEventId] = useState<string | null>(null)
   const [presaleEventId, setPresaleEventId] = useState<string | null>(null)
+  const [trackingEventId, setTrackingEventId] = useState<string | null>(null)
   const [financialsVersion, setFinancialsVersion] = useState<Record<string, number>>({})
 
   return (
@@ -224,6 +226,9 @@ export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
                     >
                       {financialsEventId === event.id ? 'Close financials' : 'Financials'}
                     </button>
+                    <button type="button" onClick={() => setTrackingEventId(trackingEventId === event.id ? null : event.id)} aria-expanded={trackingEventId === event.id} aria-controls={`tracking-${event.id}`} className="create-focus min-h-11 rounded-full border border-[var(--tikkitte-cream-border)] px-4 text-xs font-semibold hover:bg-[var(--tikkitte-cream)]">
+                      {trackingEventId === event.id ? 'Close tracking links' : 'Tracking links'}
+                    </button>
                     <button type="button" onClick={() => setPresaleEventId(presaleEventId === event.id ? null : event.id)} aria-expanded={presaleEventId === event.id} aria-controls={`presale-${event.id}`} className="create-focus min-h-11 rounded-full border border-[var(--tikkitte-cream-border)] px-4 text-xs font-semibold hover:bg-[var(--tikkitte-cream)]">
                       {presaleEventId === event.id ? 'Close early bird' : 'Early bird'}
                     </button>
@@ -238,6 +243,7 @@ export default function EventsClient({ rows }: { rows: EventFeeAdminRow[] }) {
                   </div>
                 </div>
                 {presaleEventId === event.id && <div id={`presale-${event.id}`}><PresalePanel eventId={event.id} /></div>}
+                {trackingEventId === event.id && <div id={`tracking-${event.id}`}><TrackingLinksPanel eventId={event.id} /></div>}
                 {expanded && <FeeEditor event={event} onSaved={() => setFinancialsVersion((v) => ({ ...v, [event.id]: (v[event.id] ?? 0) + 1 }))} />}
                 {financialsEventId === event.id && (
                   <div id={`financials-${event.id}`}>
