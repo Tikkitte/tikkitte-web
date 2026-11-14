@@ -7,10 +7,40 @@ type LineupPoster = {
   alt: string;
   sizes?: string;
 };
+// Order is mixed by hand: photos are spread out and the two R3WIRED
+// posters sit apart. The list loops, so the last item meets the first.
 const posters: LineupPoster[] = [
+  {
+    src: "/images/site/posters/volare.jpg",
+    alt: "Poster for VOLARÉ Vol 01 at Beehive Accra, a lighthouse at sunset",
+  },
   {
     src: "/images/site/posters/robski-bellavino-photo.jpg",
     alt: "Robski performing on stage under colored lights at Bellavino",
+  },
+  {
+    src: "/images/site/posters/r3wired-after-dark.jpg",
+    alt: "Poster for R3WIRED: After Dark, Halloween edition",
+  },
+  {
+    src: "/images/site/posters/sabatani.jpg",
+    alt: "Poster for Sabatani, a city skyline inside a cocktail glass",
+  },
+  {
+    src: "/images/site/posters/gr8-night-with-dh-photo.jpg",
+    alt: "A performer raising an arm above the crowd at A GR8 Night with DH",
+  },
+  {
+    src: "/images/site/posters/ltl-new-year-enzo.jpg",
+    alt: "Poster for LTL New Year at Enzo",
+  },
+  {
+    src: "/images/site/posters/cassa-loca.jpg",
+    alt: "Poster for Cassa Loca Houseparty, Halloween edition",
+  },
+  {
+    src: "/images/site/posters/r3wired-golden-hour.jpg",
+    alt: "Poster for R3WIRED Golden Hour, a day party at Aria",
   },
   {
     src: "/images/site/posters/dh-bellavino-photo.jpg",
@@ -19,24 +49,12 @@ const posters: LineupPoster[] = [
     sizes: "(max-width: 640px) 152vw, (max-width: 1200px) 570px, 48vw",
   },
   {
-    src: "/images/site/posters/gr8-night-with-dh-photo.jpg",
-    alt: "A performer raising an arm above the crowd at A GR8 Night with DH",
+    src: "/images/site/posters/greatest-show-on-earth.jpg",
+    alt: "Poster for The Greatest Show on Earth, Halloween edition at Aria Clubhouse",
   },
   {
     src: "/images/site/posters/saturday-night-lights.jpg",
     alt: "Poster for Saturday Night Lights",
-  },
-  {
-    src: "/images/site/posters/r3wired-after-dark.jpg",
-    alt: "Poster for R3WIRED: After Dark, Halloween edition",
-  },
-  {
-    src: "/images/site/posters/cassa-loca.jpg",
-    alt: "Poster for Cassa Loca Houseparty, Halloween edition",
-  },
-  {
-    src: "/images/site/posters/greatest-show-on-earth.jpg",
-    alt: "Poster for The Greatest Show on Earth, Halloween edition at Aria Clubhouse",
   },
 ];
 export default function LineupWall() {
