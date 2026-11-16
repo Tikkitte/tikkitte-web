@@ -19,6 +19,7 @@ import {
 import { PHONE_COUNTRIES } from '@/lib/phoneCountries'
 import { SERVICE_FEE_BPS, formatMinor, priceOrder, pricingFromBreakdown, type OrderPricing } from '@/lib/checkout-pricing'
 import { displayFeeGhs, displayTicketPrice } from '@/lib/display-price'
+import { ACKNOWLEDGEMENT_REQUIRED_MESSAGE, acknowledgementMetadata, checkoutAcknowledgement } from '@/lib/checkout-acknowledgement'
 import type { PromoCode, Ticket } from '@/lib/types'
 import OrderSummary from './OrderSummary'
 import HypeBadge, { type Hype } from './HypeBadge'
@@ -80,6 +81,10 @@ export default function EventCheckout({ trackingRef, eventId, eventSlug, tickets
   const [serverPricing, setServerPricing] = useState<OrderPricing | null>(null)
   const [priceNotice, setPriceNotice] = useState<string | null>(null)
   const [, setSaleClockTick] = useState(0)
+  const acknowledgement = checkoutAcknowledgement(eventId)
+  const [acknowledged, setAcknowledged] = useState(false)
+  const [acknowledgementMissing, setAcknowledgementMissing] = useState(false)
+  const acknowledgementRef = useRef<HTMLLabelElement>(null)
 
   // ticketSaleStatus() reads the wall clock fresh on every call, but nothing
   // otherwise prompts a re-render when a sale window opens or closes while
@@ -245,6 +250,13 @@ export default function EventCheckout({ trackingRef, eventId, eventSlug, tickets
       }
     }
 
+    if (acknowledgement && !acknowledged) {
+      setAcknowledgementMissing(true)
+      setError(ACKNOWLEDGEMENT_REQUIRED_MESSAGE)
+      acknowledgementRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+
     setLoading(true)
     try {
       const supabase = createClient()
@@ -266,7 +278,7 @@ export default function EventCheckout({ trackingRef, eventId, eventSlug, tickets
       if (process.env.NODE_ENV === 'development') console.log('[checkout] Step 2: updating user metadata...')
       const cleanName = sanitizeName(name)
       const { error: updateErr } = await supabase.auth.updateUser({
-        data: { email: validEmail, name: cleanName, is_guest: true },
+        data: { email: validEmail, name: cleanName, is_guest: true, ...acknowledgementMetadata(acknowledgement) },
       })
       if (updateErr && process.env.NODE_ENV === 'development') console.error('[checkout] updateUser error:', updateErr)
 
@@ -710,6 +722,37 @@ export default function EventCheckout({ trackingRef, eventId, eventSlug, tickets
           {promoMessage && <p className="mt-2 text-sm font-medium text-green-700">{promoMessage}</p>}
           {promoError && <p className="mt-2 text-sm font-medium text-red-600">{promoError}</p>}
         </div>
+      )}
+
+      {/* Organizer terms the buyer must agree to (lib/checkout-acknowledgement.ts) */}
+      {totalTickets > 0 && acknowledgement && (
+        <label
+          ref={acknowledgementRef}
+          className={`mb-6 flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${
+            acknowledgementMissing && !acknowledged
+              ? 'border-red-300 bg-red-50'
+              : acknowledged
+              ? 'border-[#2565D0]/35 bg-[#2565D0]/5'
+              : 'border-[#E4DFD1] bg-[#F4F2EC]'
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={acknowledged}
+            onChange={(e) => {
+              setAcknowledged(e.target.checked)
+              if (e.target.checked && acknowledgementMissing) {
+                setAcknowledgementMissing(false)
+                setError(null)
+              }
+            }}
+            className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-[#2565D0]"
+          />
+          <span className="text-sm leading-relaxed text-[#5F5D54]">
+            {acknowledgement.terms}{' '}
+            <span className="font-semibold text-[#191917]">{acknowledgement.emphasis}</span>
+          </span>
+        </label>
       )}
 
       {/* Price changed since it was displayed */}
