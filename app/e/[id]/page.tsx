@@ -132,7 +132,7 @@ async function getEventInventory(eventId: string) {
   const [ticketResult, tableResult, sellingFastResult] = await Promise.all([
     supabase
       .from('ticket')
-      .select('id, event_id, type, label, price, total_quantity, purchased_quantity, available_quantity, min_per_order, max_per_order, sale_start_date, sale_start_time, sale_end_date, sale_end_time, is_table_ticket, presale_only')
+      .select('id, event_id, type, label, description, price, total_quantity, purchased_quantity, available_quantity, min_per_order, max_per_order, sale_start_date, sale_start_time, sale_end_date, sale_end_time, is_table_ticket, presale_only')
       .eq('event_id', eventId)
       .eq('is_table_ticket', false)
       .order('price', { ascending: true }),

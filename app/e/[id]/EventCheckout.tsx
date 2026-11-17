@@ -503,6 +503,12 @@ export default function EventCheckout({ trackingRef, eventId, eventSlug, tickets
                 )}
               </div>
 
+              {ticket.description && (
+                <p className="mb-3 whitespace-pre-line break-words text-sm leading-6 text-[#5F5D54]">
+                  {ticket.description}
+                </p>
+              )}
+
               {soldOut ? (
                 <div className="py-2 text-center text-sm font-medium text-red-500">
                   Sold out

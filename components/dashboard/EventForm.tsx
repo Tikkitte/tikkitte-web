@@ -12,6 +12,7 @@ import CancelButton from '@/app/dashboard/events/[id]/CancelButton'
 type TicketRow = {
   id?: string
   label: string
+  description: string
   price: string
   total_quantity: string
   purchased_quantity: number
@@ -42,8 +43,11 @@ const EDIT_SECTIONS = [
 
 type EditSectionId = (typeof EDIT_SECTIONS)[number][0]
 
+const TICKET_DESCRIPTION_MAX = 500
+
 const emptyTicketRow: TicketRow = {
   label: '',
+  description: '',
   price: '',
   total_quantity: '',
   purchased_quantity: 0,
@@ -67,6 +71,7 @@ function saveErrorMessage(message: string) {
   if (message.includes('ERR_CAPACITY_BELOW_ISSUED')) return 'Capacity cannot be lower than the number of tickets already issued.'
   if (message.includes('ERR_INVALID_FLOOR_PLAN_VENUE')) return 'Choose a valid venue preset and try again.'
   if (message.includes('ERR_FLOOR_PLAN_VENUE_LOCKED')) return 'This event already has tables set up for another venue’s floor plan. Pick that venue or a custom venue.'
+  if (message.includes('ERR_INVALID_TICKET_DESCRIPTION')) return `Ticket descriptions can be up to ${TICKET_DESCRIPTION_MAX} characters.`
   if (message.includes('ERR_INVALID_EVENT') || message.includes('ERR_INVALID_TICKET')) return 'Some event or ticket details are invalid. Review the form and try again.'
   if (message.includes('ERR_')) return 'The event could not be saved because its data is no longer valid. Refresh and try again.'
   return message
@@ -176,6 +181,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
       ? tickets.map(t => ({
           id: t.id,
           label: t.label,
+          description: t.description ?? '',
           price: String(t.price),
           total_quantity: t.total_quantity != null ? String(t.total_quantity) : '',
           purchased_quantity: t.purchased_quantity,
@@ -223,6 +229,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
     ticketRows.map(row => ({
       id: row.id ?? null,
       label: row.label.trim(),
+      description: row.description.trim() || null,
       price: Number(row.price),
       total_quantity: row.total_quantity === '' ? null : Number(row.total_quantity),
       min_per_order: Number(row.min_per_order || '1'),
@@ -377,6 +384,10 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
 
       if (!row.label.trim() || !row.price) {
         setError('Each ticket type needs a label and price.')
+        return false
+      }
+      if (row.description.trim().length > TICKET_DESCRIPTION_MAX) {
+        setError(`${label} description can be up to ${TICKET_DESCRIPTION_MAX} characters.`)
         return false
       }
       if (!Number.isFinite(price) || price < 0) {
@@ -875,6 +886,24 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
               <span className="w-28">Price (GHS)</span>
               <span className="w-28">Capacity (blank = ∞)</span>
               <span className="w-4" />
+            </div>
+
+            <div className="mt-3">
+              <label htmlFor={`ticket-description-${i}`} className="block text-sm font-medium text-gray-700 mb-1">
+                Description <span className="font-normal text-gray-400">(optional)</span>
+              </label>
+              <textarea
+                id={`ticket-description-${i}`}
+                rows={2}
+                maxLength={TICKET_DESCRIPTION_MAX}
+                value={row.description}
+                onChange={e => updateTicketRow(i, 'description', e.target.value)}
+                className={`${inputClass} resize-y`}
+                placeholder="What this ticket includes, e.g. entry before 11pm and one free drink"
+              />
+              <p className="mt-1 text-right text-xs text-gray-400">
+                {row.description.length}/{TICKET_DESCRIPTION_MAX}
+              </p>
             </div>
 
             <div className="mt-3">
