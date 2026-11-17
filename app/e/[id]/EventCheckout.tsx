@@ -178,15 +178,25 @@ export default function EventCheckout({ trackingRef, eventId, eventSlug, tickets
     const current = counts[ticketId] ?? 0
     if (ticket.available_quantity !== null && current >= ticket.available_quantity) return
     if (ticket.max_per_order !== null && current >= ticket.max_per_order) return
+    // The per-order minimum isn't shown, so the first tap jumps straight to it.
+    const next = current === 0 ? Math.max(1, ticket.min_per_order) : current + 1
+    if (ticket.available_quantity !== null && next > ticket.available_quantity) return
+    if (ticket.max_per_order !== null && next > ticket.max_per_order) return
+    if (ticket.presale_only && presaleTotal + (next - current) > presaleMaxPerEmail) return
     setServerPricing(null)
     setPriceNotice(null)
-    setCounts((prev) => ({ ...prev, [ticketId]: current + 1 }))
+    setCounts((prev) => ({ ...prev, [ticketId]: next }))
   }
 
   const decrement = (ticketId: string) => {
+    const ticket = tickets.find((t) => t.id === ticketId)
+    const min = Math.max(1, ticket?.min_per_order ?? 1)
     setServerPricing(null)
     setPriceNotice(null)
-    setCounts((prev) => ({ ...prev, [ticketId]: Math.max(0, (prev[ticketId] ?? 0) - 1) }))
+    setCounts((prev) => {
+      const next = (prev[ticketId] ?? 0) - 1
+      return { ...prev, [ticketId]: next < min ? 0 : next }
+    })
   }
 
   const handleCheckout = async () => {
@@ -468,9 +478,11 @@ export default function EventCheckout({ trackingRef, eventId, eventSlug, tickets
           const unavailable = soldOut || !saleStatus.available
           const isLow = available !== null && available > 0 && available <= 10
           const atPresaleMax = ticket.presale_only && presaleTotal >= presaleMaxPerEmail
+          const nextCount = count === 0 ? Math.max(1, ticket.min_per_order) : count + 1
           const atMax = atPresaleMax ||
-            (available !== null && count >= available) ||
-            (ticket.max_per_order !== null && count >= ticket.max_per_order)
+            (available !== null && nextCount > available) ||
+            (ticket.max_per_order !== null && nextCount > ticket.max_per_order) ||
+            (ticket.presale_only && presaleTotal + (nextCount - count) > presaleMaxPerEmail)
 
           return (
             <div
@@ -503,12 +515,6 @@ export default function EventCheckout({ trackingRef, eventId, eventSlug, tickets
                 )}
               </div>
 
-              {ticket.description && (
-                <p className="mb-3 whitespace-pre-line break-words text-sm leading-6 text-[#5F5D54]">
-                  {ticket.description}
-                </p>
-              )}
-
               {soldOut ? (
                 <div className="py-2 text-center text-sm font-medium text-red-500">
                   Sold out
@@ -518,34 +524,31 @@ export default function EventCheckout({ trackingRef, eventId, eventSlug, tickets
                   {saleStatus.label}
                 </div>
               ) : (
-                <>
-                  {(ticket.min_per_order > 1 || ticket.max_per_order !== null) && (
-                    <p className="mb-2 text-xs text-[#8a887c]">
-                      {ticket.min_per_order > 1 ? `Min ${ticket.min_per_order}` : 'Min 1'}
-                      {ticket.max_per_order !== null ? ` · Max ${ticket.max_per_order}` : ''}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between rounded-lg border border-[#E7E2D4] bg-white px-3 py-1">
-                    <button
-                      type="button"
-                      onClick={() => decrement(ticket.id)}
-                      className="flex h-9 w-9 items-center justify-center text-lg font-bold text-[#5F5D54] transition-colors hover:text-[#2565D0]"
-                    >
-                      &minus;
-                    </button>
-                    <span className="w-8 text-center text-base font-bold tabular-nums text-[#191917]">
-                      {count}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => increment(ticket.id)}
-                      disabled={atMax}
-                      className="flex h-9 w-9 items-center justify-center text-lg font-bold text-[#5F5D54] transition-colors hover:text-[#2565D0] disabled:opacity-30"
-                    >
-                      +
-                    </button>
-                  </div>
-                </>
+                <div className="flex items-center justify-between rounded-lg border border-[#E7E2D4] bg-white px-3 py-1">
+                  <button
+                    type="button"
+                    onClick={() => decrement(ticket.id)}
+                    className="flex h-9 w-9 items-center justify-center text-lg font-bold text-[#5F5D54] transition-colors hover:text-[#2565D0]"
+                  >
+                    &minus;
+                  </button>
+                  <span className="w-8 text-center text-base font-bold tabular-nums text-[#191917]">
+                    {count}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => increment(ticket.id)}
+                    disabled={atMax}
+                    className="flex h-9 w-9 items-center justify-center text-lg font-bold text-[#5F5D54] transition-colors hover:text-[#2565D0] disabled:opacity-30"
+                  >
+                    +
+                  </button>
+                </div>
+              )}
+              {ticket.description && (
+                <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-[#5F5D54]">
+                  {ticket.description}
+                </p>
               )}
               {ticket.presale_only && (
                 <div className="mt-2 text-xs text-[#5F5D54]">
