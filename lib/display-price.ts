@@ -20,6 +20,12 @@
 const DISPLAY_SPLITS: Record<string, { price: number; fee: number }> = {
   // LTL New Year @Enzo, Early Access: stored 220, shown as 200 + 20 in fees.
   'c2e4c748-95e7-433a-8a50-a195bc3f2e48': { price: 220, fee: 20 },
+  // Added 2026-11-17. From here on the shown price is what LTL nets after the
+  // 10% platform fee, and the fee line is what Tikkitte keeps.
+  // PHASE I: stored 250, shown as 225 + 30 in fees (25 moved + 5 service fee).
+  '36f1413c-7a55-4a3c-beed-8ae2a3d74957': { price: 250, fee: 25 },
+  // Have your Cake and Eat it (ALL ACCESS): stored 700, shown as 630 + 84 in fees.
+  'c009fc46-3506-4826-ac89-688cfdc455ae': { price: 700, fee: 70 },
 }
 
 export function displayFeeGhs(ticketTypeId: string | null | undefined, price: number): number {
