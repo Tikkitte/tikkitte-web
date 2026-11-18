@@ -7,7 +7,7 @@ import Image from 'next/image'
 import type { Metadata } from 'next'
 import { formatDate } from '@/lib/format'
 import TicketQrCode from './TicketQrCode'
-import { displayFeeGhs, displayTicketPrice } from '@/lib/display-price'
+import { displayFeeGhs, displayTicketPrice, paidUnitPrices } from '@/lib/display-price'
 
 type Props = {
   params: Promise<{ reference: string }>
@@ -102,10 +102,14 @@ export default async function TicketPage({ params }: Props) {
   const { payment, userTickets, event } = data
   const totalAmount = payment.amount ? Number(payment.amount) / 100 : 0
   // Display-only: part of some ticket prices is shown as fees (lib/display-price.ts).
-  const displayFeeAmount = userTickets.reduce(
-    (sum, ut) => sum + (ut.ticket?.price != null ? displayFeeGhs(ut.ticket_type_id, ut.ticket.price) * ut.quantity : 0),
-    0,
-  )
+  // Uses the price this order was paid at, so a later price change can't alter it.
+  const paidPrices = paidUnitPrices(payment.metadata)
+  const unitPriceOf = (ut: TicketRow) =>
+    (ut.ticket_type_id ? paidPrices.get(ut.ticket_type_id) : undefined) ?? ut.ticket?.price ?? null
+  const displayFeeAmount = userTickets.reduce((sum, ut) => {
+    const price = unitPriceOf(ut)
+    return sum + (price != null ? displayFeeGhs(ut.ticket_type_id, price) * ut.quantity : 0)
+  }, 0)
   const serviceFeeAmount = Number(payment.service_fee_cents ?? 0) / 100 + displayFeeAmount
   const metadata = payment.metadata && typeof payment.metadata === 'object'
     ? payment.metadata as Record<string, unknown>
@@ -178,8 +182,8 @@ export default async function TicketPage({ params }: Props) {
                 </p>
                 <p className="text-sm text-[#5F5D54]">
                   {tableDetails ? `One QR · admits ${tableDetails.guestCapacity} guests` : `Qty: ${ut.quantity}`}
-                  {!tableDetails && ut.ticket?.price != null && (
-                    <span> &middot; {ut.ticket.price === 0 ? 'Free' : `GH₵ ${displayTicketPrice(ut.ticket_type_id, ut.ticket.price)}`}</span>
+                  {!tableDetails && unitPriceOf(ut) != null && (
+                    <span> &middot; {unitPriceOf(ut) === 0 ? 'Free' : `GH₵ ${displayTicketPrice(ut.ticket_type_id, unitPriceOf(ut)!)}`}</span>
                   )}
                 </p>
                 {tableDetails && (
