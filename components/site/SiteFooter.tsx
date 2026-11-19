@@ -66,7 +66,6 @@ export default function SiteFooter() {
               Explore
             </p>
             <Link href="/events">Browse events</Link>
-            <Link href="/about">About us</Link>
           </div>
           <div className="tk-footer__col">
             <p

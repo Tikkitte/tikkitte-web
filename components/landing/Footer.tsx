@@ -19,7 +19,6 @@ export default function Footer() {
               <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-[#8a887c]">Explore</p>
               <Link href="/events" className="text-sm text-[#5F5D54] hover:text-[#191917]">Browse events</Link>
               <Link href="/" className="text-sm text-[#5F5D54] hover:text-[#191917]">Sell tickets</Link>
-              <Link href="/about" className="text-sm text-[#5F5D54] hover:text-[#191917]">About us</Link>
               <Link href="/login" className="text-sm text-[#5F5D54] hover:text-[#191917]">Organizer sign in</Link>
             </div>
             <div className="flex flex-col gap-2.5">
