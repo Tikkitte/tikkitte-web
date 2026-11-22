@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@supabase/supabase-js'
 import { detectQRCode } from '@/lib/scan/decode'
 import { clearScannerSession, restoreScannerSession, saveScannerSession, takeScannerCode, isInvalidScannerSession, type ScannerSession } from '@/lib/scan/session'
 
@@ -187,7 +187,12 @@ export default function Scanner() {
   const isOnlineRef = useRef(true)
   const audioCtxRef = useRef<AudioContext | null>(null)
 
-  const supabase = createClient()
+  // Scanner authorization uses only the event token. In particular, never
+  // let an account-auth client interpret #code as a PKCE sign-in callback.
+  const [supabase] = useState(() => createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession:false, autoRefreshToken:false, detectSessionInUrl:false } },
+  ))
 
   function invalidateSession(message: string) {
     const previous=sessionRef.current
@@ -223,7 +228,8 @@ export default function Scanner() {
             if (isInvalidScannerSession(error)) invalidateSession('Scanner access expired or was disabled. Ask your organizer for a current code.')
             else if (data) {
               const pending=new Set(getQueue().filter(item=>item.eventId===stored.eventId).map(item=>item.ticketId))
-              saveCache(stored.eventId,(data as CachedTicket[]).map(ticket=>pending.has(ticket.ticket_id)?{...ticket,used:true}:ticket))
+              const cached=getCache(stored.eventId)
+              saveCache(stored.eventId,(data as CachedTicket[]).map(ticket=>pending.has(ticket.ticket_id) || cached.get(ticket.ticket_id)?.used ? {...ticket,used:true} : ticket))
             }
           })
       }
