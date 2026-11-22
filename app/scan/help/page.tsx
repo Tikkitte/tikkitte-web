@@ -43,10 +43,10 @@ export default function ScanHelpPage() {
           <div className="rounded-2xl p-6" style={{ backgroundColor: '#1e1e1e', border: '1px solid #2a2a2a' }}>
             <div className="flex items-center gap-3 mb-3">
               <span className="flex-shrink-0 w-7 h-7 rounded-full text-sm font-bold flex items-center justify-center" style={{ backgroundColor: '#2a2a2a', color: '#ECEDEE' }}>1</span>
-              <h2 className="font-semibold" style={{ color: '#ECEDEE' }}>Get your event PIN</h2>
+              <h2 className="font-semibold" style={{ color: '#ECEDEE' }}>Get your scanner code</h2>
             </div>
             <p className="text-sm leading-relaxed pl-10" style={{ color: '#9BA1A6' }}>
-              The event organiser will give you a 4-digit PIN before the event. This PIN is unique to the event you&apos;re working.
+              The event organiser will give you a scanner link or a 20-character code before the event. Open the link to start without typing. This code is unique to the event you&apos;re working.
               If you haven&apos;t received one, ask your organiser to generate it in their Tikkitte dashboard.
             </p>
           </div>
@@ -58,8 +58,8 @@ export default function ScanHelpPage() {
               <h2 className="font-semibold" style={{ color: '#ECEDEE' }}>Open the scanner</h2>
             </div>
             <p className="text-sm leading-relaxed pl-10" style={{ color: '#9BA1A6' }}>
-              Go to <span style={{ color: '#ECEDEE', fontWeight: 500 }}>tikkitte.com/scan</span> on your phone —
-              works on iPhone (Safari or Chrome) and Android (Chrome). No app download needed.
+              Go to <span style={{ color: '#ECEDEE', fontWeight: 500 }}>tikkitte.com/scan</span> on your phone,
+              or open the scanner link your organiser sent. It works on iPhone (Safari or Chrome) and Android (Chrome). No app download needed.
             </p>
           </div>
 
@@ -67,10 +67,10 @@ export default function ScanHelpPage() {
           <div className="rounded-2xl p-6" style={{ backgroundColor: '#1e1e1e', border: '1px solid #2a2a2a' }}>
             <div className="flex items-center gap-3 mb-3">
               <span className="flex-shrink-0 w-7 h-7 rounded-full text-sm font-bold flex items-center justify-center" style={{ backgroundColor: '#2a2a2a', color: '#ECEDEE' }}>3</span>
-              <h2 className="font-semibold" style={{ color: '#ECEDEE' }}>Enter the PIN</h2>
+              <h2 className="font-semibold" style={{ color: '#ECEDEE' }}>Enter the scanner code</h2>
             </div>
             <p className="text-sm leading-relaxed pl-10" style={{ color: '#9BA1A6' }}>
-              Type the 4-digit PIN and tap <span style={{ color: '#ECEDEE', fontWeight: 500 }}>Start scanning</span>.
+              If you did not open a scanner link, type the 20-character code and tap <span style={{ color: '#ECEDEE', fontWeight: 500 }}>Start scanning</span>.
               The scanner will load the ticket list for that event and activate your camera.
             </p>
           </div>
@@ -89,7 +89,7 @@ export default function ScanHelpPage() {
                 <div className="flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)' }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                 </div>
-                <p className="text-sm" style={{ color: '#9BA1A6' }}><span style={{ color: '#4ade80', fontWeight: 500 }}>Green — Valid.</span> Ticket is good. Shows ticket type and buyer name. Let them in.</p>
+                <p className="text-sm" style={{ color: '#9BA1A6' }}><span style={{ color: '#4ade80', fontWeight: 500 }}>Green — Valid.</span> Ticket is good. Shows the ticket type. Let them in.</p>
               </div>
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 mt-0.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}>
@@ -117,10 +117,10 @@ export default function ScanHelpPage() {
               <h2 className="font-semibold" style={{ color: '#ECEDEE' }}>Works offline too</h2>
             </div>
             <p className="text-sm leading-relaxed pl-10" style={{ color: '#9BA1A6' }}>
-              Once you enter the PIN and the scanner loads, all ticket data is saved to your device.
+              Once you enter the scanner code and the scanner loads, all ticket data is saved to your device.
               If you lose internet mid-event, scanning keeps working — you&apos;ll see an{' '}
               <span style={{ color: '#facc15', fontWeight: 500 }}>offline</span> badge at the top.
-              Scans made offline sync automatically when your connection returns.
+              Scans made offline sync automatically when your connection returns. Sessions last 24 hours; enter your code again if asked. Changes to scanner access take effect on offline devices when they reconnect.
             </p>
           </div>
 
@@ -142,11 +142,11 @@ export default function ScanHelpPage() {
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="font-bold mt-px" style={{ color: '#ECEDEE' }}>·</span>
-                Tap <span style={{ color: '#ECEDEE', fontWeight: 500 }}>Change event</span> at the top to switch to a different event PIN.
+                Tap <span style={{ color: '#ECEDEE', fontWeight: 500 }}>Change event</span> at the top to switch to a different scanner code.
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="font-bold mt-px" style={{ color: '#ECEDEE' }}>·</span>
-                Multiple bouncers can scan the same event at once — everyone uses the same PIN.
+                Multiple bouncers can scan the same event at once — everyone uses the same scanner code.
               </li>
             </ul>
           </div>

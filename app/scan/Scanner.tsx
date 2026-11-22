@@ -3,12 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { detectQRCode } from '@/lib/scan/decode'
+import { clearScannerSession, restoreScannerSession, saveScannerSession, takeScannerCode, isInvalidScannerSession, type ScannerSession } from '@/lib/scan/session'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type CachedTicket = {
   ticket_id: string
-  reference: string
   used: boolean
   ticket_type: string
   quantity: number
@@ -17,11 +17,7 @@ type CachedTicket = {
   buyer_email: string | null
 }
 
-type SessionInfo = {
-  eventId: string
-  pin: string
-  eventName: string
-}
+type SessionInfo = ScannerSession
 
 type TicketScanResult =
   | { status: 'success'; ticketType: string; quantity: number; tableCode: string | null; buyerDisplay: string | null }
@@ -31,7 +27,7 @@ type TicketScanResult =
   | { status: 'event_not_found' }
   | { status: 'error'; message: string }
 
-type QueueItem = { ticketId: string; eventId: string; pin: string; ts: number }
+type QueueItem = { ticketId: string; eventId: string; ts: number }
 
 type ScanLogEntry = {
   id: string
@@ -44,7 +40,7 @@ type ScanLogEntry = {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function cacheKey(eventId: string) {
-  return `scan_cache_${eventId}`
+  return `scan_cache_v2_${eventId}`
 }
 
 function getCache(eventId: string): Map<string, CachedTicket> {
@@ -73,7 +69,8 @@ function markCacheUsed(eventId: string, ticketId: string) {
 
 function getQueue(): QueueItem[] {
   try {
-    return JSON.parse(localStorage.getItem('scan_queue') ?? '[]')
+    const items: QueueItem[] = JSON.parse(localStorage.getItem('scan_queue_v2') ?? localStorage.getItem('scan_queue') ?? '[]')
+    return items.map(({ ticketId, eventId, ts }) => ({ ticketId, eventId, ts }))
   } catch {
     return []
   }
@@ -82,11 +79,12 @@ function getQueue(): QueueItem[] {
 function enqueue(item: QueueItem) {
   const q = getQueue()
   q.push(item)
-  localStorage.setItem('scan_queue', JSON.stringify(q))
+  localStorage.setItem('scan_queue_v2', JSON.stringify(q))
 }
 
-function clearQueue() {
-  localStorage.removeItem('scan_queue')
+function removeQueued(item: QueueItem) {
+  const remaining = getQueue().filter(q => !(q.ticketId === item.ticketId && q.eventId === item.eventId && q.ts === item.ts))
+  localStorage.setItem('scan_queue_v2', JSON.stringify(remaining))
 }
 
 // Two-tone feedback so door staff can tell a scan's outcome without staring
@@ -191,6 +189,49 @@ export default function Scanner() {
 
   const supabase = createClient()
 
+  function invalidateSession(message: string) {
+    const previous=sessionRef.current
+    clearScannerSession(localStorage)
+    if (previous) localStorage.removeItem(cacheKey(previous.eventId))
+    sessionRef.current=null
+    scanningRef.current=false
+    streamRef.current?.getTracks().forEach(track=>track.stop())
+    if (resultTimerRef.current) clearTimeout(resultTimerRef.current)
+    setSession(null)
+    setPhase('pin')
+    setResult(null)
+    setPinInput('')
+    setPinError(message)
+  }
+
+  useEffect(() => {
+    const code=takeScannerCode(window.location, window.history)
+    if (code!==null) {
+      clearScannerSession(localStorage)
+      void startSession(code)
+      return
+    }
+    const stored=restoreScannerSession(localStorage)
+    if (stored) {
+      sessionRef.current=stored
+      setSession(stored)
+      setPhase('scanning')
+      if (navigator.onLine) {
+        void supabase.rpc('get_event_tickets_for_cache', {p_event_id:stored.eventId,p_session_token:stored.token})
+          .then(({data,error})=>{
+            if (sessionRef.current?.token!==stored.token) return
+            if (isInvalidScannerSession(error)) invalidateSession('Scanner access expired or was disabled. Ask your organizer for a current code.')
+            else if (data) {
+              const pending=new Set(getQueue().filter(item=>item.eventId===stored.eventId).map(item=>item.ticketId))
+              saveCache(stored.eventId,(data as CachedTicket[]).map(ticket=>pending.has(ticket.ticket_id)?{...ticket,used:true}:ticket))
+            }
+          })
+      }
+    }
+  // Restore once; a fragment must be consumed before any session request.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Lock body scroll while scanning so the camera view never scrolls
   useEffect(() => {
     if (phase === 'scanning') {
@@ -225,75 +266,114 @@ export default function Scanner() {
     sessionRef.current = session
   }, [session])
 
-  // Flush offline queue when coming back online
+  // Remove old caches containing payment references; preserve pending ticket IDs
+  // without retaining the compromised legacy PINs in the offline queue.
+  useEffect(() => {
+    try {
+      const pending = getQueue()
+      localStorage.setItem('scan_queue_v2', JSON.stringify(pending))
+      localStorage.removeItem('scan_queue')
+      Object.keys(localStorage).filter(key => key.startsWith('scan_cache_') && !key.startsWith('scan_cache_v2_'))
+        .forEach(key => localStorage.removeItem(key))
+    } catch { /* Storage may be unavailable; session start reports cache failures. */ }
+  }, [])
+
+  // Keep failures queued and reconcile only the event authorized by the current
+  // session. Re-entering a code also retries work left by an expired session.
   useEffect(() => {
     if (!isOnline || !session) return
-    const queue = getQueue()
-    if (!queue.length) return
+    let cancelled = false
     ;(async () => {
-      for (const item of queue) {
-        try {
-          await supabase.rpc('scan_ticket', {
-            p_ticket_id: item.ticketId,
-            p_event_id: item.eventId,
-            p_pin: item.pin,
-          })
-        } catch {
-          // best-effort — leave remaining for next reconnect
+      for (const item of getQueue().filter(q => q.eventId === session.eventId)) {
+        if (cancelled) break
+        const { data, error } = await supabase.rpc('scan_ticket', {
+          p_ticket_id: item.ticketId,
+          p_event_id: item.eventId,
+          p_session_token: session.token,
+        })
+        if (cancelled || sessionRef.current?.token!==session.token) break
+        if (isInvalidScannerSession(error) || isInvalidScannerSession(data)) {
+          invalidateSession('Scanner access expired or was disabled. Enter your code again.')
+          break
+        }
+        if (error || !data) {
+          showResult({ status: 'error', message: 'Offline scans are still pending. Reconnect to retry.' })
+          break
+        }
+        if (data.ok || data.error === 'already_used') {
+          markCacheUsed(item.eventId, item.ticketId)
+          removeQueued(item)
+        }
+        else {
+          showResult({ status: 'error', message: 'An offline scan could not sync. It remains queued. Re-enter your scanner code to retry.' })
+          break
         }
       }
-      clearQueue()
-    })()
+    })().catch(() => {
+      showResult({ status: 'error', message: 'Offline scans are still pending. Reconnect to retry.' })
+    })
+    return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline])
+  }, [isOnline, session])
 
-  // ── PIN submit ──────────────────────────────────────────────────────────────
+  // Session expiry also applies while offline. Revocation requires reconnecting.
+  useEffect(() => {
+    if (!session) return
+    const timer = window.setTimeout(() => {
+      invalidateSession('Scanner session expired. Enter your code again.')
+    }, Math.max(0, Date.parse(session.expiresAt) - Date.now()))
+    return () => window.clearTimeout(timer)
+  }, [session])
 
   async function handlePinSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (pinInput.length !== 4) return
-
-    // Created synchronously inside this user-gesture handler (before any
-    // await) so it's unlocked for autoplay — Safari requires that, and
-    // creating it lazily later inside an async result callback would be
-    // silently blocked.
+    if (pinInput.length !== 20) return
     if (!audioCtxRef.current) {
       const AudioCtx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-      audioCtxRef.current = new AudioCtx()
+      if (AudioCtx) audioCtxRef.current = new AudioCtx()
     }
+    await startSession(pinInput)
+  }
 
+  async function startSession(code: string) {
     setPinLoading(true)
     setPinError('')
-
-    const { data: events, error: eventErr } = await supabase
-      .from('event')
-      .select('id, name')
-      .eq('scanner_pin', pinInput)
-      .limit(1)
-
-    if (eventErr || !events || events.length === 0) {
-      setPinError('Invalid PIN. Please check with your organizer.')
+    try {
+      const response = await fetch('/api/scanner/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+        cache: 'no-store',
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        setPinError(data.error ?? 'Could not connect to scanner.')
+        return
+      }
+      const scannerSession: SessionInfo = data
+      const { data: tickets, error } = await supabase.rpc('get_event_tickets_for_cache', {
+        p_event_id: scannerSession.eventId,
+        p_session_token: scannerSession.token,
+      })
+      if (isInvalidScannerSession(error)) {
+        invalidateSession('Scanner access expired or was disabled. Ask your organizer for a current code.')
+        return
+      }
+      if (error || !tickets) {
+        setPinError('Could not load ticket data. Try again.')
+        return
+      }
+      saveCache(scannerSession.eventId, tickets as CachedTicket[])
+      saveScannerSession(localStorage,scannerSession)
+      sessionRef.current=scannerSession
+      setSession(scannerSession)
+      setPinInput('')
+      setPhase('scanning')
+    } catch {
+      setPinError('Could not connect or save ticket data on this device. Try again.')
+    } finally {
       setPinLoading(false)
-      return
     }
-
-    const event = events[0]
-
-    const { data: tickets, error: cacheErr } = await supabase.rpc('get_event_tickets_for_cache', {
-      p_event_id: event.id,
-      p_pin: pinInput,
-    })
-
-    if (cacheErr) {
-      setPinError('Could not load ticket data. Try again.')
-      setPinLoading(false)
-      return
-    }
-
-    saveCache(event.id, tickets as CachedTicket[])
-    setSession({ eventId: event.id, pin: pinInput, eventName: event.name })
-    setPhase('scanning')
-    setPinLoading(false)
   }
 
   // ── Camera + QR scanning ────────────────────────────────────────────────────
@@ -378,9 +458,14 @@ export default function Scanner() {
       return
     }
 
-    const ticketId = payload.ticket_id
-    if (!ticketId) {
+    const ticketId = payload?.ticket_id
+    if (typeof ticketId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ticketId)) {
       showResult({ status: 'error', message: 'Invalid QR code' })
+      return
+    }
+
+    if (Date.parse(currentSession.expiresAt) <= Date.now()) {
+      invalidateSession('Scanner session expired. Enter your code again.')
       return
     }
 
@@ -398,11 +483,21 @@ export default function Scanner() {
     }
 
     try {
-      const { data } = await supabase.rpc('scan_ticket', {
+      const { data, error } = await supabase.rpc('scan_ticket', {
         p_ticket_id: ticketId,
         p_event_id: currentSession.eventId,
-        p_pin: currentSession.pin,
+        p_session_token: currentSession.token,
       })
+      if (sessionRef.current?.token!==currentSession.token) return
+
+      if (isInvalidScannerSession(error)) {
+        invalidateSession('Scanner access expired or was disabled. Ask your organizer for a current code.')
+        return
+      }
+      if (error || !data) {
+        showResult({ status: 'error', message: 'Could not verify this ticket. Try again.' })
+        return
+      }
 
       const res = data as {
         ok: boolean
@@ -424,6 +519,8 @@ export default function Scanner() {
           tableCode: res.table_code ?? null,
           buyerDisplay: buyerDisplayName(res.buyer_name, res.buyer_email),
         })
+      } else if (res.error === 'invalid_session') {
+        invalidateSession('Scanner access expired or was disabled. Ask your organizer for a current code.')
       } else if (res.error === 'already_used') {
         showResult({
           status: 'already_used',
@@ -440,7 +537,8 @@ export default function Scanner() {
         showResult({ status: 'error', message: res.error ?? 'Unknown error' })
       }
     } catch {
-      handleOfflineScan(ticketId, currentSession)
+      if (!navigator.onLine) handleOfflineScan(ticketId, currentSession)
+      else showResult({ status: 'error', message: 'Could not verify this ticket. Try again.' })
     }
   }
 
@@ -462,7 +560,7 @@ export default function Scanner() {
     }
 
     markCacheUsed(currentSession.eventId, ticketId)
-    enqueue({ ticketId, eventId: currentSession.eventId, pin: currentSession.pin, ts: Date.now() })
+    enqueue({ ticketId, eventId: currentSession.eventId, ts: Date.now() })
     showResult({
       status: 'success',
       ticketType: ticket.ticket_type,
@@ -504,7 +602,7 @@ export default function Scanner() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold mb-1" style={{ color: '#ECEDEE' }}>Ticket Scanner</h1>
-            <p className="text-sm" style={{ color: '#9BA1A6' }}>Enter the event PIN from your organizer</p>
+            <p className="text-sm" style={{ color: '#9BA1A6' }}>Enter the scanner code from your organizer</p>
             <a
               href="/scan/help"
               className="inline-block mt-3 text-xs underline underline-offset-2 transition-opacity hover:opacity-70"
@@ -516,16 +614,18 @@ export default function Scanner() {
 
           <form onSubmit={handlePinSubmit} className="flex flex-col gap-4">
             <input
-              type="tel"
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="4-digit PIN"
+              type="text"
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={24}
+              placeholder="20-character scanner code"
               value={pinInput}
               onChange={e => {
-                setPinInput(e.target.value.replace(/\D/g, '').slice(0, 4))
+                setPinInput(e.target.value.replace(/[\s-]/g, '').toUpperCase().slice(0, 20))
                 setPinError('')
               }}
-              className="w-full text-center text-3xl font-mono tracking-[0.5em] rounded-2xl px-6 py-5 outline-none transition-colors placeholder:font-sans placeholder:tracking-normal placeholder:text-lg placeholder:text-base"
+              className="w-full text-center text-lg font-mono tracking-wider rounded-2xl px-6 py-5 outline-none transition-colors placeholder:font-sans placeholder:tracking-normal placeholder:text-lg placeholder:text-base"
               style={{
                 backgroundColor: '#2a2a2a',
                 border: '1px solid #333',
@@ -540,7 +640,7 @@ export default function Scanner() {
 
             <button
               type="submit"
-              disabled={pinInput.length !== 4 || pinLoading}
+              disabled={pinInput.length !== 20 || pinLoading}
               className="w-full font-semibold py-4 rounded-2xl transition-colors text-base disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ backgroundColor: '#3569bd', color: '#fff' }}
             >
@@ -596,7 +696,9 @@ export default function Scanner() {
           </button>
           <button
             onClick={() => {
+              clearScannerSession(localStorage)
               stopCamera()
+              sessionRef.current = null
               setSession(null)
               setPinInput('')
               setResult(null)

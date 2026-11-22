@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Event, Ticket } from '@/lib/types'
 import { FLOOR_PLAN_VENUES, getFloorPlanVenue, isPresetVenueValue } from '@/lib/floor-plan-venues'
+import ScannerAccess from './ScannerAccess'
 import PublishButton from '@/app/dashboard/events/[id]/PublishButton'
 import CancelButton from '@/app/dashboard/events/[id]/CancelButton'
 
@@ -36,7 +37,7 @@ const EDIT_SECTIONS = [
   ['details', 'Event details'],
   ['event-image', 'Event image'],
   ['preview-media', 'Preview media'],
-  ['scanner', 'Scanner PIN'],
+  ['scanner', 'Scanner access'],
   ['tickets', 'Ticket types'],
   ['status', 'Event status'],
 ] as const
@@ -201,7 +202,6 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
   const [previewVideos, setPreviewVideos] = useState<string[]>(event?.preview_videos ?? [])
   const [previewUploading, setPreviewUploading] = useState(false)
   const previewFileRef = useRef<HTMLInputElement>(null)
-  const [scannerPin, setScannerPin] = useState(event?.scanner_pin ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<EditSectionId>('details')
@@ -221,7 +221,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
       image: imageUrl ? [imageUrl] : event?.image ?? null,
       preview_images: previewImages.length > 0 ? previewImages : null,
       preview_videos: filteredPreviewVideos.length > 0 ? filteredPreviewVideos : null,
-      scanner_pin: scannerPin.trim() || null,
+      scanner_pin: null,
     }
   }
 
@@ -240,11 +240,10 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
       sale_end_time: row.sale_end_time ? row.sale_end_time + ':00' : null,
     }))
 
-  // Keep the submitted payload and PIN-specific save warning in sync.
+  // Keep the submitted payload and save state in sync.
   const currentPayload = { event: buildEventPayload(), tickets: buildTicketPayloads() }
   const lastSavedSnapshotRef = useRef(currentPayload)
   const isDirty = JSON.stringify(currentPayload) !== JSON.stringify(lastSavedSnapshotRef.current)
-  const pinDirty = currentPayload.event.scanner_pin !== lastSavedSnapshotRef.current.event.scanner_pin
   const saveDisabled = loading || imageUploading || previewUploading
   const saveButtonLabel = loading ? 'Saving…' : isEdit ? 'Save changes' : 'Save as draft'
 
@@ -770,48 +769,8 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
         </button>
       </div>
 
-      {/* Scanner PIN */}
-      <div id="scanner" className="create-card flex scroll-mt-8 flex-col gap-3 p-6">
-        <div>
-          <h2 className="font-semibold text-gray-900">Scanner PIN</h2>
-          <p className="text-xs text-gray-400 mt-1">
-            Give this PIN to your bouncers. They go to{' '}
-            <span className="font-medium text-gray-600">tikkitte.com/scan</span>{' '}
-            to scan tickets at the door.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <input
-            type="tel"
-            inputMode="numeric"
-            maxLength={4}
-            readOnly
-            value={scannerPin}
-            placeholder="None"
-            className="w-24 text-center font-mono text-xl tracking-[0.3em] border border-gray-200 bg-gray-50 text-gray-900 rounded-lg px-3 py-2.5 outline-none placeholder:tracking-normal placeholder:text-base"
-          />
-          <button
-            type="button"
-            onClick={() => setScannerPin(String(Math.floor(1000 + Math.random() * 9000)))}
-            className="text-sm font-medium text-[#3d3d3d] border border-[#3d3d3d] rounded-lg px-4 py-2 hover:bg-gray-100 transition-colors"
-          >
-            {scannerPin ? 'Regenerate' : 'Generate PIN'}
-          </button>
-          {scannerPin && (
-            <button
-              type="button"
-              onClick={() => setScannerPin('')}
-              className="text-sm text-gray-400 hover:text-red-500 transition-colors"
-            >
-              Remove
-            </button>
-          )}
-          {pinDirty && (
-            <span role="status" className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">
-              This PIN change won’t take effect until you save.
-            </span>
-          )}
-        </div>
+      <div id="scanner" className="create-card scroll-mt-8 p-6">
+        {event?.id ? <ScannerAccess key={event.id} eventId={event.id} /> : <p className="text-sm text-gray-500">Save your event first, then generate a scanner code from its dashboard.</p>}
       </div>
 
       {/* Ticket types */}

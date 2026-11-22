@@ -64,11 +64,8 @@ export default async function OrganizerPage({ params }: { params: Promise<{ slug
   const supabase = await createClient()
 
   const { data: organizer } = await supabase
-    .from('organizer_profile')
-    .select('id, display_name, bio, logo_url, tiktok_url, instagram_url, snapchat_url')
-    .eq('slug', slug)
-    .eq('approved', true)
-    .maybeSingle()
+    .rpc('get_public_organizer', { p_slug: slug })
+    .maybeSingle<Organizer>()
 
   if (!organizer) notFound()
 

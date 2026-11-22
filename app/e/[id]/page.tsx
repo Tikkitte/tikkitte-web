@@ -81,10 +81,7 @@ async function fetchEventCore(idOrSlug: string) {
 
   const { data: organizer, error: organizerError } = event.organizer_id
     ? await supabase
-        .from('organizer_profile')
-        .select('id, slug, display_name, logo_url')
-        .eq('id', event.organizer_id)
-        .eq('approved', true)
+        .rpc('get_public_organizer', { p_id: event.organizer_id })
         .maybeSingle()
     : { data: null, error: null }
 

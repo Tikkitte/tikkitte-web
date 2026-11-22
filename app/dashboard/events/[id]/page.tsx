@@ -381,7 +381,7 @@ export default async function EventDetailPage({
               ['Transactions', allPayments.length.toLocaleString()],
               ['Checked in', `${totalCheckedIn}/${totalAdmissionsIssued}`],
             ].map(([label, value]) => <div key={label} className="create-card p-4"><p className="text-xs text-[var(--tikkitte-ink-faint)]">{label}</p><p className="create-display mt-1 text-[26px]">{value}</p></div>)}</div>
-            <CheckinStats eventId={id} totalSold={totalAdmissionsIssued} initialCheckedIn={totalCheckedIn} scannerPin={event.scanner_pin ?? null} doorsAt={formatTime(event.time)} />
+            <CheckinStats eventId={id} totalSold={totalAdmissionsIssued} initialCheckedIn={totalCheckedIn} doorsAt={formatTime(event.time)} />
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
               {ticketTable}
               <div className="space-y-4">{payoutPanel}<div className="create-card overflow-hidden"><div className="border-b border-[var(--tikkitte-cream-border)] px-5 py-4 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Marketing</div>{[['Message attendees', paidAttendees.length], ['Promo codes', `${activePromoCount ?? 0} active`], ['Tracking links', (trackingLinks ?? []).length], ['Comp tickets', `${(compTickets ?? []).reduce((sum, ticket) => sum + ticket.quantity, 0)} issued`]].map(([label, value]) => <div key={label} className="flex items-center justify-between border-b border-[var(--tikkitte-cream-border)] px-5 py-3 text-sm last:border-0"><span>{label}</span><span className="text-[var(--tikkitte-ink-faint)]">{value} ›</span></div>)}</div></div>

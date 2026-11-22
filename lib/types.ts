@@ -31,7 +31,8 @@ export type Event = {
   organizer_id: string | null
   preview_images: string[] | null
   preview_videos: string[] | null
-  scanner_pin: string | null
+  /** Legacy null-only column. Scanner credentials are private. */
+  scanner_pin: null
   published: boolean
   listed: boolean
   presale_max_per_email: number
