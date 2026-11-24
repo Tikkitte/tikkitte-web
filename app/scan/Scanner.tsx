@@ -14,14 +14,16 @@ type CachedTicket = {
   quantity: number
   table_code: string | null
   buyer_name: string | null
-  buyer_email: string | null
 }
 
 type SessionInfo = ScannerSession
 
+// What door staff see for a known ticket, whether it is valid or already used.
+type TicketDetails = { ticketType: string; quantity: number; tableCode: string | null; buyerName: string | null }
+
 type TicketScanResult =
-  | { status: 'success'; ticketType: string; quantity: number; tableCode: string | null; buyerDisplay: string | null }
-  | { status: 'already_used'; scannedAt: string | null; buyerDisplay: string | null }
+  | ({ status: 'success' } & TicketDetails)
+  | ({ status: 'already_used'; scannedAt: string | null } & TicketDetails)
   | { status: 'ticket_not_found' }
   | { status: 'wrong_event' }
   | { status: 'event_not_found' }
@@ -33,7 +35,7 @@ type ScanLogEntry = {
   id: string
   ts: number
   status: TicketScanResult['status']
-  buyerDisplay: string | null
+  title: string
   detail: string
 }
 
@@ -110,10 +112,18 @@ function playFeedbackTone(kind: 'success' | 'reject', ctx: AudioContext) {
   })
 }
 
-function buyerDisplayName(name: string | null | undefined, email: string | null | undefined) {
-  const trimmedName = name?.trim()
-  if (trimmedName) return trimmedName
-  return email?.trim() || null
+function ticketDetails(fields: { ticket_type?: string | null; quantity?: number | null; table_code?: string | null; buyer_name?: string | null }): TicketDetails {
+  return {
+    ticketType: fields.ticket_type?.trim() || 'Ticket',
+    quantity: fields.quantity ?? 1,
+    tableCode: fields.table_code ?? null,
+    buyerName: fields.buyer_name?.trim() || null,
+  }
+}
+
+function admitLine(t: TicketDetails) {
+  if (t.tableCode) return `Table ${t.tableCode} · Admit ${t.quantity} guests`
+  return t.quantity > 1 ? `×${t.quantity} tickets` : '×1 ticket'
 }
 
 function formatScannedAt(iso: string | null) {
@@ -131,34 +141,50 @@ function formatLogTime(ts: number) {
 
 const SCAN_LOG_LIMIT = 50
 
-function logEntryFromResult(r: TicketScanResult): ScanLogEntry {
-  const base = { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, ts: Date.now() }
+// One-line summary for the last-scan strip and the scan history.
+function scanSummary(r: TicketScanResult): { title: string; detail: string } {
   switch (r.status) {
     case 'success':
-      return {
-        ...base,
-        status: r.status,
-        buyerDisplay: r.buyerDisplay,
-        detail: r.tableCode
-          ? `Table ${r.tableCode} · Admit ${r.quantity} guests`
-          : `${r.ticketType} ×${r.quantity}`,
-      }
+      return { title: r.ticketType, detail: [r.buyerName, admitLine(r)].filter(Boolean).join(' · ') }
     case 'already_used':
       return {
-        ...base,
-        status: r.status,
-        buyerDisplay: r.buyerDisplay,
-        detail: `Already used${r.scannedAt ? ` · ${formatScannedAt(r.scannedAt)}` : ''}`,
+        title: r.ticketType,
+        detail: [`Already used${r.scannedAt ? ` at ${formatScannedAt(r.scannedAt)}` : ''}`, r.buyerName, admitLine(r)]
+          .filter(Boolean).join(' · '),
       }
     case 'ticket_not_found':
-      return { ...base, status: r.status, buyerDisplay: null, detail: 'Ticket not found' }
+      return { title: 'Not found', detail: 'Ticket not valid for this event' }
     case 'wrong_event':
-      return { ...base, status: r.status, buyerDisplay: null, detail: 'Wrong event' }
+      return { title: 'Wrong event', detail: 'This ticket is for a different event' }
     case 'event_not_found':
-      return { ...base, status: r.status, buyerDisplay: null, detail: 'Event not found' }
+      return { title: 'Error', detail: 'Event not found' }
     case 'error':
-      return { ...base, status: r.status, buyerDisplay: null, detail: r.message }
+      return { title: 'Error', detail: r.message }
   }
+}
+
+function logEntryFromResult(r: TicketScanResult): ScanLogEntry {
+  return { id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, ts: Date.now(), status: r.status, ...scanSummary(r) }
+}
+
+// Ticket type first, then the holder's name and what the ticket admits.
+// Valid and already used tickets show the same details.
+function TicketDetailLines({ details }: { details: TicketDetails }) {
+  return (
+    <>
+      <p className="text-xl font-semibold mb-1 truncate max-w-full" style={{ color: '#ECEDEE' }}>
+        {details.ticketType}
+      </p>
+      {details.buyerName && (
+        <p className="text-lg font-medium mb-1 truncate max-w-full" style={{ color: 'rgba(236,237,238,0.8)' }}>
+          {details.buyerName}
+        </p>
+      )}
+      <p className="text-sm" style={{ color: 'rgba(236,237,238,0.5)' }}>
+        {admitLine(details)}
+      </p>
+    </>
+  )
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -512,27 +538,16 @@ export default function Scanner() {
         quantity?: number
         table_code?: string | null
         buyer_name?: string | null
-        buyer_email?: string | null
         scanned_at?: string | null
       }
 
       if (res.ok) {
         markCacheUsed(currentSession.eventId, ticketId)
-        showResult({
-          status: 'success',
-          ticketType: res.ticket_type!,
-          quantity: res.quantity!,
-          tableCode: res.table_code ?? null,
-          buyerDisplay: buyerDisplayName(res.buyer_name, res.buyer_email),
-        })
+        showResult({ status: 'success', ...ticketDetails(res) })
       } else if (res.error === 'invalid_session') {
         invalidateSession('Scanner access expired or was disabled. Ask your organizer for a current code.')
       } else if (res.error === 'already_used') {
-        showResult({
-          status: 'already_used',
-          scannedAt: res.scanned_at ?? null,
-          buyerDisplay: buyerDisplayName(res.buyer_name, res.buyer_email),
-        })
+        showResult({ status: 'already_used', scannedAt: res.scanned_at ?? null, ...ticketDetails(res) })
       } else if (res.error === 'ticket_not_found') {
         showResult({ status: 'ticket_not_found' })
       } else if (res.error === 'wrong_event') {
@@ -557,23 +572,13 @@ export default function Scanner() {
       return
     }
     if (ticket.used) {
-      showResult({
-        status: 'already_used',
-        scannedAt: null,
-        buyerDisplay: buyerDisplayName(ticket.buyer_name, ticket.buyer_email),
-      })
+      showResult({ status: 'already_used', scannedAt: null, ...ticketDetails(ticket) })
       return
     }
 
     markCacheUsed(currentSession.eventId, ticketId)
     enqueue({ ticketId, eventId: currentSession.eventId, ts: Date.now() })
-    showResult({
-      status: 'success',
-      ticketType: ticket.ticket_type,
-      quantity: ticket.quantity,
-      tableCode: ticket.table_code ?? null,
-      buyerDisplay: buyerDisplayName(ticket.buyer_name, ticket.buyer_email),
-    })
+    showResult({ status: 'success', ...ticketDetails(ticket) })
   }
 
   function showResult(r: TicketScanResult) {
@@ -772,36 +777,13 @@ export default function Scanner() {
             />
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-widest mb-0.5" style={{ color: 'rgba(236,237,238,0.5)' }}>Last scan</p>
-              {lastResult.status === 'success' && (
-                <>
-                  <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
-                    {lastResult.buyerDisplay ?? 'Guest'}
-                  </p>
-                  <p className="text-xs truncate" style={{ color: 'rgba(236,237,238,0.65)' }}>
-                    {lastResult.tableCode
-                      ? `Table ${lastResult.tableCode} · Admit ${lastResult.quantity} guests`
-                      : `${lastResult.ticketType} ×${lastResult.quantity}`}
-                  </p>
-                </>
-              )}
-              {lastResult.status === 'already_used' && (
-                <>
-                  <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
-                    {lastResult.buyerDisplay ?? 'Guest'}
-                  </p>
-                  <p className="text-xs truncate" style={{ color: 'rgba(236,237,238,0.65)' }}>
-                    Already used{lastResult.scannedAt ? ` · ${formatScannedAt(lastResult.scannedAt)}` : ''}
-                  </p>
-                </>
-              )}
-              {lastResult.status === 'ticket_not_found' && (
-                <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Not found</p>
-              )}
-              {lastResult.status === 'wrong_event' && (
-                <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Wrong event</p>
-              )}
-              {(lastResult.status === 'event_not_found' || lastResult.status === 'error') && (
-                <p className="text-sm font-semibold" style={{ color: '#ECEDEE' }}>Error</p>
+              <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
+                {scanSummary(lastResult).title}
+              </p>
+              {scanSummary(lastResult).detail && (
+                <p className="text-xs truncate" style={{ color: 'rgba(236,237,238,0.65)' }}>
+                  {scanSummary(lastResult).detail}
+                </p>
               )}
             </div>
           </div>
@@ -829,17 +811,7 @@ export default function Scanner() {
                 </svg>
               </div>
               <p className="text-3xl font-bold mb-1" style={{ color: '#ECEDEE' }}>Valid</p>
-              <p className="text-xl font-semibold mb-1 truncate max-w-full" style={{ color: '#ECEDEE' }}>
-                {result.buyerDisplay ?? 'Guest'}
-              </p>
-              <p className="text-lg font-medium mb-1" style={{ color: 'rgba(236,237,238,0.8)' }}>
-                {result.tableCode ? `Table ${result.tableCode}` : result.ticketType}
-              </p>
-              <p className="text-sm" style={{ color: 'rgba(236,237,238,0.5)' }}>
-                {result.tableCode
-                  ? `Admit ${result.quantity} guests`
-                  : result.quantity > 1 ? `×${result.quantity} tickets` : '×1 ticket'}
-              </p>
+              <TicketDetailLines details={result} />
             </>
           )}
 
@@ -851,11 +823,9 @@ export default function Scanner() {
                 </svg>
               </div>
               <p className="text-3xl font-bold mb-1" style={{ color: '#ECEDEE' }}>Already scanned</p>
-              <p className="text-xl font-semibold mb-1 truncate max-w-full" style={{ color: '#ECEDEE' }}>
-                {result.buyerDisplay ?? 'Guest'}
-              </p>
+              <TicketDetailLines details={result} />
               {result.scannedAt && (
-                <p className="text-base" style={{ color: 'rgba(236,237,238,0.65)' }}>
+                <p className="text-base mt-2" style={{ color: 'rgba(236,237,238,0.65)' }}>
                   Used at {formatScannedAt(result.scannedAt)}
                 </p>
               )}
@@ -946,11 +916,9 @@ export default function Scanner() {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate" style={{ color: '#ECEDEE' }}>
-                          {entry.status === 'success' || entry.status === 'already_used'
-                            ? entry.buyerDisplay ?? 'Guest'
-                            : entry.detail}
+                          {entry.title}
                         </p>
-                        {(entry.status === 'success' || entry.status === 'already_used') && (
+                        {entry.detail && (
                           <p className="text-xs truncate" style={{ color: 'rgba(236,237,238,0.55)' }}>
                             {entry.detail}
                           </p>
