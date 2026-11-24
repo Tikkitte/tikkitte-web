@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { navItems } from './dashboardNavItems'
 
-export default function MobileTabBar() {
+export default function MobileTabBar({ approved = true }: { approved?: boolean }) {
   const pathname = usePathname()
 
   if (pathname === '/dashboard/events/new') return null
@@ -15,7 +15,7 @@ export default function MobileTabBar() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="Organizer dashboard"
     >
-      {navItems.map((item) => {
+      {navItems.filter(item => approved || item.href !== '/dashboard/audience').map((item) => {
         const active = item.match(pathname)
         return (
           <Link

@@ -112,7 +112,7 @@ export default function DashboardEventsClient({ events: allEvents, tickets, gros
                 type="button"
                 onClick={() => selectFilter(tab)}
                 aria-pressed={active}
-                className={`create-focus whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                className={`create-focus whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors sm:px-4 ${
                   active
                     ? 'bg-[#191917] text-white'
                     : 'text-[#8a887c] hover:text-[#191917]'

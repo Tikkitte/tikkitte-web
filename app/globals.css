@@ -82,6 +82,27 @@ body {
   outline: none;
 }
 
+/* iOS Safari draws date and time inputs natively and ignores box-sizing for
+   them, so width: 100% plus padding comes out 30px too wide and spills off
+   the screen. Without the native appearance they size like other inputs
+   (measured in the iOS 26 simulator). Desktop browsers render these the
+   same either way, so the rule applies everywhere. */
+input[type='date'],
+input[type='time'],
+input[type='datetime-local'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+input[type='date']::-webkit-date-and-time-value,
+input[type='time']::-webkit-date-and-time-value,
+input[type='datetime-local']::-webkit-date-and-time-value {
+  text-align: left;
+}
+
 .create-input:focus-visible,
 .create-input:focus-within {
   border-color: var(--tikkitte-blue-bright);

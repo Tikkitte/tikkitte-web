@@ -1,9 +1,10 @@
+import { getOrganizerContext } from '@/lib/organizer-context'
 import { isCancelledForOrganizer } from '@/lib/event-cancellation'
 import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment, Payout, PayoutAccount, TablePackage, EventOutstandingPayout } from '@/lib/types'
+import type { ComplimentaryTicket, Event, Ticket, TrackingLink, UserTicket, Payment, PaymentAttribution, Payout, PayoutAccount, TablePackage, EventOutstandingPayout } from '@/lib/types'
 import { TicketBarChart, RevenueBreakdown } from '@/components/dashboard/LazyTicketChart'
 import ShareLiveModal from './ShareLiveModal'
 import PromoCodeManager from './PromoCodeManager'
@@ -17,6 +18,8 @@ import TablePackageManager from './TablePackageManager'
 import EventWorkspace from './EventWorkspace'
 import { summarizeTrackingLinkSales } from '@/lib/tracking-link-sales'
 import { ticketRevenueCents } from '@/lib/revenue'
+import { fetchAllRows } from '@/lib/fetch-all-rows'
+import PublishButton from './PublishButton'
 
 function formatDate(dateStr: string | null | undefined) {
   if (!dateStr) return 'TBA'
@@ -94,6 +97,7 @@ export default async function EventDetailPage({
   const supabase = await createClient()
   const user = await getAuthedUser()
   if (!user) redirect('/login')
+  const isApproved = Boolean((await getOrganizerContext()).profile?.approved)
 
   const { data: event } = await supabase
     .from('event')
@@ -124,10 +128,13 @@ export default async function EventDetailPage({
       .select('*')
       .eq('event_id', id)
       .order('type'),
-    supabase
+    fetchAllRows<UserTicket>((from, to) => supabase
       .from('user_ticket')
       .select('*')
-      .eq('event_id', id),
+      .eq('event_id', id)
+      .order('created_at')
+      .order('id')
+      .range(from, to), (row) => row.id),
     supabase
       .from('complimentary_ticket')
       .select('*')
@@ -138,22 +145,31 @@ export default async function EventDetailPage({
       .select('*')
       .eq('event_id', id)
       .order('created_at', { ascending: false }),
-    supabase
+    fetchAllRows<Pick<PaymentAttribution, 'payment_reference' | 'tracking_link_id'>>((from, to) => supabase
       .from('payment_attribution')
       .select('payment_reference, tracking_link_id')
-      .eq('event_id', id),
-    supabase
+      .eq('event_id', id)
+      .order('created_at')
+      .order('payment_reference')
+      .range(from, to), (row) => row.payment_reference),
+    // Paged oldest paid first, so payments that succeed mid-load land on later
+    // pages; allPayments re-sorts newest first below.
+    fetchAllRows<Payment>((from, to) => supabase
       .from('payments')
       .select('*')
       .eq('event_id', id)
       .eq('status', 'success')
-      .order('paid_at', { ascending: false }),
-    supabase
+      .order('paid_at')
+      .order('id')
+      .range(from, to), (row) => row.id),
+    fetchAllRows<Payment>((from, to) => supabase
       .from('payments')
       .select('*')
       .eq('event_id', id)
       .eq('status', 'free')
-      .order('paid_at', { ascending: false }),
+      .order('paid_at')
+      .order('id')
+      .range(from, to), (row) => row.id),
     supabase
       .from('payout')
       .select('*')
@@ -337,7 +353,7 @@ export default async function EventDetailPage({
     </div>
   )
 
-  const payoutPanel = (
+  const payoutPanel = isApproved ? (
     <PayoutSummary
       cancelled={isCancelledForOrganizer(event)}
       eventId={id}
@@ -347,7 +363,7 @@ export default async function EventDetailPage({
       payoutAccount={(primaryPayoutAccount ?? null) as Pick<PayoutAccount, 'method' | 'provider' | 'account_number'> | null}
       payouts={(payouts ?? []) as Payout[]}
     />
-  )
+  ) : null
 
   return (
     <div>
@@ -366,11 +382,12 @@ export default async function EventDetailPage({
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#2565d0]">{formatEventDateRange(event)} · {event.venue ?? 'Venue TBA'}</p>
             <a href={eventUrl} className="create-focus truncate text-xs text-[var(--tikkitte-ink-faint)]" target="_blank" rel="noreferrer">{eventUrl.replace('https://', '')} ↗</a>
           </div>
-          {!isCancelledForOrganizer(event) && <Link href={`/dashboard/events/${id}/edit`} className="create-focus mt-3 inline-flex min-h-10 items-center rounded-full border border-[var(--tikkitte-cream-border)] px-5 text-sm font-semibold hover:border-[var(--tikkitte-ink)]">Edit event</Link>}
+          {!isCancelledForOrganizer(event) && <div className="mt-3 flex flex-wrap items-start gap-3"><Link href={`/dashboard/events/${id}/edit`} className="create-focus inline-flex min-h-11 items-center rounded-full border border-[var(--tikkitte-cream-border)] px-5 text-sm font-semibold hover:border-[var(--tikkitte-ink)]">Edit event</Link><PublishButton eventId={id} published={event.published} approved={isApproved} /></div>}
         </div>
       </header>
 
       <EventWorkspace
+        showPayout={isApproved}
         hasTables={event.floor_plan_venue != null}
         counts={{ tables: (tablePackages ?? []).length, marketing: (activePromoCount ?? 0) + (trackingLinks ?? []).length + (compTickets ?? []).length, attendees: totalAdmissionsIssued }}
         panels={{
@@ -381,7 +398,7 @@ export default async function EventDetailPage({
               ['Transactions', allPayments.length.toLocaleString()],
               ['Checked in', `${totalCheckedIn}/${totalAdmissionsIssued}`],
             ].map(([label, value]) => <div key={label} className="create-card p-4"><p className="text-xs text-[var(--tikkitte-ink-faint)]">{label}</p><p className="create-display mt-1 text-[26px]">{value}</p></div>)}</div>
-            <CheckinStats eventId={id} totalSold={totalAdmissionsIssued} initialCheckedIn={totalCheckedIn} doorsAt={formatTime(event.time)} />
+            {isApproved && <CheckinStats eventId={id} totalSold={totalAdmissionsIssued} initialCheckedIn={totalCheckedIn} doorsAt={formatTime(event.time)} />}
             <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
               {ticketTable}
               <div className="space-y-4">{payoutPanel}<div className="create-card overflow-hidden"><div className="border-b border-[var(--tikkitte-cream-border)] px-5 py-4 text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--tikkitte-ink-soft)]">Marketing</div>{[['Message attendees', paidAttendees.length], ['Promo codes', `${activePromoCount ?? 0} active`], ['Tracking links', (trackingLinks ?? []).length], ['Comp tickets', `${(compTickets ?? []).reduce((sum, ticket) => sum + ticket.quantity, 0)} issued`]].map(([label, value]) => <div key={label} className="flex items-center justify-between border-b border-[var(--tikkitte-cream-border)] px-5 py-3 text-sm last:border-0"><span>{label}</span><span className="text-[var(--tikkitte-ink-faint)]">{value} ›</span></div>)}</div></div>
@@ -406,9 +423,9 @@ export default async function EventDetailPage({
             </section>}
             <EventDetailTabs payments={formattedPayments} attendees={formattedAttendees} fixedTab="transactions" />
           </div>,
-          tables: event.floor_plan_venue ? <TablePackageManager eventId={id} venue={event.floor_plan_venue} initialPackages={(tablePackages ?? []) as TablePackage[]} initialLive={event.aria_tables_live} /> : null,
+          tables: !isApproved ? <p className="create-card p-6 text-sm text-gray-500">Table setup unlocks once your account is approved.</p> : event.floor_plan_venue ? <TablePackageManager eventId={id} venue={event.floor_plan_venue} initialPackages={(tablePackages ?? []) as TablePackage[]} initialLive={event.aria_tables_live} /> : null,
           payout: payoutPanel,
-          marketing: <div className="space-y-5"><div className="create-card p-5"><h2 className="create-display text-xl">Reach your audience</h2><p className="mb-4 mt-1 text-sm text-[var(--tikkitte-ink-soft)]">Message ticket holders or create campaign tools for this event.</p><MessageAttendeesButton eventId={id} lastAlertSentAt={event.last_alert_sent_at} attendeeCount={paidAttendees.length} /></div><PromoCodeManager eventId={id} tickets={ordinaryTickets} /><TrackingLinkManager salesByLink={linkSales?.byLink ?? null} eventId={id} eventSlug={event.slug ?? event.id} initialTrackingLinks={(trackingLinks ?? []) as TrackingLink[]} /><CompTicketManager eventId={id} tickets={ordinaryTickets} initialCompTickets={(compTickets ?? []) as ComplimentaryTicket[]} /></div>,
+          marketing: <div className="space-y-5">{isApproved && <div className="create-card p-5"><h2 className="create-display text-xl">Reach your audience</h2><p className="mb-4 mt-1 text-sm text-[var(--tikkitte-ink-soft)]">Message ticket holders or create campaign tools for this event.</p><MessageAttendeesButton eventId={id} lastAlertSentAt={event.last_alert_sent_at} attendeeCount={paidAttendees.length} /></div>}<PromoCodeManager eventId={id} tickets={ordinaryTickets} /><TrackingLinkManager salesByLink={linkSales?.byLink ?? null} eventId={id} eventSlug={event.slug ?? event.id} initialTrackingLinks={(trackingLinks ?? []) as TrackingLink[]} />{isApproved && <CompTicketManager eventId={id} tickets={ordinaryTickets} initialCompTickets={(compTickets ?? []) as ComplimentaryTicket[]} />}</div>,
           attendees: <EventDetailTabs payments={formattedPayments} attendees={formattedAttendees} fixedTab="attendees" />,
         }}
       />

@@ -169,8 +169,8 @@ export default function MobileEventWizard({ organizerId }: { organizerId: string
             <div className="mt-8 space-y-4">
               <label className="block"><span className="mb-2 block text-sm font-semibold">Event name</span><input autoFocus value={name} onChange={(event) => setName(event.target.value)} className={fieldClass} placeholder="e.g. Saturday Night Lights" /></label>
               <div className="grid grid-cols-2 gap-3">
-                <label><span className="mb-2 block text-sm font-semibold">Date</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} className={fieldClass} /></label>
-                <label><span className="mb-2 block text-sm font-semibold">Starts</span><input type="time" value={time} onChange={(event) => setTime(event.target.value)} className={fieldClass} /></label>
+                <label className="min-w-0"><span className="mb-2 block text-sm font-semibold">Date</span><input type="date" value={date} onChange={(event) => setDate(event.target.value)} className={fieldClass} /></label>
+                <label className="min-w-0"><span className="mb-2 block text-sm font-semibold">Starts</span><input type="time" value={time} onChange={(event) => setTime(event.target.value)} className={fieldClass} /></label>
               </div>
               <label className="block"><span className="mb-2 block text-sm font-semibold">Description <span className="font-normal text-[#89867c]">(optional)</span></span><textarea value={description} onChange={(event) => setDescription(event.target.value)} className={`${fieldClass} min-h-28 py-4`} placeholder="Tell people what to expect…" /></label>
               <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(event) => {
@@ -217,9 +217,7 @@ export default function MobileEventWizard({ organizerId }: { organizerId: string
           <section aria-labelledby="wizard-heading">
             <p className="text-sm font-semibold text-[#2766d2]">Open the doors</p>
             <h1 id="wizard-heading" className="create-display mt-2 text-5xl leading-[0.98] text-[#25251f]">Add your tickets.</h1>
-            <p className="mt-4 text-sm leading-6 text-[#77746b]">
-              This saves your event as a draft. <strong className="font-bold text-[#25251f]">You can fine-tune everything before publishing</strong>—including sale windows, order limits, preview media, scanner settings, and table packages.
-            </p>
+            <p className="mt-4 text-sm leading-6 text-[#77746b]">This saves a draft. You can change anything before you publish.</p>
             <div className="mt-7 space-y-4">
               {tickets.map((ticket, index) => (
                 <div key={index} className="rounded-[22px] border border-[#ded8c9] bg-white p-4">

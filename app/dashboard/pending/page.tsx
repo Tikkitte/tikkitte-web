@@ -1,7 +1,6 @@
 import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
-import RefreshButton from './RefreshButton'
 import CompleteOrganizerProfile from './CompleteOrganizerProfile'
 
 export default async function PendingPage() {
@@ -25,7 +24,7 @@ export default async function PendingPage() {
     throw new Error(`Failed to load organizer profile: ${profileError.message}`)
   }
 
-  if (profile?.approved) redirect('/dashboard')
+  if (profile) redirect('/dashboard')
 
   // No row at all is not "under review": admins cannot see this account yet.
   // Finish creating the profile here instead of dead-ending.
@@ -49,29 +48,7 @@ export default async function PendingPage() {
     )
   }
 
-  return (
-    <PendingShell>
-      <h1 className="text-2xl font-bold text-gray-900 mb-3">
-        Application under review
-      </h1>
-
-      <p className="text-gray-500 text-[15px] leading-relaxed mb-1">
-        We&apos;re reviewing your organizer request.
-      </p>
-      <p className="text-gray-500 text-[15px] leading-relaxed mb-1">
-        We&apos;ll notify you at
-      </p>
-      <p className="font-semibold text-gray-900 text-[15px] mb-6">
-        {user.email}
-      </p>
-
-      <p className="text-gray-400 text-sm mb-8">
-        This usually takes less than 24 hours.
-      </p>
-
-      <RefreshButton />
-    </PendingShell>
-  )
+  redirect('/dashboard')
 }
 
 function PendingShell({ children }: { children: React.ReactNode }) {

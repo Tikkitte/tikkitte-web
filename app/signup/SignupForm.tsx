@@ -97,12 +97,12 @@ export default function SignupForm() {
           disabled={loading}
           className="create-focus mt-1 min-h-12 w-full rounded-full bg-[#191917] py-3 font-semibold text-white transition-colors hover:bg-black disabled:opacity-60"
         >
-          {loading ? 'Submitting…' : 'Request access'}
+          {loading ? 'Submitting…' : 'Create account'}
         </button>
       </form>
 
       <p className="text-sm text-gray-500 mt-6">
-        Already approved?{' '}
+        Already have an account?{' '}
         <Link href="/login" className="create-focus font-medium text-[#2565d0] hover:underline">
           Sign in
         </Link>

@@ -30,6 +30,7 @@ type Props = {
   event?: Event
   tickets?: Ticket[]
   organizerId: string
+  organizerApproved?: boolean
   showPreview?: boolean
 }
 
@@ -62,8 +63,9 @@ const emptyTicketRow: TicketRow = {
 }
 
 function saveErrorMessage(message: string) {
+  if (message.includes('ERR_ORGANIZER_NOT_ACTIVE')) return 'Your account can’t manage events. Email admin@tikkitte.com.'
   if (message.includes('ERR_UNAUTHENTICATED')) return 'Your session has expired. Sign in and try again.'
-  if (message.includes('ERR_ORGANIZER_NOT_APPROVED')) return 'Your organizer account is not approved to manage events.'
+  if (message.includes('ERR_ORGANIZER_NOT_APPROVED')) return 'Publishing unlocks once your account is approved.'
   if (message.includes('ERR_EVENT_NOT_FOUND_OR_FORBIDDEN')) return 'This event was not found or you no longer have permission to edit it.'
   if (message.includes('ERR_EVENT_CHANGED_REFRESH')) return 'This event changed in another tab. Refresh before saving again.'
   if (message.includes('ERR_TICKET_NOT_FOUND_OR_FORBIDDEN')) return 'A ticket type changed in another tab. Refresh before saving again.'
@@ -158,7 +160,7 @@ function EventPreviewCard({
   )
 }
 
-export default function EventForm({ event, tickets, organizerId, showPreview = false }: Props) {
+export default function EventForm({ event, tickets, organizerId, showPreview = false, organizerApproved = true }: Props) {
   const router = useRouter()
   const isEdit = !!event
   const cancelledForOrganizer = event ? isCancelledForOrganizer(event) : false
@@ -770,7 +772,7 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
       </div>
 
       <div id="scanner" className="create-card scroll-mt-8 p-6">
-        {event?.id ? <ScannerAccess key={event.id} eventId={event.id} /> : <p className="text-sm text-gray-500">Save your event first, then generate a scanner code from its dashboard.</p>}
+        {!organizerApproved ? <p className="text-sm text-gray-500">Scanner access unlocks once your account is approved.</p> : event?.id ? <ScannerAccess key={event.id} eventId={event.id} /> : <p className="text-sm text-gray-500">Save your event first, then generate a scanner code from its dashboard.</p>}
       </div>
 
       {/* Ticket types */}
@@ -785,17 +787,20 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
         </div>
         {ticketRows.map((row, i) => (
           <div key={row.id ?? i} className="rounded-xl border border-gray-100 bg-gray-50/60 p-4">
-            <div className="flex gap-3 items-start">
-              <div className="flex-1">
+            {/* Phones: the name gets its own row, price and capacity share the next. */}
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-3 sm:grid-cols-[minmax(0,1fr)_7rem_7rem_auto]">
+              <label className="col-span-2 min-w-0 sm:col-span-1">
+                <span className="mb-1 block text-xs text-gray-500">Name</span>
                 <input
                   required
                   value={row.label}
                   onChange={e => updateTicketRow(i, 'label', e.target.value)}
                   className={inputClass}
-                  placeholder="Label (e.g. General, VIP)"
+                  placeholder="e.g. General, VIP"
                 />
-              </div>
-              <div className="w-28">
+              </label>
+              <label className="min-w-0">
+                <span className="mb-1 block text-xs text-gray-500">Price (GHS)</span>
                 <input
                   required
                   type="number"
@@ -804,47 +809,43 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
                   value={row.price}
                   onChange={e => updateTicketRow(i, 'price', e.target.value)}
                   className={inputClass}
-                  placeholder="Price"
+                  placeholder="0"
                 />
-              </div>
-              <div className="w-28">
+              </label>
+              <label className="min-w-0">
+                <span className="mb-1 block text-xs text-gray-500">Capacity</span>
                 <input
                   type="number"
                   min="0"
                   value={row.total_quantity}
                   onChange={e => updateTicketRow(i, 'total_quantity', e.target.value)}
                   className={inputClass}
-                  placeholder="Qty (∞)"
+                  placeholder="Unlimited"
                 />
-              </div>
-              {canRemoveTicketRow(row) ? (
-                <button
-                  type="button"
-                  onClick={() => removeTicketRow(i)}
-                  className="text-gray-400 hover:text-red-500 transition-colors pt-2.5 text-lg leading-none"
-                  aria-label={`Remove ${row.label || 'ticket type'}`}
-                >
-                  ×
-                </button>
-              ) : (
-                <span title="Saved ticket types cannot be removed after an event has been published.">
+              </label>
+              <div className="col-start-3 row-start-1 flex items-end sm:col-start-4">
+                {canRemoveTicketRow(row) ? (
                   <button
                     type="button"
-                    disabled
-                    className="text-gray-300 pt-2.5 text-lg leading-none cursor-not-allowed"
-                    aria-label={`${row.label || 'Ticket type'} cannot be removed`}
+                    onClick={() => removeTicketRow(i)}
+                    className="flex h-11 w-8 items-center justify-center text-lg leading-none text-gray-400 transition-colors hover:text-red-500"
+                    aria-label={`Remove ${row.label || 'ticket type'}`}
                   >
                     ×
                   </button>
-                </span>
-              )}
-            </div>
-
-            <div className="flex gap-2 text-xs text-gray-400 mt-2 px-1">
-              <span className="flex-1">Label</span>
-              <span className="w-28">Price (GHS)</span>
-              <span className="w-28">Capacity (blank = ∞)</span>
-              <span className="w-4" />
+                ) : (
+                  <span title="Saved ticket types cannot be removed after an event has been published.">
+                    <button
+                      type="button"
+                      disabled
+                      className="flex h-11 w-8 cursor-not-allowed items-center justify-center text-lg leading-none text-gray-300"
+                      aria-label={`${row.label || 'Ticket type'} cannot be removed`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="mt-3">
@@ -950,30 +951,17 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
       </div>
 
       {isEdit && !cancelledForOrganizer && (
-        <section id="status" className="create-card scroll-mt-8 overflow-hidden" aria-labelledby="status-title">
-          <div className="p-6">
-            <h2 id="status-title" className="font-semibold text-[#25251f]">Event status</h2>
-            <p className="mt-1 text-sm text-[#77746b]">Control when this event is visible and available to attendees.</p>
-            {isDirty && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">Save or discard your changes before changing the event status.</p>}
+        <section id="status" className="create-card scroll-mt-8 p-6" aria-labelledby="status-title">
+          {/* What publishing and cancelling mean is explained in their confirm dialogs. */}
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="status-title" className="font-semibold text-[#25251f]">Status</h2>
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${event.published ? 'bg-green-50 text-green-700' : 'bg-purple-50 text-purple-700'}`}>{event.published ? 'Live' : 'Draft'}</span>
           </div>
-
-          <fieldset disabled={isDirty} className="border-t border-[var(--tikkitte-cream-border)] disabled:opacity-50">
-            <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-              <div className="max-w-lg">
-                <h3 className="text-sm font-semibold text-[#25251f]">{event.published ? 'Published' : 'Draft'}</h3>
-                <p className="mt-1 text-sm leading-6 text-[#77746b]">
-                  {event.published ? 'Unpublishing hides the event page and pauses new checkouts.' : 'Publish when every detail is ready for attendees.'}
-                </p>
-                {!event.ever_published && <p className="mt-2 text-xs leading-5 text-[#626f84]">After publishing, saved ticket types cannot be removed. Their details and sale windows can still be edited.</p>}
-              </div>
-              <PublishButton eventId={event.id} published={event.published} />
-            </div>
-
-            <div className="flex flex-col gap-4 border-t border-red-100 bg-[#fff9f7] p-6 sm:flex-row sm:items-center sm:justify-between">
-              <div className="max-w-lg">
-                <h3 className="text-sm font-semibold text-[#8d211d]">Cancel event</h3>
-                <p className="mt-1 text-sm leading-6 text-[#735f5a]">Permanently cancel this event and begin refunds for ticket holders. This cannot be undone.</p>
-              </div>
+          <p className="mt-1 text-sm text-[#77746b]">{event.published ? 'Your event page is public.' : 'Not public yet.'}</p>
+          {isDirty && <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">Save or discard your changes first.</p>}
+          <fieldset disabled={isDirty} className="mt-4 disabled:opacity-50">
+            <PublishButton eventId={event.id} published={event.published} approved={organizerApproved} />
+            <div className="mt-5 border-t border-[var(--tikkitte-cream-border)] pt-2">
               <CancelButton eventId={event.id} />
             </div>
           </fieldset>
@@ -982,20 +970,14 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 
-      <div className={isEdit ? 'sticky bottom-3 z-20 flex items-center justify-between gap-3 rounded-[22px] border border-[#d8d2c4] bg-white/95 p-3 shadow-[0_12px_40px_rgba(38,37,31,0.14)] backdrop-blur' : 'flex gap-3'}>
+      <div className={isEdit ? 'sticky bottom-3 z-20 flex items-center gap-3 rounded-[22px] border border-[#d8d2c4] bg-white/95 p-2 shadow-[0_8px_28px_rgba(38,37,31,0.12)] backdrop-blur sm:p-3' : 'flex gap-3'}>
         {isEdit && (
           <p className="hidden pl-2 text-sm font-medium text-[#6d6a60] sm:block" role="status">
             {isDirty ? 'You have unsaved changes' : 'All changes saved'}
           </p>
         )}
-        <div className="ml-auto flex gap-2">
-          <button
-            type="submit"
-            disabled={saveDisabled || (isEdit && !isDirty)}
-            className="create-focus rounded-full bg-[#2766d2] px-7 py-3 font-semibold text-white transition-colors hover:bg-[#1f56b5] disabled:opacity-50"
-          >
-            {saveButtonLabel}
-          </button>
+        {/* On phones the two buttons fill the bar; on wider screens they sit on the right. */}
+        <div className="flex w-full gap-2 sm:ml-auto sm:w-auto">
           <button
             type="button"
             onClick={() => {
@@ -1005,9 +987,16 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
               }
               else router.back()
             }}
-            className="create-focus rounded-full px-5 py-3 font-medium text-[#666359] transition-colors hover:bg-[#eeeae0]"
+            className="create-focus flex-1 rounded-full border border-[#d8d2c4] px-5 py-3 font-medium text-[#666359] transition-colors hover:bg-[#eeeae0] sm:flex-none"
           >
             {isEdit && isDirty ? 'Discard' : 'Cancel'}
+          </button>
+          <button
+            type="submit"
+            disabled={saveDisabled || (isEdit && !isDirty)}
+            className="create-focus flex-[2] rounded-full bg-[#2766d2] px-7 py-3 font-semibold text-white transition-colors hover:bg-[#1f56b5] disabled:opacity-50 sm:flex-none"
+          >
+            {saveButtonLabel}
           </button>
         </div>
       </div>
@@ -1017,7 +1006,9 @@ export default function EventForm({ event, tickets, organizerId, showPreview = f
   if (!showPreview && isEdit) {
     const sections = cancelledForOrganizer ? EDIT_SECTIONS.filter(([id]) => id !== 'status') : EDIT_SECTIONS
     return (
-      <div className="grid items-start gap-8 lg:grid-cols-[180px_minmax(0,1fr)]">
+      // grid-cols-1 keeps the phone column at screen width; an implicit grid
+      // column grows to fit its content and pushed the cards off the screen.
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[180px_minmax(0,1fr)]">
         <nav className="sticky top-8 hidden rounded-[22px] border border-[#ded8c9] bg-white p-3 lg:block" aria-label="Event form sections">
           {sections.map(([id, label]) => (
             <a key={id} href={`#${id}`} aria-current={activeSection === id ? 'location' : undefined} className={`create-focus block rounded-full px-4 py-2.5 text-sm font-medium transition-colors ${activeSection === id ? 'bg-[#e4ecfb] text-[#245dbc]' : 'text-[#666359] hover:bg-[#eeeae0] hover:text-[#25251f]'}`}>

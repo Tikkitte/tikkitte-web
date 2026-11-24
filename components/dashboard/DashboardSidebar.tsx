@@ -8,6 +8,7 @@ import { navItems } from './dashboardNavItems'
 type Props = {
   displayName: string
   logoUrl: string | null
+  approved?: boolean
   signOutAction: () => Promise<void>
 }
 
@@ -17,7 +18,7 @@ function initialsFor(name: string) {
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('')
 }
 
-export default function DashboardSidebar({ displayName, logoUrl, signOutAction }: Props) {
+export default function DashboardSidebar({ displayName, logoUrl, signOutAction, approved = true }: Props) {
   const pathname = usePathname()
 
   return (
@@ -29,7 +30,7 @@ export default function DashboardSidebar({ displayName, logoUrl, signOutAction }
       </Link>
 
       <nav className="flex-1 space-y-2 px-4" aria-label="Organizer dashboard">
-        {navItems.map((item) => {
+        {navItems.filter(item => approved || item.href !== '/dashboard/audience').map((item) => {
           const active = item.match(pathname)
           return (
             <Link
@@ -49,6 +50,7 @@ export default function DashboardSidebar({ displayName, logoUrl, signOutAction }
       </nav>
 
       <div className="shrink-0 px-4 pb-6">
+        <a href="mailto:admin@tikkitte.com" className="mb-4 block px-2 text-xs text-[#a7a59a]">Need help? Email admin@tikkitte.com</a>
         <div className="border-t border-white/10 pt-4">
         <div className="flex items-center gap-2.5">
           {logoUrl ? (

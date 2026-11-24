@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { normalizeSocialLink } from '@/lib/organizer-application'
 
 type UpdateOrganizerProfileInput = {
   displayName: string
@@ -51,9 +52,6 @@ function parseInput(input: unknown): UpdateOrganizerProfileInput | null {
   }
 }
 
-const tiktokPattern = /^https:\/\/((www\.)?tiktok\.com\/@|vm\.tiktok\.com\/)/
-const instagramPattern = /^https:\/\/(www\.)?instagram\.com\//
-const snapchatPattern = /^https:\/\/(www\.)?snapchat\.com\/add\//
 const urlPattern = /^https?:\/\//
 
 export async function updateOrganizerProfile(
@@ -66,9 +64,10 @@ export async function updateOrganizerProfile(
 
   const displayName = parsed.displayName.trim()
   const bio = parsed.bio.trim()
-  const tiktokUrl = parsed.tiktokUrl.trim()
-  const instagramUrl = parsed.instagramUrl.trim()
-  const snapchatUrl = parsed.snapchatUrl.trim()
+  // The form sends handles; store full profile links.
+  const tiktokUrl = normalizeSocialLink('tiktok', parsed.tiktokUrl)
+  const instagramUrl = normalizeSocialLink('instagram', parsed.instagramUrl)
+  const snapchatUrl = normalizeSocialLink('snapchat', parsed.snapchatUrl)
 
   if (displayName.length < 1 || displayName.length > 80) {
     return { ok: false, message: 'Display name must be between 1 and 80 characters.' }
@@ -77,14 +76,14 @@ export async function updateOrganizerProfile(
   if (bio.length > 500) {
     return { ok: false, message: 'Bio must be 500 characters or fewer.' }
   }
-  if (tiktokUrl && !tiktokPattern.test(tiktokUrl)) {
-    return { ok: false, message: 'Enter a valid TikTok profile URL.' }
+  if (tiktokUrl === null) {
+    return { ok: false, message: 'Enter a valid TikTok username.' }
   }
-  if (instagramUrl && !instagramPattern.test(instagramUrl)) {
-    return { ok: false, message: 'Enter a valid Instagram profile URL.' }
+  if (instagramUrl === null) {
+    return { ok: false, message: 'Enter a valid Instagram username.' }
   }
-  if (snapchatUrl && !snapchatPattern.test(snapchatUrl)) {
-    return { ok: false, message: 'Enter a valid Snapchat add URL.' }
+  if (snapchatUrl === null) {
+    return { ok: false, message: 'Enter a valid Snapchat username.' }
   }
   if (typeof parsed.logoUrl === 'string' && !urlPattern.test(parsed.logoUrl)) {
     return { ok: false, message: 'Profile photo URL is invalid.' }

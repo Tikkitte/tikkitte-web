@@ -66,7 +66,7 @@ function VerifyForm() {
     }
 
     setLoading(false)
-    router.push('/dashboard')
+    router.push('/dashboard/welcome')
     router.refresh()
   }, [email, router])
 

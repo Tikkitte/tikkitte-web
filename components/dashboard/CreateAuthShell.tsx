@@ -4,7 +4,7 @@ import Link from 'next/link'
 type Props = {
   children: React.ReactNode
   heading: string
-  description: string
+  description?: string
 }
 
 export default function CreateAuthShell({ children, heading, description }: Props) {
@@ -38,8 +38,8 @@ export default function CreateAuthShell({ children, heading, description }: Prop
           <span className="rounded-full bg-[#2e6fe6] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-white">Create</span>
         </Link>
         <div className="w-full max-w-[380px] rounded-3xl bg-white p-7 shadow-[0_18px_44px_rgba(25,25,23,0.1)] sm:p-9">
-          <h1 className="create-display text-[26px]">{heading}</h1>
-          <p className="mb-7 mt-2 text-sm text-[var(--tikkitte-ink-soft)]">{description}</p>
+          <h1 className={`create-display text-[26px]${description ? '' : ' mb-7'}`}>{heading}</h1>
+          {description && <p className="mb-7 mt-2 text-sm text-[var(--tikkitte-ink-soft)]">{description}</p>}
           {children}
         </div>
       </section>

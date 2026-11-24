@@ -1,5 +1,6 @@
 import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getOrganizerContext } from '@/lib/organizer-context'
 import AudienceHeader from './AudienceHeader'
 import FansClient, { type AudienceResponse } from './FansClient'
 
@@ -7,6 +8,7 @@ export default async function AudiencePage() {
   const supabase = await createClient()
   const user = await getAuthedUser()
   if (!user) redirect('/login')
+  if (!(await getOrganizerContext()).profile?.approved) redirect('/dashboard')
 
   const { data: audience, error } = await supabase.rpc('get_organizer_audience', {
     p_page: 1,

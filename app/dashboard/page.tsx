@@ -1,8 +1,11 @@
 import { isCancelledForOrganizer } from '@/lib/event-cancellation'
-import { createClient, getAuthedUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { Event, Ticket } from '@/lib/types'
+import { getOrganizerContext } from '@/lib/organizer-context'
+import OrganizerIntro from '@/components/dashboard/OrganizerIntro'
+import LaunchChecklist from '@/components/dashboard/LaunchChecklist'
 import DashboardRevenueChart from '@/components/dashboard/LazyDashboardRevenueChart'
 import { ticketRevenueCents } from '@/lib/revenue'
 
@@ -24,38 +27,24 @@ function initials(value: string) {
   return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'TK'
 }
 
-export default async function DashboardHomePage() {
+export default async function DashboardHomePage({ searchParams }: { searchParams: Promise<{ intro?: string | string[] }> }) {
   const supabase = await createClient()
-  const user = await getAuthedUser()
+  const { user, profile } = await getOrganizerContext()
   if (!user) redirect('/login')
-
-  const [
-    { data: profile },
-    { data: rawEvents },
-    { data: outstandingPayoutTotal, error: outstandingPayoutTotalError },
-    { data: primaryAccount },
-  ] = await Promise.all([
-    supabase
-      .from('organizer_profile')
-      .select('display_name')
-      .eq('id', user.id)
-      .maybeSingle(),
-    supabase
-      .from('event')
-      .select('*')
-      .eq('organizer_id', user.id),
-    supabase.rpc('get_organizer_outstanding_payout_total', { p_organizer_id: user.id }),
-    supabase
-      .from('payout_account')
-      .select('provider, account_number')
-      .eq('organizer_id', user.id)
-      .eq('is_primary', true)
-      .maybeSingle(),
+  if (!profile) redirect('/dashboard/pending')
+  const intro = (await searchParams).intro === '1' ? <OrganizerIntro approved={profile.approved} /> : null
+  const [{ data: rawEvents, error: eventsError }, { data: primaryAccount, error: accountError }] = await Promise.all([
+    supabase.from('event').select('*').eq('organizer_id', user.id),
+    supabase.from('payout_account').select('id, provider, account_number').eq('organizer_id', user.id)
+      .order('is_primary', { ascending: false }).limit(1).maybeSingle(),
   ])
-
-  if (outstandingPayoutTotalError) {
-    throw new Error('Unable to load the outstanding payout total.')
+  if (eventsError || accountError) throw new Error('Unable to load organizer launch progress.')
+  if (!(rawEvents ?? []).some(event => event.ever_published)) {
+    const newestDraft = [...(rawEvents ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
+    return <>{intro}<LaunchChecklist name={profile.display_name ?? 'there'} profileComplete={Boolean(profile.logo_url && profile.bio?.trim())} hasInstagram={Boolean(profile.instagram_url)} eventId={newestDraft?.id} hasPayout={Boolean(primaryAccount)} approved={profile.approved} /></>
   }
+  const { data: outstandingPayoutTotal, error: outstandingPayoutTotalError } = await supabase.rpc('get_organizer_outstanding_payout_total', { p_organizer_id: user.id })
+  if (outstandingPayoutTotalError) throw new Error('Unable to load the outstanding payout total.')
 
   const account = primaryAccount as { provider: string; account_number: string } | null
   const events = (rawEvents ?? []) as Event[]
@@ -103,6 +92,8 @@ export default async function DashboardHomePage() {
   }, 0)
 
   return (
+    <>
+      {intro}
     <div className="space-y-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -190,5 +181,6 @@ export default async function DashboardHomePage() {
         )}
       </section>
     </div>
+    </>
   )
 }

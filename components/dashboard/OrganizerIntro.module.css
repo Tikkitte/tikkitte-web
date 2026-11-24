@@ -1,0 +1,50 @@
+.dialog { border:0; padding:0; margin:0; width:100vw; max-width:none; height:100dvh; max-height:100dvh; background:var(--tikkitte-cream); color:var(--tikkitte-ink); overflow:hidden; }
+/* Dark enough that the white "Skip intro" above the card stays at 4.5:1 or better over any page. */
+.dialog::backdrop { background:rgba(25,25,23,.65); }
+.shell { display:flex; flex-direction:column; height:100%; }
+.header { height:68px; flex-shrink:0; padding:8px 16px 0 20px; display:flex; align-items:center; justify-content:space-between; }
+.logo { width:40px; height:auto; }
+.skip { min-height:44px; border:0; padding:0 8px; background:none; font:700 15px var(--tikkitte-font-body); color:var(--tikkitte-ink-soft); cursor:pointer; }
+.skip:focus-visible,.dotButton:focus-visible { outline:2px solid var(--tikkitte-blue); outline-offset:3px; border-radius:8px; }
+.desktopOnly { display:none; }
+.card { background:transparent; border-radius:0 !important; box-shadow:none !important; flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+.content { padding:0 16px; overflow:auto; min-height:0; flex:1; }
+.picture { height:330px; flex-shrink:0; background:var(--tikkitte-blue-tint-soft); border-radius:24px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.text { padding:22px 4px 8px; }
+.title { margin:10px 0; font:400 40px/1 var(--tikkitte-font-display); text-transform:uppercase; }
+.body { margin:0; font-size:15px; line-height:1.5; color:var(--tikkitte-ink-soft); }
+.bullets { list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.bullets li { display:flex; gap:10px; align-items:flex-start; font-size:14px; line-height:1.45; }
+.check { flex-shrink:0; margin-top:1px; }
+.approvalNote { color:var(--tikkitte-ink-soft); }
+.footer { padding:12px 20px max(24px,env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:16px; flex-shrink:0; }
+.dots { display:flex; align-items:center; justify-content:center; gap:8px; }
+.dot { display:block; width:8px; height:8px; border-radius:99px; background:#c9c6ba; }
+.activeDot { background:#2565d0; width:22px; }
+.dotButton { display:none; }
+.buttons { display:flex; align-items:center; justify-content:flex-end; gap:10px; }
+.buttons > :last-child { flex:1; }
+@media(max-width:350px) { .picture > div { transform:scale(.9); } }
+@media(min-width:640px) {
+  .dialog { margin:auto; width:calc(100vw - 48px); max-width:1040px; height:fit-content; max-height:calc(100dvh - 48px); background:transparent; overflow:auto; }
+  .shell { height:auto; }
+  .header { height:44px; padding:0; margin-bottom:20px; }
+  .logo { width:48px; }
+  .skip { color:#fff; }
+  .desktopOnly { display:inline; }
+  .phoneOnly { display:none; }
+  /* No shadow: the scrolling dialog would clip it, and the backdrop already sets the card apart. */
+  .card { background:var(--tikkitte-white); border-radius:var(--tikkitte-radius-card-lg) !important; overflow:visible; }
+  .content { padding:24px 24px 0; display:flex; flex-direction:row-reverse; flex-wrap:wrap; gap:32px; overflow:visible; }
+  .picture { flex:1 1 420px; min-width:0; min-height:420px; height:auto; border-radius:18px; }
+  .picture > div { transform:scale(1.2); }
+  .text { flex:1 1 320px; min-width:0; padding:16px 8px; display:flex; flex-direction:column; justify-content:center; }
+  .title { margin:14px 0; font-size:56px; line-height:.98; }
+  .body { font-size:17px; line-height:1.55; }
+  .bullets { margin-top:20px; gap:10px; }
+  .bullets li { font-size:15px; }
+  .footer { flex-direction:row; align-items:center; justify-content:space-between; padding:20px 24px 24px; }
+  .dots { gap:0; }
+  .dotButton { display:flex; align-items:center; justify-content:center; width:32px; height:32px; padding:0; border:0; background:none; cursor:pointer; }
+  .buttons > :last-child { flex:none; }
+}

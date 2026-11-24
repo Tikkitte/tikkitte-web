@@ -1,30 +1,14 @@
-import { createClient, getAuthedUser } from '@/lib/supabase/server'
+import { getOrganizerContext } from '@/lib/organizer-context'
+import ReviewBanner from '@/components/dashboard/ReviewBanner'
 import { redirect } from 'next/navigation'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
 import MobileTabBar from '@/components/dashboard/MobileTabBar'
 import { signOut } from '@/lib/auth-actions'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const user = await getAuthedUser()
+  const { user, profile, application } = await getOrganizerContext()
   if (!user) redirect('/login')
-
-  const { data: profile, error: profileError } = await supabase
-    .from('organizer_profile')
-    .select('display_name, approved, logo_url')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  // A query error here means something went wrong reading the profile, not
-  // that the organizer is unapproved — don't show the pending screen for it.
-  if (profileError) {
-    throw new Error(`Failed to load organizer profile: ${profileError.message}`)
-  }
-
-  // Unapproved organizers see the pending page without the dashboard shell
-  if (!profile?.approved) {
-    return <>{children}</>
-  }
+  if (!profile || profile.review_status === 'declined' || (!profile.approved && !application)) return <>{children}</>
 
   return (
     <div className="create-shell flex h-dvh overflow-hidden bg-[var(--tikkitte-cream)]">
@@ -32,14 +16,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
         displayName={profile.display_name ?? user.email ?? 'Organizer'}
         logoUrl={profile.logo_url ?? null}
         signOutAction={signOut}
+        approved={profile.approved}
       />
       <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-8 pt-[max(24px,env(safe-area-inset-top))] md:px-8 md:py-8 lg:px-10">
           <div className="mx-auto w-full max-w-[1220px]">
+            {!profile.approved && <ReviewBanner needsInfo={profile.review_status === 'needs_info'} contact={application?.preferred_contact} />}
             {children}
           </div>
         </main>
-        <MobileTabBar />
+        <MobileTabBar approved={profile.approved} />
       </div>
     </div>
   )

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 export type EventWorkspaceTab = 'overview' | 'tickets' | 'tables' | 'payout' | 'marketing' | 'attendees'
 
 type Props = {
+  showPayout?: boolean
   hasTables: boolean
   counts: Partial<Record<EventWorkspaceTab, number>>
   panels: Record<EventWorkspaceTab, React.ReactNode>
@@ -25,8 +26,8 @@ function tabFromLocation(validTabs: EventWorkspaceTab[]): EventWorkspaceTab {
   return candidate && validTabs.includes(candidate) ? candidate : 'overview'
 }
 
-export default function EventWorkspace({ hasTables, counts, panels }: Props) {
-  const tabs = useMemo(() => baseTabs.filter((tab) => hasTables || tab.id !== 'tables'), [hasTables])
+export default function EventWorkspace({ hasTables, counts, panels, showPayout = true }: Props) {
+  const tabs = useMemo(() => baseTabs.filter((tab) => (hasTables || tab.id !== 'tables') && (showPayout || tab.id !== 'payout')), [hasTables, showPayout])
   const validTabs = useMemo(() => tabs.map((tab) => tab.id), [tabs])
   const [activeTab, setActiveTab] = useState<EventWorkspaceTab>('overview')
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])

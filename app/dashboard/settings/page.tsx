@@ -42,7 +42,7 @@ export default async function SettingsPage() {
           snapchatUrl={profile?.snapchat_url ?? ''}
         />
         <div className="space-y-6 lg:sticky lg:top-8">
-          <PayoutAccountsSection accounts={(payoutAccounts ?? []) as PayoutAccount[]} />
+          <div id="payout-account"><PayoutAccountsSection accounts={(payoutAccounts ?? []) as PayoutAccount[]} /></div>
           <div className="create-card p-5">
             <h2 className="text-sm font-semibold text-gray-900 mb-1">Account</h2>
             <p className="text-xs text-gray-400 mb-4">{user.email}</p>

@@ -110,7 +110,7 @@ export default function HowItWorks() {
                 }}
                 className="m-0"
               >
-                Request access
+                Create your account
               </h3>
               <p
                 style={{
@@ -120,8 +120,7 @@ export default function HowItWorks() {
                 }}
                 className="m-0"
               >
-                Sign up as an organizer. We review and approve you within 24
-                hours.
+                Sign up and prepare your first event. We review new accounts within 24 to 48 hours.
               </p>
             </li>
 

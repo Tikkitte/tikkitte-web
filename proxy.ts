@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { organizerRedirect } from '@/lib/organizer-access'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const AUTH_GATED_EXACT_PATHS = ['/login', '/signup']
@@ -74,14 +75,14 @@ export async function proxy(request: NextRequest) {
 
   // Protect /dashboard routes
   if (effectivePathname.startsWith('/dashboard')) {
-    if (!user) {
+    if (!user || user.is_anonymous) {
       return redirectWithRefreshedCookies(new URL('/login', request.url))
     }
 
     // Check organizer is approved
     const { data: profile, error: profileError } = await supabase
       .from('organizer_profile')
-      .select('approved')
+      .select('approved, review_status, organizer_application(organizer_id)')
       .eq('id', user.id)
       .maybeSingle()
 
@@ -98,9 +99,10 @@ export async function proxy(request: NextRequest) {
       return errorResponse
     }
 
-    if (!profile?.approved && !pathname.startsWith('/dashboard/pending')) {
-      return redirectWithRefreshedCookies(new URL('/dashboard/pending', request.url))
-    }
+    const application = profile?.organizer_application
+    const hasApplication = Array.isArray(application) ? application.length > 0 : Boolean(application)
+    const destination = organizerRedirect(effectivePathname, { signedIn: true, profile, hasApplication })
+    if (destination) return redirectWithRefreshedCookies(new URL(destination, request.url))
   }
 
   // Redirect approved organizers away from login/signup. This is a

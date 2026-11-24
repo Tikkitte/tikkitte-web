@@ -1,0 +1,43 @@
+.drawing { width:300px; display:flex; flex-direction:column; gap:10px; color:#191917; font-family:var(--tikkitte-font-body); --tikkitte-white:#fff; --tikkitte-cream-border:#e7e2d4; --tikkitte-ink:#191917; --tikkitte-ink-faint:#5f5d54; }
+.row { display:flex; gap:10px; }
+.box { min-width:0; padding:10px 12px; border:1px solid #e7e2d4; border-radius:14px; background:#fff; }
+.column { display:flex; flex-direction:column; gap:8px; flex:1; min-width:0; }
+.between { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.label { color:#5f5d54; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.small { color:#5f5d54; font-size:10.5px; line-height:1.35; }
+.name { font-size:12.5px; font-weight:700; }
+.poster { width:104px; flex-shrink:0; border-radius:14px; padding:12px 10px; background:#191917; color:#f4f2ec; display:flex; flex-direction:column; justify-content:space-between; }
+.posterTitle { font:400 24px/.95 var(--tikkitte-font-display); text-transform:uppercase; }
+.posterVolume { margin-bottom:5px; font:400 16px/1 var(--tikkitte-font-display); color:#8fb2f2; text-transform:uppercase; }
+.posterDate { color:#c9c6ba; font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.ticket { display:flex; justify-content:space-between; gap:6px; border-bottom:1px solid #eeeae0; padding-bottom:7px; }
+.ticket:last-of-type { border:0; padding:0; }
+.ticketInfo { display:flex; flex-direction:column; gap:1px; }
+.add { color:#2565d0; font-size:11.5px; font-weight:700; }
+.switch { width:36px; height:20px; border-radius:99px; background:#2565d0; flex-shrink:0; position:relative; }
+.switch::after { content:''; position:absolute; right:2px; top:2px; width:16px; height:16px; border-radius:99px; background:white; }
+.live { display:flex; align-items:center; gap:5px; color:#17663f; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.live::before { content:''; width:6px; height:6px; border-radius:99px; background:#17663f; }
+.link { padding:8px 10px; border-radius:10px; background:#f4f2ec; font-size:12px; font-weight:500; }
+.pill { flex:1; padding:8px 10px; border-radius:99px; background:#191917; color:white; text-align:center; font-size:12px; font-weight:700; white-space:nowrap; }
+.outlinePill { composes:pill; background:#fff; color:#191917; border:1.5px solid #e7e2d4; padding:6.5px 10px; }
+.promo { font-size:11.5px; font-weight:700; letter-spacing:.06em; padding:4px 8px; border-radius:8px; background:#d9e4fa; color:#1e56b5; }
+.trackingName { width:82px; font-size:12px; font-weight:700; flex-shrink:0; }
+.bar { flex:1; height:8px; border-radius:99px; background:#eeeae0; overflow:hidden; }
+.fill { height:100%; border-radius:99px; background:#2565d0; }
+.sold { width:50px; font-size:12px; font-weight:700; text-align:right; }
+.phone { width:132px; height:240px; flex-shrink:0; display:flex; flex-direction:column; gap:8px; padding:10px; border-radius:22px; background:#191917; }
+.camera { flex:1; display:flex; align-items:center; justify-content:center; border-radius:14px; background:#2b2b28; }
+.valid { display:flex; flex-direction:column; gap:1px; border-radius:10px; background:#17663f; padding:7px 9px; color:#fff; font-size:12px; font-weight:700; }
+.validDetail { font-size:10px; font-weight:400; color:#dcefe4; }
+.checkin { display:flex; align-items:baseline; gap:5px; }
+.number { font:400 26px/1 var(--tikkitte-font-display); }
+.stats { display:flex; gap:10px; }
+.stat { flex:1; min-width:0; padding:12px !important; border-radius:14px !important; }
+.stat :global(.tk-stat-tile__label) { font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+.stat :global(.tk-stat-tile__value) { font-size:26px; }
+.chart { display:flex; align-items:flex-end; gap:8px; height:44px; }
+.chartBar { flex:1; border-radius:4px 4px 2px 2px; background:#bcd2f7; }
+.days { display:flex; gap:8px; font-size:10px; color:#5f5d54; }
+.days span { flex:1; text-align:center; }
+.payout { font:400 24px/1.05 var(--tikkitte-font-display); }

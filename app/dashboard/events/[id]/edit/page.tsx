@@ -1,3 +1,4 @@
+import { getOrganizerContext } from '@/lib/organizer-context'
 import { createClient, getAuthedUser } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import EventForm from '@/components/dashboard/EventForm'
@@ -7,6 +8,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   const supabase = await createClient()
   const user = await getAuthedUser()
   if (!user) redirect('/login')
+  const organizerApproved = Boolean((await getOrganizerContext()).profile?.approved)
 
   const { data: event } = await supabase
     .from('event')
@@ -31,7 +33,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
         <h1 className="create-display mt-1 text-4xl text-[#25251f] sm:text-5xl">Edit event</h1>
         <p className="mt-2 max-w-2xl truncate text-sm text-[#77746b]">{event.name}</p>
       </div>
-      <EventForm event={event} tickets={tickets ?? []} organizerId={user.id} />
+      <EventForm event={event} tickets={tickets ?? []} organizerId={user.id} organizerApproved={organizerApproved} />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { type ChangeEvent, type FormEvent, useRef, useState, useTransition } from 'react'
 import { updateOrganizerProfile } from './actions'
+import { normalizeSocialLink, socialHandle } from '@/lib/organizer-application'
 
 type Props = {
   organizerId: string
@@ -53,25 +54,15 @@ function SnapchatIcon({ className }: { className?: string }) {
   )
 }
 
-const tiktokPattern = /^https:\/\/((www\.)?tiktok\.com\/@|vm\.tiktok\.com\/)/
-const instagramPattern = /^https:\/\/(www\.)?instagram\.com\//
-const snapchatPattern = /^https:\/\/(www\.)?snapchat\.com\/add\//
-
 function getSocialErrors(values: {
   tiktokUrl: string
   instagramUrl: string
   snapchatUrl: string
 }): SocialErrors {
   const errors: SocialErrors = {}
-  if (values.tiktokUrl.trim() && !tiktokPattern.test(values.tiktokUrl.trim())) {
-    errors.tiktokUrl = 'Use a TikTok profile URL such as https://tiktok.com/@handle.'
-  }
-  if (values.instagramUrl.trim() && !instagramPattern.test(values.instagramUrl.trim())) {
-    errors.instagramUrl = 'Use an Instagram URL such as https://instagram.com/handle.'
-  }
-  if (values.snapchatUrl.trim() && !snapchatPattern.test(values.snapchatUrl.trim())) {
-    errors.snapchatUrl = 'Use a Snapchat add URL such as https://snapchat.com/add/handle.'
-  }
+  if (normalizeSocialLink('tiktok', values.tiktokUrl) === null) errors.tiktokUrl = 'Enter your TikTok username, like @yourname.'
+  if (normalizeSocialLink('instagram', values.instagramUrl) === null) errors.instagramUrl = 'Enter your Instagram username, like @yourname.'
+  if (normalizeSocialLink('snapchat', values.snapchatUrl) === null) errors.snapchatUrl = 'Enter your Snapchat username, like @yourname.'
   return errors
 }
 
@@ -90,9 +81,9 @@ export default function OrganizerProfileForm({
   const [name, setName] = useState(displayName)
   const [bioValue, setBioValue] = useState(bio)
   const [logoUrlValue, setLogoUrlValue] = useState<string | null>(logoUrl)
-  const [tiktokUrlValue, setTiktokUrlValue] = useState(tiktokUrl)
-  const [instagramUrlValue, setInstagramUrlValue] = useState(instagramUrl)
-  const [snapchatUrlValue, setSnapchatUrlValue] = useState(snapchatUrl)
+  const [tiktokUrlValue, setTiktokUrlValue] = useState(socialHandle('tiktok', tiktokUrl))
+  const [instagramUrlValue, setInstagramUrlValue] = useState(socialHandle('instagram', instagramUrl))
+  const [snapchatUrlValue, setSnapchatUrlValue] = useState(socialHandle('snapchat', snapchatUrl))
   const [socialErrors, setSocialErrors] = useState<SocialErrors>({})
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -107,7 +98,7 @@ export default function OrganizerProfileForm({
     })
     setSocialErrors(nextSocialErrors)
     if (Object.keys(nextSocialErrors).length > 0) {
-      setError('Fix the social link URLs before saving.')
+      setError('Fix the social links before saving.')
       return false
     }
     return true
@@ -156,10 +147,10 @@ export default function OrganizerProfileForm({
     setPhotoUploading(true)
     const supabase = createClient()
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-    const path = `avatars/${organizerId}/avatar.${ext}`
+    const path = `avatars/${organizerId}/${crypto.randomUUID()}.${ext}`
     const { error: uploadError } = await supabase.storage
       .from('event-images')
-      .upload(path, file, { contentType: file.type, upsert: true })
+      .upload(path, file, { contentType: file.type, upsert: false })
 
     if (uploadError) {
       setError('Upload failed. Try again.')
@@ -294,7 +285,10 @@ export default function OrganizerProfileForm({
                       setSocialErrors((current) => ({ ...current, tiktokUrl: undefined }))
                     }}
                     className={socialInputClass}
-                    placeholder="https://tiktok.com/@handle"
+                    placeholder="@yourhandle"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                   />
                 </div>
                 {socialErrors.tiktokUrl && <p className="mt-1 text-xs text-red-500">{socialErrors.tiktokUrl}</p>}
@@ -314,7 +308,10 @@ export default function OrganizerProfileForm({
                       setSocialErrors((current) => ({ ...current, instagramUrl: undefined }))
                     }}
                     className={socialInputClass}
-                    placeholder="https://instagram.com/handle"
+                    placeholder="@yourhandle"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                   />
                 </div>
                 {socialErrors.instagramUrl && <p className="mt-1 text-xs text-red-500">{socialErrors.instagramUrl}</p>}
@@ -334,7 +331,10 @@ export default function OrganizerProfileForm({
                       setSocialErrors((current) => ({ ...current, snapchatUrl: undefined }))
                     }}
                     className={socialInputClass}
-                    placeholder="https://snapchat.com/add/handle"
+                    placeholder="@yourhandle"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                   />
                 </div>
                 {socialErrors.snapchatUrl && <p className="mt-1 text-xs text-red-500">{socialErrors.snapchatUrl}</p>}

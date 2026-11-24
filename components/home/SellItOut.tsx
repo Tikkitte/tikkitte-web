@@ -37,8 +37,7 @@ export default function SellItOut() {
           }}
           className="m-0"
         >
-          List your event for free. We&apos;ll review and approve you within 24
-          hours.
+          Create your organizer account and prepare your first event. We’ll review your account and get in touch within 24 to 48 hours.
         </p>
         <div
           className="tkh-cta-row flex-wrap"
