@@ -110,6 +110,11 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    // Local dev serves images from the local Supabase stack
+    // (https://<mac>.local:54443), which is neither the production host below
+    // nor a public address, and Next 16 refuses to optimize private-network
+    // images. Load them directly in dev; production builds are unaffected.
+    unoptimized: isDev,
     qualities: [20, 75, 90],
     remotePatterns: [
       {

@@ -1,10 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-
-function extractYouTubeId(url: string): string | null {
-  return url.match(/(?:watch\?v=|embed\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] ?? null
-}
+import { extractYouTubeId } from '@/lib/youtube'
 
 type Item =
   | { type: 'image'; url: string }

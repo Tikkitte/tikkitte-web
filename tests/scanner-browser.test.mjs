@@ -60,9 +60,9 @@ test('invalid_session from cache and queue scan RPCs clears persistence',{skip:!
 })
 test('fragment starts a session after removing the code from the address bar',{skip:!enabled},async()=>{
  const {p,starts,authRequests}=await setup({stored:null});try{
-  await p.goto(`${base}/scan#code=ABCD-1234-ABCD-1234-ABCD`)
+  await p.goto(`${base}/scan#code=K7M4Q-XR9TD`)
   await p.getByText('Door test',{exact:true}).waitFor()
-  assert.deepEqual(starts,[{hash:'',code:'ABCD1234ABCD1234ABCD'}])
+  assert.deepEqual(starts,[{hash:'',code:'K7M4QXR9TD'}])
   assert.equal(new URL(p.url()).hash,'');assert.deepEqual(authRequests,[])
   assert.equal(JSON.parse(await p.evaluate(()=>localStorage.getItem('scan_session_v1'))).token,session.token)
  }finally{await p.close()}

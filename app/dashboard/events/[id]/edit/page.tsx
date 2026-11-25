@@ -26,14 +26,5 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
     .eq('is_table_ticket', false)
     .order('type')
 
-  return (
-    <div>
-      <div className="mb-8 lg:pl-[212px]">
-        <p className="text-sm font-semibold text-[#2766d2]">Event settings</p>
-        <h1 className="create-display mt-1 text-4xl text-[#25251f] sm:text-5xl">Edit event</h1>
-        <p className="mt-2 max-w-2xl truncate text-sm text-[#77746b]">{event.name}</p>
-      </div>
-      <EventForm event={event} tickets={tickets ?? []} organizerId={user.id} organizerApproved={organizerApproved} />
-    </div>
-  )
+  return <EventForm event={event} tickets={tickets ?? []} organizerId={user.id} organizerApproved={organizerApproved} />
 }

@@ -33,7 +33,7 @@ afterEach(() => {
   })
 })
 
-function request(body = { code: 'abcd-1234-abcd-1234-abcd' }, headers = {}) {
+function request(body = { code: 'k7m4q-xr9td' }, headers = {}) {
   return new Request('https://scanner.test/api/scanner/session', {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body),
   })
@@ -47,11 +47,11 @@ test('normalizes codes, hashes trusted ingress IP, and never caches the token', 
   assert.deepEqual(await response.json(), result)
   assert.equal(calls.length, 1)
   assert.equal(calls[0].url, 'https://scanner-test.supabase.invalid/rest/v1/rpc/start_scanner_session')
-  assert.deepEqual(calls[0].body, { p_code: 'ABCD1234ABCD1234ABCD', p_source: hash('203.0.113.10') })
+  assert.deepEqual(calls[0].body, { p_code: 'K7M4QXR9TD', p_source: hash('203.0.113.10') })
 })
 
 test('client-supplied source and ordinary forwarded headers cannot bypass source limits', async () => {
-  await POST(request({ code: 'A'.repeat(20), source: 'my-new-bucket' }, { 'x-forwarded-for': '203.0.113.50' }))
+  await POST(request({ code: 'A'.repeat(10), source: 'my-new-bucket' }, { 'x-forwarded-for': '203.0.113.50' }))
   assert.equal(calls[0].body.p_source, hash('shared-ingress'))
   process.env.VERCEL = '0'
   await POST(request(undefined, { 'x-vercel-forwarded-for': '203.0.113.51' }))
@@ -99,7 +99,7 @@ test('malformed and oversized bodies are rejected before accessing the database'
 })
 
 // Storage/fragment helpers used by the scanner's mount and invalidation paths.
-const {restoreScannerSession,saveScannerSession,clearScannerSession,isInvalidScannerSession,takeScannerCode,SESSION_KEY}=await import('../lib/scan/session.ts')
+const {restoreScannerSession,saveScannerSession,clearScannerSession,isInvalidScannerSession,takeScannerCode,scannerLink,SESSION_KEY}=await import('../lib/scan/session.ts')
 function storage() { const data=new Map();return {getItem:key=>data.get(key)??null,setItem:(key,value)=>data.set(key,value),removeItem:key=>data.delete(key)} }
 test('stored unexpired session survives a reload, without unrelated data',()=>{
   const store=storage(),session={eventId:'event-a',eventName:'Door',token:'a'.repeat(64),expiresAt:'2030-01-01T00:00:00Z'}
@@ -119,12 +119,19 @@ test('invalid_session from either RPC is recognized and storage can be cleared',
   assert.equal(isInvalidScannerSession({message:'network unavailable'}),false)
 })
 test('scanner fragment is consumed before session creation and never enters a request URL',async()=>{
-  const location={hash:'#code=ABCD-1234-ABCD-1234-ABCD',pathname:'/scan',search:'?door=1'},events=[]
+  const location={hash:'#code=K7M4Q-XR9TD',pathname:'/scan',search:'?door=1'},events=[]
   const history={state:{test:true},replaceState:(state,title,url)=>{events.push({kind:'remove',url,state});location.hash=''}}
   const code=takeScannerCode(location,history)
   const response=await POST(request({code}))
   events.push({kind:'start'});assert.equal(response.status,200)
   assert.deepEqual(events,[{kind:'remove',url:'/scan?door=1',state:{test:true}},{kind:'start'}])
-  assert.equal(location.hash,'');assert.equal(calls[0].body.p_code,'ABCD1234ABCD1234ABCD')
+  assert.equal(location.hash,'');assert.equal(calls[0].body.p_code,'K7M4QXR9TD')
   assert.equal(takeScannerCode(location,history),null)
+})
+
+test('scanner links point door staff at tikkitte.com on the live site', () => {
+  assert.equal(scannerLink('K7M4QXR9TD', 'https://create.tikkitte.com'), 'https://tikkitte.com/scan#code=K7M4Q-XR9TD')
+  assert.equal(scannerLink('K7M4QXR9TD', 'https://tikkitte.com'), 'https://tikkitte.com/scan#code=K7M4Q-XR9TD')
+  assert.equal(scannerLink('K7M4QXR9TD', 'https://basics-star-system.local:3000'), 'https://basics-star-system.local:3000/scan#code=K7M4Q-XR9TD')
+  assert.equal(scannerLink('K7M4QXR9TD', 'https://nottikkitte.com'), 'https://nottikkitte.com/scan#code=K7M4Q-XR9TD')
 })

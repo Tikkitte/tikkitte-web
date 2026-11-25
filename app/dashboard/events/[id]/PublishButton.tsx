@@ -5,9 +5,12 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { computeServiceFeeMinor, serviceFeeBpsFromPercent } from '@/lib/checkout-pricing'
 import ConfirmDialog from '@/components/dashboard/ConfirmDialog'
+import { Button } from 'tikkitte-ui'
 
 type PublishTerms = { approved: boolean; firstPublish: boolean; buyerFeePercent: number | null; platformFeePercent: number | null; termsVersion: number | null; termsAccepted: boolean }
-export default function PublishButton({ eventId, published, approved }: { eventId: string; published: boolean; approved?: boolean }) {
+// 'status' is the edit page's Event status card: design-system button, and the
+// card shows the locked note itself.
+export default function PublishButton({ eventId, published, approved, variant = 'default' }: { eventId: string; published: boolean; approved?: boolean; variant?: 'default' | 'status' }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -59,9 +62,13 @@ export default function PublishButton({ eventId, published, approved }: { eventI
   const buyer = terms?.buyerFeePercent
   const platform = terms?.platformFeePercent
   const buyerTotal = buyer == null ? null : 100 + computeServiceFeeMinor(10000, serviceFeeBpsFromPercent(buyer)) / 100
+  const disabled = loading || (!published && approved !== true)
+  const label = loading ? 'Working…' : published ? 'Unpublish' : 'Publish event'
   return <div className="shrink-0">
-    <button type="button" onClick={click} disabled={loading || (!published && approved !== true)} className={`create-focus min-h-11 rounded-full px-6 text-sm font-semibold disabled:opacity-50 ${published ? 'border border-gray-300 bg-white' : 'bg-[#2766d2] text-white'}`}>{loading ? 'Working…' : published ? 'Unpublish' : 'Publish event'}</button>
-    {!published && approved !== true && <p className="mt-2 max-w-xs text-xs text-gray-500">Publishing unlocks once your account is approved.</p>}
+    {variant === 'status'
+      ? <Button type="button" variant={published ? 'secondary' : 'primary'} onClick={click} disabled={disabled} className="w-full sm:w-auto">{label}</Button>
+      : <button type="button" onClick={click} disabled={disabled} className={`create-focus min-h-11 rounded-full px-6 text-sm font-semibold disabled:opacity-50 ${published ? 'border border-gray-300 bg-white' : 'bg-[#2766d2] text-white'}`}>{label}</button>}
+    {variant === 'default' && !published && approved !== true && <p className="mt-2 max-w-xs text-xs text-gray-500">Publishing unlocks once your account is approved.</p>}
     {error && !confirming && !terms && <p role="alert" className="mt-2 max-w-xs text-xs text-red-600">{error}</p>}
     <ConfirmDialog open={confirming} title="Unpublish this event?" description="The public event page and checkout will stop working until you publish again. Already-sold tickets and bookings are not affected." confirmLabel="Unpublish" loading={loading} error={error} onConfirm={toggle} onCancel={() => { setConfirming(false); setError(null) }} danger />
     {terms && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><section role="dialog" aria-modal="true" aria-labelledby="publish-heading" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">

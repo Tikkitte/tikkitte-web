@@ -46,7 +46,7 @@ export default function ScanHelpPage() {
               <h2 className="font-semibold" style={{ color: '#ECEDEE' }}>Get your scanner code</h2>
             </div>
             <p className="text-sm leading-relaxed pl-10" style={{ color: '#9BA1A6' }}>
-              The event organiser will give you a scanner link or a 20-character code before the event. Open the link to start without typing. This code is unique to the event you&apos;re working.
+              The event organiser will give you a scanner link or a 10-character code before the event. Open the link to start without typing. This code is unique to the event you&apos;re working.
               If you haven&apos;t received one, ask your organiser to generate it in their Tikkitte dashboard.
             </p>
           </div>
@@ -70,7 +70,7 @@ export default function ScanHelpPage() {
               <h2 className="font-semibold" style={{ color: '#ECEDEE' }}>Enter the scanner code</h2>
             </div>
             <p className="text-sm leading-relaxed pl-10" style={{ color: '#9BA1A6' }}>
-              If you did not open a scanner link, type the 20-character code and tap <span style={{ color: '#ECEDEE', fontWeight: 500 }}>Start scanning</span>.
+              If you did not open a scanner link, type the 10-character code and tap <span style={{ color: '#ECEDEE', fontWeight: 500 }}>Start scanning</span>.
               The scanner will load the ticket list for that event and activate your camera.
             </p>
           </div>

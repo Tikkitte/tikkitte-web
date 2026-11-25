@@ -35,7 +35,7 @@ export default function CancelButton({ eventId }: { eventId: string }) {
       <button
         type="button"
         onClick={() => { setError(null); setConfirming(true) }}
-        className="create-focus -ml-3 min-h-11 shrink-0 rounded-full px-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
+        className="create-focus inline-flex min-h-11 shrink-0 items-center self-center px-1 text-sm font-bold text-[#b42318] hover:underline disabled:cursor-not-allowed disabled:opacity-45 disabled:no-underline sm:self-auto"
       >
         Cancel event
       </button>

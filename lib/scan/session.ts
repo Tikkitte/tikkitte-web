@@ -1,4 +1,16 @@
 export type ScannerSession = { eventId: string; eventName: string; token: string; expiresAt: string }
+// Codes are 10 characters from digits 2-9 and capitals without I, L, O or U,
+// shown as two groups of five. Dashes and spaces are ignored when typed.
+export const SCANNER_CODE_LENGTH = 10
+export function formatScannerCode(code: string) {
+  return code.length === SCANNER_CODE_LENGTH ? `${code.slice(0, 5)}-${code.slice(5)}` : code
+}
+// The link organizers send to door staff. On the live site it always points
+// at tikkitte.com, even when the organizer is on create.tikkitte.com.
+export function scannerLink(code: string, origin: string) {
+  const base = /(^|\.)tikkitte\.com$/.test(new URL(origin).hostname) ? 'https://tikkitte.com' : origin
+  return `${base}/scan#code=${formatScannerCode(code)}`
+}
 export const SESSION_KEY = 'scan_session_v1'
 type Storage = Pick<globalThis.Storage, 'getItem' | 'setItem' | 'removeItem'>
 

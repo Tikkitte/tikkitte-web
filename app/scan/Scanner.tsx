@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { detectQRCode } from '@/lib/scan/decode'
-import { clearScannerSession, restoreScannerSession, saveScannerSession, takeScannerCode, isInvalidScannerSession, type ScannerSession } from '@/lib/scan/session'
+import { clearScannerSession, restoreScannerSession, saveScannerSession, takeScannerCode, isInvalidScannerSession, SCANNER_CODE_LENGTH, type ScannerSession } from '@/lib/scan/session'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -629,11 +629,11 @@ export default function Scanner() {
               autoCapitalize="characters"
               autoComplete="off"
               spellCheck={false}
-              maxLength={24}
-              placeholder="20-character scanner code"
+              maxLength={16}
+              placeholder="10-character scanner code"
               value={pinInput}
               onChange={e => {
-                setPinInput(e.target.value.replace(/[\s-]/g, '').toUpperCase().slice(0, 20))
+                setPinInput(e.target.value.replace(/[\s-]/g, '').toUpperCase().slice(0, SCANNER_CODE_LENGTH))
                 setPinError('')
               }}
               className="w-full text-center text-lg font-mono tracking-wider rounded-2xl px-6 py-5 outline-none transition-colors placeholder:font-sans placeholder:tracking-normal placeholder:text-lg placeholder:text-base"
